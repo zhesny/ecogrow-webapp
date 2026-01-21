@@ -1308,14 +1308,15 @@
                     </label>
                 </div>
                 
-                <div class="btn-group">
-                    <button class="btn btn-success" onclick="setCurrentTime()">
-                        <span class="material-icons">schedule</span>
-                        Установить сейчас
-                    </button>
+                <!-- ИСПРАВЛЕННЫЙ блок кнопок -->
+                <div class="btn-group" style="margin-top: 20px;">
                     <button class="btn btn-primary" onclick="setCustomTime()">
                         <span class="material-icons">edit</span>
                         Установить время
+                    </button>
+                    <button class="btn btn-success" onclick="setCurrentTime()">
+                        <span class="material-icons">schedule</span>
+                        Установить сейчас
                     </button>
                 </div>
             </div>
@@ -1372,6 +1373,7 @@
         let voiceRecognition = null;
         let currentTheme = 'light';
         let deviceSettings = {};
+        let lastFetchTime = 0;
         
         // ===== ИНИЦИАЛИЗАЦИЯ =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1398,7 +1400,7 @@
             registerServiceWorker();
             
             // 7. Проверка подключения
-            checkConnection();
+            testConnection();
             
             // 8. Обновление времени
             updateTime();
@@ -1406,6 +1408,9 @@
             
             // 9. Настройка событий
             setupEventListeners();
+            
+            // 10. Автоматическое обновление данных
+            startPolling();
         }
         
         // ===== TELEGRAM WEB APP =====
@@ -1613,14 +1618,39 @@
         async function sendCommand(cmd, value) {
             const deviceId = localStorage.getItem('device_id') || DEFAULT_CHAT_ID;
             const botToken = localStorage.getItem('bot_token') || DEFAULT_BOT_TOKEN;
+            const localIp = localStorage.getItem('local_ip') || '';
             
-            if (!deviceId || !botToken) {
+            if (!deviceId) {
                 showNotification('Настройте подключение в настройках', 'error');
                 return;
             }
             
             try {
-                // Пытаемся через Telegram Bot API
+                // Сначала пробуем локальное подключение
+                if (localIp) {
+                    try {
+                        const response = await fetch(`http://${localIp}/webapp/command`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                device_id: deviceId,
+                                cmd: cmd,
+                                param: value
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            showNotification('Команда отправлена локально', 'success');
+                            // Обновляем данные через 2 секунды
+                            setTimeout(fetchDeviceData, 2000);
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('Локальная отправка не удалась:', e);
+                    }
+                }
+                
+                // Если локально не получилось, пробуем через Telegram
                 const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
                 const text = `WEBAPP:${cmd}=${value}`;
                 
@@ -1637,7 +1667,7 @@
                 const data = await response.json();
                 
                 if (data.ok) {
-                    showNotification('Команда отправлена', 'success');
+                    showNotification('Команда отправлена через Telegram', 'success');
                     // Обновляем данные через 2 секунды
                     setTimeout(fetchDeviceData, 2000);
                 } else {
@@ -1651,9 +1681,16 @@
         
         // ===== ПОЛУЧЕНИЕ ДАННЫХ =====
         async function fetchDeviceData() {
+            const now = Date.now();
+            if (now - lastFetchTime < 5000) { // Не чаще чем раз в 5 секунд
+                console.log('Пропускаем запрос, слишком часто');
+                return;
+            }
+            lastFetchTime = now;
+            
             const deviceId = localStorage.getItem('device_id') || DEFAULT_CHAT_ID;
             const botToken = localStorage.getItem('bot_token') || DEFAULT_BOT_TOKEN;
-            const localIp = localStorage.getItem('local_ip');
+            const localIp = localStorage.getItem('local_ip') || '';
             
             if (!deviceId) {
                 showNotification('Укажите ID устройства в настройках', 'warning');
@@ -1666,56 +1703,71 @@
                 // Сначала пробуем локальное подключение
                 if (localIp) {
                     try {
-                        const response = await fetch(`http://${localIp}/webapp/data`, { timeout: 3000 });
+                        console.log('Пробуем локальное подключение к:', localIp);
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 3000);
+                        
+                        const response = await fetch(`http://${localIp}/webapp/data`, {
+                            signal: controller.signal,
+                            mode: 'cors'
+                        });
+                        clearTimeout(timeoutId);
+                        
                         if (response.ok) {
                             data = await response.json();
                             isConnected = true;
                             console.log('Данные получены локально:', data);
+                            updateUI(data);
+                            return;
                         }
                     } catch (e) {
-                        console.log('Локальное подключение не удалось:', e);
-                        // Локальное подключение не удалось, пробуем через Telegram
+                        console.log('Локальное подключение не удалось:', e.message);
                     }
                 }
                 
                 // Если локально не получилось, пробуем через Telegram
-                if (!data) {
-                    console.log('Пробуем получить данные через Telegram...');
-                    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: deviceId,
-                            text: "/webapp_data",
-                            parse_mode: "HTML"
-                        })
-                    });
-                    
-                    const telegramData = await response.json();
-                    console.log('Ответ от Telegram:', telegramData);
-                    
-                    if (telegramData.ok && telegramData.result.text && telegramData.result.text.startsWith('DATA:')) {
-                        try {
-                            data = JSON.parse(telegramData.result.text.substring(5));
-                            isConnected = true;
-                            console.log('Данные получены через Telegram:', data);
-                        } catch (e) {
-                            console.error('Ошибка парсинга данных:', e);
-                        }
-                    } else {
-                        throw new Error('Не удалось получить данные через Telegram');
-                    }
-                }
+                console.log('Пробуем получить данные через Telegram...');
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: deviceId,
+                        text: "/status", // Используем /status вместо /webapp_data
+                        parse_mode: "Markdown"
+                    })
+                });
                 
-                if (data) {
+                const telegramData = await response.json();
+                console.log('Ответ от Telegram:', telegramData);
+                
+                if (telegramData.ok) {
+                    isConnected = true;
+                    // Парсим ответ от /status для основных данных
+                    const text = telegramData.result.text;
+                    const moistureMatch = text.match(/Влажность:\s*\*(\d+)%\*/);
+                    const pumpMatch = text.match(/Насос:\s*(✅ ВКЛ|❌ ВЫКЛ)/);
+                    const lightMatch = text.match(/Свет:\s*(✅ ВКЛ|❌ ВЫКЛ)/);
+                    const thresholdMatch = text.match(/Порог:\s*(\d+)%/);
+                    const timeMatch = text.match(/Время:\s*(\d{2}:\d{2})/);
+                    
+                    data = {
+                        moisture: moistureMatch ? parseInt(moistureMatch[1]) : 0,
+                        pump: pumpMatch ? pumpMatch[1].includes('✅') : false,
+                        light: lightMatch ? lightMatch[1].includes('✅') : false,
+                        moisture_threshold: thresholdMatch ? parseInt(thresholdMatch[1]) : 50,
+                        current_time: timeMatch ? timeMatch[1] : '--:--'
+                    };
+                    
+                    console.log('Данные получены через Telegram:', data);
                     updateUI(data);
-                    showNotification('Данные обновлены', 'success');
+                } else {
+                    throw new Error(telegramData.description || 'Ошибка Telegram API');
                 }
             } catch (error) {
                 console.error('Ошибка получения данных:', error);
                 isConnected = false;
-                showNotification('Ошибка подключения к устройству', 'error');
+                showNotification('Не удалось подключиться к устройству', 'error');
             }
         }
         
@@ -1927,13 +1979,25 @@
         
         function setCurrentTime() {
             const now = new Date();
-            sendCommand('set_time', `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            // Обновляем поля ввода
+            document.getElementById('time_hours').value = hours;
+            document.getElementById('time_minutes').value = minutes;
+            
+            // Отправляем команду
+            sendCommand('set_time', `${hours}:${minutes}`);
+            showNotification(`Установлено время: ${hours}:${minutes}`, 'success');
         }
         
         function setCustomTime() {
             const hours = document.getElementById('time_hours').value;
             const minutes = document.getElementById('time_minutes').value;
-            sendCommand('set_time', `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+            const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            
+            sendCommand('set_time', timeStr);
+            showNotification(`Установлено время: ${timeStr}`, 'success');
         }
         
         // ===== НАСТРОЙКИ =====
@@ -1973,7 +2037,7 @@
             showNotification('Настройки сохранены', 'success');
             
             // Перезапускаем подключение
-            checkConnection();
+            testConnection();
         }
         
         function loadDefaultSettings() {
@@ -2014,13 +2078,24 @@
             }
         }
         
-        function checkConnection() {
+        function testConnection() {
             if (localStorage.getItem('device_id')) {
+                showNotification('Проверяю подключение...', 'info');
                 fetchDeviceData();
-                // Запускаем периодическое обновление
-                if (pollingInterval) clearInterval(pollingInterval);
-                pollingInterval = setInterval(fetchDeviceData, 10000);
+            } else {
+                showNotification('Настройте подключение в настройках', 'warning');
+                setTimeout(() => openModal('settingsModal'), 2000);
             }
+        }
+        
+        function startPolling() {
+            // Запускаем периодическое обновление каждые 30 секунд
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(() => {
+                if (localStorage.getItem('device_id')) {
+                    fetchDeviceData();
+                }
+            }, 30000);
         }
         
         function refreshData() {
@@ -2095,8 +2170,8 @@
                 navigator.serviceWorker.ready.then(registration => {
                     registration.showNotification('EcoGrow Alert', {
                         body: message,
-                        icon: '/icon-192.png',
-                        badge: '/icon-192.png',
+                        icon: 'https://img.icons8.com/color/96/000000/plant-under-sun.png',
+                        badge: 'https://img.icons8.com/color/96/000000/plant-under-sun.png',
                         vibrate: [200, 100, 200]
                     });
                 });
@@ -2166,10 +2241,7 @@
             // Сохраняем локально
             localStorage.setItem('device_settings', JSON.stringify(settings));
             
-            // Отправляем на устройство через API
-            sendCommand('settings', JSON.stringify(settings));
-            
-            showNotification('Настройки сохранены', 'success');
+            showNotification('Настройки сохранены локально', 'success');
         }
         
         // ===== ЗАГРУЗКА ПРИ ЗАПУСКЕ =====
@@ -2181,12 +2253,12 @@
             
             // Автоподключение при наличии сохраненных настроек
             if (localStorage.getItem('device_id')) {
-                checkConnection();
+                setTimeout(testConnection, 2000);
             } else {
                 // Если нет настроек, открываем окно настроек
                 setTimeout(() => {
                     openModal('settingsModal');
-                }, 2000);
+                }, 3000);
             }
         };
     </script>
