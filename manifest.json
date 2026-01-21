@@ -1,32 +1,65 @@
 {
-  "name": "EcoGrow Control Panel",
+  "name": "EcoGrow Web App",
   "short_name": "EcoGrow",
   "description": "Управление системой автоматического полива растений",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#27ae60",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "ru",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "https://img.icons8.com/color/96/000000/plant-under-sun.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "https://img.icons8.com/color/144/000000/plant-under-sun.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "https://img.icons8.com/color/192/000000/plant-under-sun.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "https://img.icons8.com/color/512/000000/plant-under-sun.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ],
   "categories": ["productivity", "utilities"],
-  "lang": "ru",
-  "orientation": "portrait",
   "shortcuts": [
     {
       "name": "Панель управления",
       "short_name": "Панель",
-      "description": "Открыть панель управления",
-      "url": "/"
+      "description": "Открыть панель управления EcoGrow",
+      "url": "/",
+      "icons": [{ "src": "https://img.icons8.com/color/96/000000/plant-under-sun.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Статистика",
+      "short_name": "Статистика",
+      "description": "Просмотр статистики полива",
+      "url": "/#stats",
+      "icons": [{ "src": "https://img.icons8.com/color/96/000000/statistics.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://via.placeholder.com/540x720/27ae60/ffffff?text=EcoGrow+Mobile",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "https://via.placeholder.com/720x540/27ae60/ffffff?text=EcoGrow+Desktop",
+      "sizes": "720x540",
+      "type": "image/png",
+      "form_factor": "wide"
     }
   ]
 }
