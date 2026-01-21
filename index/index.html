@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoGrow Remote Control</title>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #27ae60;
+            --secondary-color: #2c3e50;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            padding: 20px;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), #2ecc71);
+            color: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .card {
+            background: var(--card-color);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .status-display {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-width: 100px;
+        }
+        
+        .status-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .status-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .control-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .device-id {
+            background: #f1f8ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px dashed #3498db;
+        }
+        
+        .device-id input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffeaea;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c0392b;
+        }
+        
+        .success {
+            background: #e8f6ef;
+            color: #27ae60;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .info {
+            background: #e8f4fc;
+            color: #2980b9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #2980b9;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+        
+        .settings-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .control-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-item {
+                min-width: 80px;
+                padding: 10px;
+            }
+            
+            .status-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="header">
+            <h1>🌱 EcoGrow Remote</h1>
+            <p>Управление системой из любой точки мира</p>
+            <div id="connectionStatus" class="info">
+                🔄 Подключение...
+            </div>
+        </div>
+        
+        <!-- Форма ввода ID устройства -->
+        <div class="card" id="deviceIdForm">
+            <div class="card-title">📱 Подключение</div>
+            <div class="device-id">
+                <p>Введите ID вашего устройства (из Telegram):</p>
+                <input type="text" id="deviceIdInput" placeholder="Например: 6712996693">
+                <button class="btn btn-primary" onclick="connectDevice()" style="width: 100%; margin-top: 10px;">
+                    Подключиться
+                </button>
+            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                ID можно получить отправив боту команду <code>/status</code> в Telegram
+            </p>
+        </div>
+        
+        <!-- Основной интерфейс (скрыт до подключения) -->
+        <div id="mainInterface" style="display: none;">
+            <!-- Влажность -->
+            <div class="card">
+                <div class="card-title">💧 Влажность почвы</div>
+                <div class="status-display">
+                    <div class="status-item">
+                        <div class="status-value" id="currentMoisture">--%</div>
+                        <div class="status-label">Текущая</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="moistureThreshold">50%</div>
+                        <div class="status-label">Порог</div>
+                    </div>
+                </div>
+                
+                <div class="settings-panel">
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Порог полива:</span>
+                            <span id="thresholdValue">50%</span>
+                        </div>
+                        <input type="range" id="moistureSlider" min="10" max="90" step="1" value="50">
+                    </div>
+                    <button class="btn btn-secondary" onclick="updateThreshold()" style="width: 100%;">
+                        Установить порог
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Насос -->
+            <div class="card">
+                <div class="card-title">🚰 Управление насосом</div>
+                <div class="control-panel">
+                    <button class="btn btn-success" onclick="sendCommand('pump', 'on')">
+                        💧 Включить
+                    </button>
+                    <button class="btn btn-danger" onclick="sendCommand('pump', 'off')">
+                        ⏹️ Выключить
+                    </button>
+                </div>
+                <div class="control-panel">
+                    <button class="btn btn-primary" onclick="sendCommand('pump_auto', '')" style="grid-column: span 2;">
+                        🔧 Авторежим
+                    </button>
+                </div>
+                <div id="pumpStatus" class="info" style="margin-top: 15px;">
+                    Статус: Неизвестен
+                </div>
+            </div>
+            
+            <!-- Свет -->
+            <div class="card">
+                <div class="card-title">💡 Управление светом</div>
+                <div class="control-panel">
+                    <button class="btn btn-success" onclick="sendCommand('light', 'on')">
+                        💡 Включить
+                    </button>
+                    <button class="btn btn-danger" onclick="sendCommand('light', 'off')">
+                        🌙 Выключить
+                    </button>
+                </div>
+                <div class="control-panel">
+                    <button class="btn btn-primary" onclick="sendCommand('light_auto', '')" style="grid-column: span 2;">
+                        🔧 Авторежим
+                    </button>
+                </div>
+                <div id="lightStatus" class="info" style="margin-top: 15px;">
+                    Статус: Неизвестен
+                </div>
+            </div>
+            
+            <!-- Информация -->
+            <div class="card">
+                <div class="card-title">📊 Информация</div>
+                <div class="status-display">
+                    <div class="status-item">
+                        <div class="status-value" id="totalWaterings">0</div>
+                        <div class="status-label">Поливов</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="totalLightHours">0ч</div>
+                        <div class="status-label">Света</div>
+                    </div>
+                </div>
+                <div id="systemTime" class="info" style="margin-top: 15px;">
+                    Время системы: --:--
+                </div>
+            </div>
+        </div>
+        
+        <!-- Сообщения -->
+        <div id="messageContainer"></div>
+    </div>
+    
+    <!-- Кнопка обновления -->
+    <button class="refresh-btn" onclick="fetchData()">🔄</button>
+    
+    <script>
+        // Telegram Web App
+        let tg = window.Telegram.WebApp;
+        let deviceId = null;
+        let botToken = "8365221747:AAEskXtc6T-IhEik718wJJ9x-vz_TOh26tw";
+        
+        // Инициализация Telegram Web App
+        function initTelegram() {
+            if (typeof tg !== 'undefined') {
+                tg.expand();
+                tg.BackButton.hide();
+                
+                // Получаем данные из Telegram
+                let initData = tg.initDataUnsafe;
+                if (initData.user) {
+                    console.log("Пользователь Telegram:", initData.user);
+                }
+                
+                // Проверяем, есть ли device_id в параметрах
+                let startParam = tg.initDataUnsafe.start_param;
+                if (startParam) {
+                    deviceId = startParam;
+                    connectDevice();
+                }
+            }
+        }
+        
+        // Подключение к устройству
+        function connectDevice() {
+            let inputId = document.getElementById('deviceIdInput').value.trim();
+            if (inputId) {
+                deviceId = inputId;
+                localStorage.setItem('ecogrow_device_id', deviceId);
+                
+                document.getElementById('deviceIdForm').style.display = 'none';
+                document.getElementById('mainInterface').style.display = 'block';
+                document.getElementById('connectionStatus').className = 'success';
+                document.getElementById('connectionStatus').innerHTML = '✅ Подключено к устройству: ' + deviceId;
+                
+                fetchData();
+                startDataPolling();
+            } else {
+                showMessage('Введите ID устройства', 'error');
+            }
+        }
+        
+        // Отправка команды
+        async function sendCommand(cmd, param) {
+            if (!deviceId) {
+                showMessage('Сначала подключитесь к устройству', 'error');
+                return;
+            }
+            
+            showMessage('Отправка команды...', 'info');
+            
+            try {
+                // Отправляем через Telegram Bot API
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                const text = `WEBAPP:${cmd}=${param}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: deviceId,
+                        text: text,
+                        parse_mode: "HTML"
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    showMessage('✅ Команда отправлена', 'success');
+                    
+                    // Обновляем данные через 2 секунды
+                    setTimeout(fetchData, 2000);
+                } else {
+                    showMessage('❌ Ошибка отправки: ' + data.description, 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Ошибка сети: ' + error.message, 'error');
+            }
+        }
+        
+        // Получение данных
+        async function fetchData() {
+            if (!deviceId) return;
+            
+            try {
+                // Запрашиваем данные через Telegram Bot API
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: deviceId,
+                        text: "/webapp_data",
+                        parse_mode: "HTML"
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok && data.result.text && data.result.text.startsWith('DATA:')) {
+                    const jsonData = JSON.parse(data.result.text.substring(5));
+                    updateUI(jsonData);
+                    showMessage('✅ Данные обновлены', 'success');
+                } else {
+                    // Альтернативный метод: прямой запрос если ESP доступен
+                    tryAlternativeDataFetch();
+                }
+            } catch (error) {
+                console.error('Ошибка получения данных:', error);
+                tryAlternativeDataFetch();
+            }
+        }
+        
+        // Альтернативный метод получения данных
+        async function tryAlternativeDataFetch() {
+            // Пытаемся получить данные напрямую (если ESP в локальной сети)
+            const localUrls = [
+                `http://ecogrow.local/state`,
+                `http://192.168.1.100/state`,
+                `http://${window.location.hostname}/state`
+            ];
+            
+            for (let url of localUrls) {
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const data = await response.json();
+                        updateUI(data);
+                        showMessage('✅ Данные получены напрямую', 'success');
+                        return;
+                    }
+                } catch (e) {
+                    // Продолжаем пробовать следующий URL
+                }
+            }
+            
+            showMessage('⚠️ Не удалось получить данные', 'error');
+        }
+        
+        // Обновление интерфейса
+        function updateUI(data) {
+            // Влажность
+            if (data.moisture !== undefined) {
+                document.getElementById('currentMoisture').textContent = data.moisture + '%';
+            }
+            
+            if (data.moisture_threshold !== undefined) {
+                document.getElementById('moistureThreshold').textContent = data.moisture_threshold + '%';
+                document.getElementById('thresholdValue').textContent = data.moisture_threshold + '%';
+                document.getElementById('moistureSlider').value = data.moisture_threshold;
+            }
+            
+            // Статус насоса и света
+            if (data.pump !== undefined) {
+                document.getElementById('pumpStatus').innerHTML = 
+                    `Статус: <strong>${data.pump ? 'ВКЛЮЧЕН' : 'ВЫКЛЮЧЕН'}</strong>`;
+            }
+            
+            if (data.light !== undefined) {
+                document.getElementById('lightStatus').innerHTML = 
+                    `Статус: <strong>${data.light ? 'ВКЛЮЧЕН' : 'ВЫКЛЮЧЕН'}</strong>`;
+            }
+            
+            // Статистика
+            if (data.total_waterings !== undefined) {
+                document.getElementById('totalWaterings').textContent = data.total_waterings;
+            }
+            
+            if (data.total_light_hours !== undefined) {
+                document.getElementById('totalLightHours').textContent = data.total_light_hours + 'ч';
+            }
+            
+            // Время
+            if (data.current_time) {
+                document.getElementById('systemTime').innerHTML = 
+                    `Время системы: <strong>${data.current_time}</strong>`;
+            }
+        }
+        
+        // Обновление порога влажности
+        function updateThreshold() {
+            const value = document.getElementById('moistureSlider').value;
+            sendCommand('threshold', value);
+        }
+        
+        // Показ сообщений
+        function showMessage(text, type = 'info') {
+            const container = document.getElementById('messageContainer');
+            const message = document.createElement('div');
+            message.className = type;
+            message.innerHTML = text;
+            message.style.animation = 'fadeIn 0.3s';
+            
+            container.appendChild(message);
+            
+            // Удаляем через 5 секунд
+            setTimeout(() => {
+                message.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => {
+                    if (message.parentNode) {
+                        container.removeChild(message);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // Автоматическое обновление данных
+        let pollingInterval = null;
+        function startDataPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(fetchData, 10000); // Каждые 10 секунд
+        }
+        
+        // Инициализация при загрузке
+        window.onload = function() {
+            initTelegram();
+            
+            // Проверяем сохраненный device_id
+            const savedDeviceId = localStorage.getItem('ecogrow_device_id');
+            if (savedDeviceId) {
+                deviceId = savedDeviceId;
+                document.getElementById('deviceIdInput').value = savedDeviceId;
+            }
+            
+            // Стили анимаций
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translateY(0); }
+                    to { opacity: 0; transform: translateY(-10px); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Если device_id уже есть, автоматически подключаемся
+            if (deviceId && deviceId !== "null") {
+                connectDevice();
+            }
+        };
+    </script>
+</body>
+</html>
