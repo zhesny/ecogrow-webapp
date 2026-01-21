@@ -106,6 +106,5 @@ self.addEventListener('sync', event => {
 });
 
 async function syncData() {
-  // Синхронизация данных при восстановлении соединения
   console.log('Синхронизация данных...');
 }
