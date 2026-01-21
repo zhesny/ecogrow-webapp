@@ -1,0 +1,32 @@
+{
+  "name": "EcoGrow Control Panel",
+  "short_name": "EcoGrow",
+  "description": "Управление системой автоматического полива растений",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#27ae60",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "ru",
+  "orientation": "portrait",
+  "shortcuts": [
+    {
+      "name": "Панель управления",
+      "short_name": "Панель",
+      "description": "Открыть панель управления",
+      "url": "/"
+    }
+  ]
+}
