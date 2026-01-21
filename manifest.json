@@ -1,7 +1,4 @@
 
-## 2. manifest.json (без изменений)
-
-```json
 {
   "name": "EcoGrow Web App",
   "short_name": "EcoGrow",
