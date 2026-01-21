@@ -939,6 +939,20 @@
             visibility: visible;
             bottom: calc(100% + 10px);
         }
+        
+        /* ===== ИСПРАВЛЕНИЯ ДЛЯ КНОПОК УСТАНОВКИ ВРЕМЕНИ ===== */
+        .time-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .time-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1035,6 +1049,7 @@
                 <p class="app-subtitle">Управление системой автоматического полива из любой точки мира</p>
             </div>
             <div class="header-controls">
+                <div id="connection_status" class="status-badge status-off">Нет подключения</div>
                 <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
                     <span class="material-icons">dark_mode</span>
                     Тёмная тема
@@ -1319,7 +1334,7 @@
                     </label>
                 </div>
                 
-                <div class="btn-group" style="margin-top: 20px;">
+                <div class="time-buttons">
                     <button class="btn btn-primary" onclick="setCustomTime()">
                         <span class="material-icons">edit</span>
                         Установить время
@@ -1385,6 +1400,7 @@
         let deviceSettings = {};
         let lastFetchTime = 0;
         let isFetching = false;
+        let lastSuccessfulFetch = 0;
         
         // ===== ИНИЦИАЛИЗАЦИЯ =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1398,11 +1414,15 @@
             loadSettings();
             initVoiceControl();
             registerServiceWorker();
-            testConnection();
             updateTime();
             setInterval(updateTime, 60000);
             setupEventListeners();
             startPolling();
+            
+            // Проверка подключения при загрузке
+            setTimeout(() => {
+                testConnection();
+            }, 2000);
         }
         
         // ===== TELEGRAM WEB APP =====
@@ -1619,6 +1639,9 @@
                 // Сначала пробуем локальное подключение
                 if (localIp) {
                     try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 3000);
+                        
                         const response = await fetch(`http://${localIp}/webapp/command`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1626,8 +1649,11 @@
                                 device_id: deviceId,
                                 cmd: cmd,
                                 param: value
-                            })
+                            }),
+                            signal: controller.signal
                         });
+                        
+                        clearTimeout(timeoutId);
                         
                         if (response.ok) {
                             showNotification('Команда отправлена локально', 'success');
@@ -1690,11 +1716,13 @@
             if (!deviceId) {
                 showNotification('Укажите ID устройства в настройках', 'warning');
                 isFetching = false;
+                updateConnectionStatus();
                 return;
             }
             
             try {
                 let data = null;
+                let error = null;
                 
                 // Сначала пробуем локальное подключение
                 if (localIp) {
@@ -1704,20 +1732,24 @@
                         const timeoutId = setTimeout(() => controller.abort(), 3000);
                         
                         const response = await fetch(`http://${localIp}/webapp/data`, {
-                            signal: controller.signal,
-                            mode: 'cors'
+                            signal: controller.signal
                         });
                         clearTimeout(timeoutId);
                         
                         if (response.ok) {
                             data = await response.json();
                             isConnected = true;
+                            lastSuccessfulFetch = now;
                             console.log('Данные получены локально:', data);
                             updateUI(data);
+                            updateConnectionStatus();
                             isFetching = false;
                             return;
+                        } else {
+                            throw new Error(`HTTP status ${response.status}`);
                         }
                     } catch (e) {
+                        error = e;
                         console.log('Локальное подключение не удалось:', e.message);
                     }
                 }
@@ -1740,18 +1772,21 @@
                 
                 if (telegramData.ok) {
                     isConnected = true;
+                    lastSuccessfulFetch = now;
                     const text = telegramData.result.text;
-                    const moistureMatch = text.match(/Влажность:\s*\*(\d+)%\*/);
-                    const pumpMatch = text.match(/Насос:\s*(✅ ВКЛ|❌ ВЫКЛ)/);
-                    const lightMatch = text.match(/Свет:\s*(✅ ВКЛ|❌ ВЫКЛ)/);
+                    
+                    // Улучшенный парсинг сообщения от бота
+                    const moistureMatch = text.match(/Влажность:\s*(\d+)%/);
+                    const pumpMatch = text.match(/Насос:\s*(✅ ВКЛ|❌ ВЫКЛ|ВКЛ|ВЫКЛ)/);
+                    const lightMatch = text.match(/Свет:\s*(✅ ВКЛ|❌ ВЫКЛ|ВКЛ|ВЫКЛ)/);
                     const thresholdMatch = text.match(/Порог:\s*(\d+)%/);
                     const timeMatch = text.match(/Время:\s*(\d{2}:\d{2})/);
                     const notificationsMatch = text.match(/Уведомления:\s*(ВКЛ|ВЫКЛ)/);
                     
                     data = {
                         moisture: moistureMatch ? parseInt(moistureMatch[1]) : 0,
-                        pump: pumpMatch ? pumpMatch[1].includes('✅') : false,
-                        light: lightMatch ? lightMatch[1].includes('✅') : false,
+                        pump: pumpMatch ? (pumpMatch[1].includes('ВКЛ') || pumpMatch[1].includes('✅')) : false,
+                        light: lightMatch ? (lightMatch[1].includes('ВКЛ') || lightMatch[1].includes('✅')) : false,
                         moisture_threshold: thresholdMatch ? parseInt(thresholdMatch[1]) : 50,
                         current_time: timeMatch ? timeMatch[1] : '--:--',
                         telegram_notifications: notificationsMatch ? (notificationsMatch[1] === 'ВКЛ') : false
@@ -1759,12 +1794,20 @@
                     
                     console.log('Данные получены через Telegram:', data);
                     updateUI(data);
+                    updateConnectionStatus();
                 } else {
                     throw new Error(telegramData.description || 'Ошибка Telegram API');
                 }
             } catch (error) {
                 console.error('Ошибка получения данных:', error);
                 isConnected = false;
+                
+                // Показываем уведомление только если прошло много времени с последнего успешного обновления
+                if (now - lastSuccessfulFetch > 300000) { // 5 минут
+                    showNotification('Не удалось подключиться к устройству', 'error');
+                }
+                
+                updateConnectionStatus();
             } finally {
                 isFetching = false;
             }
@@ -2081,6 +2124,17 @@
             const timeDisplay = document.getElementById('current_time_display');
             if (timeDisplay && timeDisplay.textContent.includes('--:--')) {
                 timeDisplay.textContent = 'Текущее: ' + timeString;
+            }
+        }
+        
+        function updateConnectionStatus() {
+            const connectionStatus = document.getElementById('connection_status');
+            if (isConnected) {
+                connectionStatus.textContent = 'Подключено';
+                connectionStatus.className = 'status-badge status-on';
+            } else {
+                connectionStatus.textContent = 'Нет подключения';
+                connectionStatus.className = 'status-badge status-off';
             }
         }
         
