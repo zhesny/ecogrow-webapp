@@ -1,619 +1,78 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
+    <title>EcoGrow Control</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌱 EcoGrow Control Panel</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #f8f9fa;
-            --bg-card: #ffffff;
-            --text-primary: #2c3e50;
-            --accent-green: #27ae60;
-            --accent-blue: #3498db;
-            --accent-red: #e74c3c;
-            --border-color: #e1e8ed;
-        }
-        
-        [data-theme="dark"] {
-            --bg-primary: #1a1a2e;
-            --bg-card: #16213e;
-            --text-primary: #ecf0f1;
-            --border-color: #2c3e50;
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        
-        .container { max-width: 800px; margin: 0 auto; }
-        
-        .header {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .app-title {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-        
-        .card {
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        
-        .status-badge {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        
-        .status-on { background: rgba(39, 174, 96, 0.15); color: var(--accent-green); }
-        .status-off { background: rgba(52, 152, 219, 0.15); color: var(--accent-blue); }
-        
-        .control-group { margin: 15px 0; }
-        
-        .control-item {
-            margin-bottom: 15px;
-        }
-        
-        .control-item label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        
-        input[type="range"] {
-            width: 100%;
-            height: 8px;
-            border-radius: 4px;
-            background: var(--border-color);
-            outline: none;
-        }
-        
-        .btn-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .btn {
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: var(--accent-blue);
-            color: white;
-        }
-        
-        .btn-success {
-            background: var(--accent-green);
-            color: white;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .stat-card {
-            background: var(--bg-primary);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-blue);
-            margin-bottom: 5px;
-        }
-        
-        .chart-container {
-            height: 200px;
-            margin: 20px 0;
-        }
-        
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--bg-card);
-            color: var(--text-primary);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            z-index: 1000;
-            border-left: 4px solid var(--accent-green);
-            transform: translateY(100px);
-            transition: transform 0.3s;
-        }
-        
-        .notification.show {
-            transform: translateY(0);
-        }
-        
-        @media (max-width: 600px) {
-            .container { padding: 10px; }
-            .btn-group { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; }
-        }
+        body { font-family: Arial; margin: 20px; }
+        button { padding: 15px; margin: 5px; font-size: 16px; }
+        .status { padding: 15px; background: #f0f0f0; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 class="app-title">
-                <span class="material-icons">eco</span>
-                EcoGrow Control
-            </h1>
-            <p>Управление через Telegram</p>
-            <div id="connection_status" class="status-badge status-off">Подключение...</div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span class="material-icons">water_drop</span>
-                    Влажность
-                </div>
-                <div id="moist_status" class="status-badge">--%</div>
-            </div>
-            
-            <div class="chart-container">
-                <canvas id="moist_chart"></canvas>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div id="current_moist" class="stat-value">--%</div>
-                    <div>Текущая</div>
-                </div>
-                <div class="stat-card">
-                    <div id="avg_moist" class="stat-value">--%</div>
-                    <div>Средняя</div>
-                </div>
-            </div>
-            
-            <div class="control-item">
-                <label>Порог полива: <span id="thresh_val">50%</span></label>
-                <input id="moist_threshold" type="range" min="10" max="90" step="1" value="50">
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span class="material-icons">water_drop</span>
-                    Насос
-                </div>
-                <div id="pump_status" class="status-badge status-off">ВЫКЛ</div>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-success" onclick="sendCommand('pump', 'on')">
-                    <span class="material-icons">play_arrow</span>
-                    Включить
-                </button>
-                <button class="btn btn-primary" onclick="sendCommand('pump', 'off')">
-                    <span class="material-icons">stop</span>
-                    Выключить
-                </button>
-            </div>
-            
-            <div class="control-item" style="margin-top: 15px;">
-                <label>Длительность ручного полива (сек)</label>
-                <input id="manual_pump_time" type="number" min="5" max="300" value="10" onchange="sendCommand('manual_pump_time', this.value)">
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span class="material-icons">lightbulb</span>
-                    Свет
-                </div>
-                <div id="light_status" class="status-badge status-off">ВЫКЛ</div>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-success" onclick="sendCommand('light', 'on')">
-                    <span class="material-icons">lightbulb</span>
-                    Включить
-                </button>
-                <button class="btn btn-primary" onclick="sendCommand('light', 'off')">
-                    <span class="material-icons">lightbulb_outline</span>
-                    Выключить
-                </button>
-            </div>
-            
-            <div class="control-item" style="margin-top: 15px;">
-                <label>Расписание света</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input id="lamp_start" type="time" value="08:00" onchange="sendCommand('lamp_start', this.value)">
-                    <input id="lamp_end" type="time" value="20:00" onchange="sendCommand('lamp_end', this.value)">
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span class="material-icons">settings</span>
-                    Настройки
-                </div>
-            </div>
-            
-            <div class="control-item">
-                <label style="display: flex; align-items: center; justify-content: space-between;">
-                    <span>Уведомления в Telegram</span>
-                    <label class="switch">
-                        <input id="telegram_notifications" type="checkbox" onchange="sendCommand('telegram_notifications', this.checked ? 'on' : 'off')">
-                        <span class="slider-switch"></span>
-                    </label>
-                </label>
-            </div>
-            
-            <div class="control-item">
-                <label>Задержка между поливами (мин)</label>
-                <input id="watering_delay" type="number" min="5" max="1440" value="30" onchange="sendCommand('watering_delay', this.value)">
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="refreshData()">
-                    <span class="material-icons">refresh</span>
-                    Обновить
-                </button>
-                <button class="btn btn-success" onclick="sendCommand('pump_auto', '')">
-                    <span class="material-icons">autorenew</span>
-                    Авторежим
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="notification" class="notification"></div>
-
+    <h1>🌱 EcoGrow Control</h1>
+    <input type="text" id="ip" placeholder="IP адрес (например: 192.168.1.100)" style="width: 300px; padding: 10px;">
+    <button onclick="connect()">Подключиться</button>
+    
+    <div class="status" id="status">Введите IP и нажмите "Подключиться"</div>
+    
+    <button onclick="command('pump_on')">Насос ВКЛ</button>
+    <button onclick="command('pump_off')">Насос ВЫКЛ</button>
+    <button onclick="command('light_on')">Свет ВКЛ</button>
+    <button onclick="command('light_off')">Свет ВЫКЛ</button>
+    <button onclick="command('pump_auto')">Авто полив</button>
+    
     <script>
-        const BOT_TOKEN = "8365221747:AAEskXtc6T-IhEik718wJJ9x-vz_TOh26tw";
-        let CHAT_ID = "6712996693";
-        let chart = null;
-        let isConnected = false;
+        let ip = '';
         
-        document.addEventListener('DOMContentLoaded', function() {
-            initApp();
-        });
-        
-        function initApp() {
-            // Получаем Chat ID из Telegram или localStorage
-            if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-                const tg = Telegram.WebApp;
-                tg.expand();
-                
-                if (tg.initDataUnsafe.user) {
-                    CHAT_ID = tg.initDataUnsafe.user.id.toString();
-                }
-                if (tg.initDataUnsafe.start_param) {
-                    CHAT_ID = tg.initDataUnsafe.start_param;
-                }
+        function connect() {
+            ip = document.getElementById('ip').value;
+            if (!ip) {
+                alert('Введите IP адрес!');
+                return;
             }
-            
-            // Пробуем получить из localStorage
-            const savedId = localStorage.getItem('ecogrow_chat_id');
-            if (savedId) CHAT_ID = savedId;
-            
-            localStorage.setItem('ecogrow_chat_id', CHAT_ID);
-            
-            initChart();
-            refreshData();
-            setInterval(refreshData, 30000);
+            if (!ip.startsWith('http://')) {
+                ip = 'http://' + ip;
+            }
+            updateStatus();
         }
         
-        function initChart() {
-            const ctx = document.getElementById('moist_chart').getContext('2d');
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Влажность %',
-                        data: [],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100 },
-                        x: { display: false }
-                    }
-                }
-            });
-        }
-        
-        async function sendCommand(cmd, value) {
-            showNotification('Отправка команды...');
+        function updateStatus() {
+            if (!ip) return;
             
-            try {
-                const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-                const text = `WEBAPP:${cmd}=${value}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: text,
-                        parse_mode: "HTML"
-                    })
+            fetch(ip + '/api/state')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('status').innerHTML = 
+                        `Влажность: ${data.moisture}%<br>` +
+                        `Насос: ${data.pump ? 'ВКЛ' : 'ВЫКЛ'}<br>` +
+                        `Свет: ${data.light ? 'ВКЛ' : 'ВЫКЛ'}`;
+                })
+                .catch(e => {
+                    document.getElementById('status').innerHTML = 'Ошибка: ' + e.message;
                 });
-                
-                const data = await response.json();
-                
-                if (data.ok) {
-                    showNotification('Команда отправлена');
-                    setTimeout(refreshData, 2000);
-                } else {
-                    showNotification('Ошибка отправки: ' + data.description, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка отправки команды:', error);
-                showNotification('Ошибка подключения', 'error');
-            }
         }
         
-        async function refreshData() {
-            try {
-                const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: "/data",
-                        parse_mode: "HTML"
-                    })
-                });
-                
-                const telegramData = await response.json();
-                
-                if (telegramData.ok) {
-                    const text = telegramData.result.text;
-                    
-                    if (text.startsWith("WEBAPP_DATA:")) {
-                        const jsonStr = text.substring(12);
-                        const data = JSON.parse(jsonStr);
-                        
-                        updateUI(data);
-                        isConnected = true;
-                        document.getElementById('connection_status').textContent = 'Подключено';
-                        document.getElementById('connection_status').className = 'status-badge status-on';
-                    } else {
-                        // Парсим текстовый ответ как запасной вариант
-                        parseTextResponse(text);
-                    }
-                } else {
-                    throw new Error(telegramData.description);
-                }
-            } catch (error) {
-                console.error('Ошибка получения данных:', error);
-                isConnected = false;
-                document.getElementById('connection_status').textContent = 'Ошибка подключения';
-                document.getElementById('connection_status').className = 'status-badge status-off';
-                
-                // Пробуем получить данные через локальный API
-                tryLocalApi();
+        function command(cmd) {
+            if (!ip) {
+                alert('Сначала подключитесь!');
+                return;
             }
+            
+            fetch(ip + '/api/command', {
+                method: 'POST',
+                body: cmd,
+                headers: {'Content-Type': 'text/plain'}
+            })
+            .then(() => {
+                setTimeout(updateStatus, 1000);
+            })
+            .catch(e => alert('Ошибка: ' + e.message));
         }
         
-        function tryLocalApi() {
-            // Пробуем подключиться локально как запасной вариант
-            const localIps = [
-                'ecogrow.local',
-                '192.168.1.100',
-                '192.168.1.101',
-                '192.168.0.100'
-            ];
-            
-            localIps.forEach(ip => {
-                fetch(`http://${ip}/api/data`)
-                    .then(response => {
-                        if (response.ok) return response.json();
-                        throw new Error();
-                    })
-                    .then(data => {
-                        updateUI(data);
-                        isConnected = true;
-                        document.getElementById('connection_status').textContent = 'Локальное подключение';
-                        document.getElementById('connection_status').className = 'status-badge status-on';
-                    })
-                    .catch(() => {});
-            });
-        }
-        
-        function parseTextResponse(text) {
-            // Парсим текстовый ответ от бота
-            const moistureMatch = text.match(/Влажность:\s*\*?(\d+)%/);
-            const pumpMatch = text.match(/Насос:\s*(✅ ВКЛ|❌ ВЫКЛ)/);
-            const lightMatch = text.match(/Свет:\s*(✅ ВКЛ|❌ ВЫКЛ)/);
-            const thresholdMatch = text.match(/Порог:\s*(\d+)%/);
-            
-            const data = {
-                moisture: moistureMatch ? parseInt(moistureMatch[1]) : 0,
-                pump: pumpMatch ? pumpMatch[1].includes('✅') : false,
-                light: lightMatch ? lightMatch[1].includes('✅') : false,
-                moisture_threshold: thresholdMatch ? parseInt(thresholdMatch[1]) : 50
-            };
-            
-            updateUI(data);
-        }
-        
-        function updateUI(data) {
-            console.log('Обновление интерфейса:', data);
-            
-            // Влажность
-            if (data.moisture !== undefined) {
-                document.getElementById('moist_status').textContent = data.moisture + '%';
-                document.getElementById('current_moist').textContent = data.moisture + '%';
-                
-                // Обновляем график
-                if (chart) {
-                    if (data.moisture_history && Array.isArray(data.moisture_history)) {
-                        chart.data.datasets[0].data = data.moisture_history;
-                        const labels = [];
-                        for (let i = 0; i < data.moisture_history.length; i++) labels.push('');
-                        chart.data.labels = labels;
-                        chart.update();
-                    } else {
-                        // Добавляем точку в график
-                        chart.data.datasets[0].data.push(data.moisture);
-                        if (chart.data.datasets[0].data.length > 20) {
-                            chart.data.datasets[0].data.shift();
-                        }
-                        chart.data.labels.push('');
-                        if (chart.data.labels.length > 20) {
-                            chart.data.labels.shift();
-                        }
-                        chart.update();
-                    }
-                }
-            }
-            
-            // Средняя влажность
-            if (data.avg_moisture !== undefined) {
-                document.getElementById('avg_moist').textContent = data.avg_moisture + '%';
-            }
-            
-            // Насос
-            if (data.pump !== undefined) {
-                document.getElementById('pump_status').textContent = data.pump ? 'ВКЛ' : 'ВЫКЛ';
-                document.getElementById('pump_status').className = 'status-badge ' + (data.pump ? 'status-on' : 'status-off');
-            }
-            
-            // Свет
-            if (data.light !== undefined) {
-                document.getElementById('light_status').textContent = data.light ? 'ВКЛ' : 'ВЫКЛ';
-                document.getElementById('light_status').className = 'status-badge ' + (data.light ? 'status-on' : 'status-off');
-            }
-            
-            // Порог влажности
-            if (data.moisture_threshold !== undefined) {
-                document.getElementById('moist_threshold').value = data.moisture_threshold;
-                document.getElementById('thresh_val').textContent = data.moisture_threshold + '%';
-            }
-            
-            // Время ручного насоса
-            if (data.manual_pump_time !== undefined) {
-                document.getElementById('manual_pump_time').value = data.manual_pump_time;
-            }
-            
-            // Расписание лампы
-            if (data.lamp_start) {
-                document.getElementById('lamp_start').value = data.lamp_start;
-            }
-            if (data.lamp_end) {
-                document.getElementById('lamp_end').value = data.lamp_end;
-            }
-            
-            // Задержка полива
-            if (data.watering_delay !== undefined) {
-                document.getElementById('watering_delay').value = data.watering_delay;
-            }
-            
-            // Уведомления
-            if (data.telegram_notifications !== undefined) {
-                document.getElementById('telegram_notifications').checked = data.telegram_notifications;
-            }
-        }
-        
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = 'notification show';
-            
-            if (type === 'error') {
-                notification.style.borderLeftColor = '#e74c3c';
-            } else if (type === 'success') {
-                notification.style.borderLeftColor = '#27ae60';
-            } else {
-                notification.style.borderLeftColor = '#3498db';
-            }
-            
-            setTimeout(() => {
-                notification.className = 'notification';
-            }, 3000);
-        }
-        
-        // Обработчики событий
-        document.getElementById('moist_threshold').addEventListener('input', function(e) {
-            document.getElementById('thresh_val').textContent = e.target.value + '%';
-        });
-        
-        document.getElementById('moist_threshold').addEventListener('change', function(e) {
-            sendCommand('threshold', e.target.value);
-        });
-        
-        // Загружаем данные при старте
-        window.onload = function() {
-            setTimeout(refreshData, 1000);
-        };
+        // Автообновление
+        setInterval(updateStatus, 3000);
     </script>
 </body>
 </html>
