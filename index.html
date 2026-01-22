@@ -9,11 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <style>
-        /* === ВЕСЬ ДИЗАЙН ИЗ ВАШЕГО ЛОКАЛЬНОГО САЙТА === */
         * {
             margin: 0;
             padding: 0;
@@ -39,7 +35,6 @@
             border-radius: 15px;
             margin-bottom: 25px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .header h1 {
@@ -47,10 +42,34 @@
             font-size: 2.5rem;
         }
         
+        .debug-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .debug-panel h2 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+        }
+        
+        .debug-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        
         .device-panel {
             background: white;
             border-radius: 15px;
-            padding: 30px;
+            padding: 25px;
             margin-bottom: 25px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
@@ -72,14 +91,8 @@
         }
         
         .device-card:hover {
-            transform: translateY(-5px);
             border-color: #27ae60;
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .device-card.selected {
-            border-color: #27ae60;
-            background: rgba(39, 174, 96, 0.05);
         }
         
         .device-header {
@@ -87,20 +100,18 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f1f2f6;
         }
         
         .device-name {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: #2c3e50;
         }
         
         .device-status {
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
         
@@ -154,10 +165,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
         }
         
         .btn-primary {
@@ -190,147 +197,19 @@
             box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
         }
         
-        .btn-secondary {
-            background: #f1f2f6;
-            color: #2c3e50;
-        }
-        
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .control-panel {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 25px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e1e8ed;
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f1f2f6;
-        }
-        
-        .card-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        
-        .chart-container {
-            height: 200px;
-            margin: 15px 0;
-            position: relative;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 15px 0;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #3498db;
-            margin-bottom: 3px;
-        }
-        
-        .stat-label {
-            font-size: 0.75rem;
-            color: #7f8c8d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .setting-item {
-            margin-bottom: 15px;
-        }
-        
-        .setting-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .slider-value {
-            min-width: 40px;
-            text-align: center;
-            font-weight: 600;
-            color: #3498db;
-        }
-        
-        input[type="range"] {
-            flex: 1;
-            height: 6px;
-            border-radius: 3px;
-            background: #e1e8ed;
-            outline: none;
-            -webkit-appearance: none;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #3498db;
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
         .notification {
             position: fixed;
             top: 20px;
             right: 20px;
             background: white;
             padding: 15px 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transform: translateX(120%);
             transition: transform 0.3s ease-out;
             z-index: 1000;
             border-left: 5px solid #27ae60;
-            max-width: 300px;
+            max-width: 400px;
             font-weight: 500;
         }
         
@@ -343,10 +222,6 @@
         }
         
         @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-            
             .devices-list {
                 grid-template-columns: 1fr;
             }
@@ -355,8 +230,8 @@
                 grid-template-columns: 1fr;
             }
             
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .device-info {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -366,136 +241,39 @@
         <!-- ШАПКА -->
         <div class="header">
             <h1>🌱 EcoGrow Remote Control</h1>
-            <p id="connectionStatus">🔌 Подключение к облаку...</p>
+            <p id="connectionStatus">🔌 Подключение к Firebase...</p>
+        </div>
+        
+        <!-- ПАНЕЛЬ ОТЛАДКИ -->
+        <div class="debug-panel" id="debugPanel" style="display: none;">
+            <h2>🐛 Панель отладки</h2>
+            <div class="debug-info" id="debugInfo">
+                Загрузка отладочной информации...
+            </div>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="checkFirebaseConnection()">
+                    🔄 Проверить подключение
+                </button>
+                <button class="btn btn-danger" onclick="hideDebug()">
+                    ❌ Скрыть отладку
+                </button>
+            </div>
         </div>
         
         <!-- ВЫБОР УСТРОЙСТВА -->
-        <div class="device-panel" id="deviceSelection">
-            <h2>📱 Выберите устройство</h2>
+        <div class="device-panel">
+            <h2>📱 Доступные устройства</h2>
             <p id="devicesCount">Поиск устройств...</p>
             <div id="devicesList" class="devices-list">
                 <!-- Устройства появятся здесь -->
             </div>
-        </div>
-        
-        <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
-        <div id="mainInterface" style="display: none;">
-            <!-- ГРАФИК ВЛАЖНОСТИ -->
-            <div class="control-panel">
-                <div class="card-header">
-                    <div class="card-title">📈 График влажности</div>
-                    <div id="moist_status" class="device-status status-online">--%</div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="moist_chart"></canvas>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div id="current_moist" class="stat-value">--%</div>
-                        <div class="stat-label">Текущая</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="avg_moist" class="stat-value">--%</div>
-                        <div class="stat-label">Средняя</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="min_moist" class="stat-value">--%</div>
-                        <div class="stat-label">Минимум</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="grid">
-                <!-- УПРАВЛЕНИЕ НАСОСОМ -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">💧 Управление насосом</div>
-                        <div id="pump_status" class="device-status status-offline">ВЫКЛ</div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label class="setting-label">Порог влажности: <span id="thresh_val" class="slider-value">50%</span></label>
-                        <div class="slider-container">
-                            <input id="moist_threshold" type="range" min="10" max="90" value="50">
-                        </div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label class="setting-label">Длительность полива (секунды)</label>
-                        <input id="watering_duration" type="number" min="1" max="300" value="10">
-                    </div>
-                    
-                    <div class="controls" style="margin-top: 20px;">
-                        <button class="btn btn-success" onclick="togglePump(true)">
-                            💧 Включить насос
-                        </button>
-                        <button class="btn btn-danger" onclick="togglePump(false)">
-                            ⛔ Выключить насос
-                        </button>
-                    </div>
-                    
-                    <div class="controls" style="margin-top: 10px;">
-                        <button class="btn btn-primary" onclick="manualWatering()">
-                            🚿 Полить сейчас
-                        </button>
-                        <button class="btn btn-secondary" onclick="setPumpAuto()">
-                            ⚙️ Авторежим
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- УПРАВЛЕНИЕ СВЕТОМ -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">💡 Фитолампа</div>
-                        <div id="light_status" class="device-status status-offline">ВЫКЛ</div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label class="setting-label">Время работы (часы)</label>
-                        <input id="light_duration" type="number" min="1" max="24" value="12">
-                    </div>
-                    
-                    <div class="controls" style="margin-top: 20px;">
-                        <button class="btn btn-success" onclick="toggleLight(true)">
-                            💡 Включить свет
-                        </button>
-                        <button class="btn btn-danger" onclick="toggleLight(false)">
-                            🌙 Выключить свет
-                        </button>
-                    </div>
-                    
-                    <div class="controls" style="margin-top: 10px;">
-                        <button class="btn btn-secondary" onclick="setLightAuto()">
-                            ⚙️ Авторежим
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- УСТАНОВКА ВРЕМЕНИ -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">⏰ Установка времени</div>
-                        <div id="time_status" class="device-status">--:--</div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label class="setting-label">Текущее время</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <input id="time_hours" type="number" min="0" max="23" value="12" placeholder="Часы">
-                            <input id="time_minutes" type="number" min="0" max="59" value="0" placeholder="Минуты">
-                        </div>
-                    </div>
-                    
-                    <div class="controls" style="margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="setCurrentTime()">
-                            🕐 Установить сейчас
-                        </button>
-                        <button class="btn btn-success" onclick="setCustomTime()">
-                            ⏰ Установить время
-                        </button>
-                    </div>
-                </div>
+            <div class="controls" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="showDebug()">
+                    🐛 Показать отладку
+                </button>
+                <button class="btn btn-success" onclick="forceRefresh()">
+                    🔄 Обновить устройства
+                </button>
             </div>
         </div>
         
@@ -505,9 +283,11 @@
 
     <script>
         // ============================================
-        // КОНФИГУРАЦИЯ FIREBASE (ВАШИ ДАННЫЕ)
+        // КОНФИГУРАЦИЯ FIREBASE (ОБНОВИТЕ ЭТИ ДАННЫЕ!)
         // ============================================
         const firebaseConfig = {
+            // ВСТАВЬТЕ СВОЙ КОНФИГ ОТСЮДА:
+            // Firebase Console → Project Settings → Ваше веб-приложение
             apiKey: "AIzaSyBJSFgQqIrsXj88Xq9h_vwzWjsbZq3z7r8",
             authDomain: "ecogrow-remote.firebaseapp.com",
             databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
@@ -523,36 +303,146 @@
         
         // Глобальные переменные
         let currentDeviceId = null;
-        let currentDeviceRef = null;
-        let moistureChart = null;
-        let moistureHistory = [];
+        let debugMode = false;
         
         // ============================================
         // ИНИЦИАЛИЗАЦИЯ
         // ============================================
         window.onload = function() {
-            initChart();
-            loadDevices();
+            console.log("Сайт загружен, инициализируем Firebase...");
             showNotification('🌐 Подключение к Firebase...');
+            
+            // Проверяем подключение к Firebase
+            checkFirebaseConnection();
+            
+            // Загружаем устройства
+            loadDevices();
         };
+        
+        // ============================================
+        // ОТЛАДОЧНЫЕ ФУНКЦИИ
+        // ============================================
+        
+        function showDebug() {
+            debugMode = true;
+            document.getElementById('debugPanel').style.display = 'block';
+            updateDebugInfo();
+        }
+        
+        function hideDebug() {
+            debugMode = false;
+            document.getElementById('debugPanel').style.display = 'none';
+        }
+        
+        function updateDebugInfo() {
+            if (!debugMode) return;
+            
+            const debugInfo = document.getElementById('debugInfo');
+            let info = `=== ИНФОРМАЦИЯ ОТЛАДКИ ===\n\n`;
+            
+            info += `Firebase config loaded: ${firebaseConfig ? '✅' : '❌'}\n`;
+            info += `Database URL: ${firebaseConfig.databaseURL}\n`;
+            info += `Current time: ${new Date().toLocaleTimeString()}\n`;
+            info += `Current device: ${currentDeviceId || 'нет'}\n`;
+            
+            // Проверяем доступность Firebase
+            database.ref('.info/connected').once('value')
+                .then(snapshot => {
+                    const connected = snapshot.val();
+                    info += `Firebase connected: ${connected ? '✅' : '❌'}\n`;
+                    
+                    // Проверяем наличие данных
+                    return database.ref('devices').once('value');
+                })
+                .then(snapshot => {
+                    const devices = snapshot.val();
+                    info += `Devices in database: ${devices ? Object.keys(devices).length : 0}\n`;
+                    
+                    if (devices) {
+                        info += `\n=== СПИСОК УСТРОЙСТВ ===\n`;
+                        for (const deviceId in devices) {
+                            const device = devices[deviceId];
+                            const isOnline = isDeviceOnline(device);
+                            info += `\n${deviceId}:\n`;
+                            info += `  Name: ${device.name || 'нет'}\n`;
+                            info += `  IP: ${device.ip || 'нет'}\n`;
+                            info += `  Status: ${device.status || 'unknown'}\n`;
+                            info += `  Online: ${isOnline ? '✅' : '❌'}\n`;
+                            info += `  Last seen: ${device.lastSeen ? new Date(device.lastSeen * 1000).toLocaleTimeString() : 'never'}\n`;
+                            
+                            if (device.data) {
+                                info += `  Data:\n`;
+                                info += `    Moisture: ${device.data.moisture || '--'}%\n`;
+                                info += `    Pump: ${device.data.pump ? 'ON' : 'OFF'}\n`;
+                                info += `    Light: ${device.data.light ? 'ON' : 'OFF'}\n`;
+                                info += `    Timestamp: ${device.data.timestamp ? new Date(device.data.timestamp * 1000).toLocaleTimeString() : 'never'}\n`;
+                            }
+                        }
+                    }
+                    
+                    debugInfo.textContent = info;
+                })
+                .catch(error => {
+                    info += `\n=== ОШИБКА ===\n${error.message}\n`;
+                    debugInfo.textContent = info;
+                });
+        }
+        
+        function checkFirebaseConnection() {
+            console.log("Проверка подключения к Firebase...");
+            showNotification('🔍 Проверка подключения к Firebase...');
+            
+            database.ref('.info/connected').once('value')
+                .then(snapshot => {
+                    const connected = snapshot.val();
+                    if (connected) {
+                        console.log("✅ Firebase подключен!");
+                        document.getElementById('connectionStatus').innerHTML = '✅ Подключено к Firebase';
+                        showNotification('✅ Подключено к Firebase');
+                    } else {
+                        console.log("❌ Firebase не подключен");
+                        document.getElementById('connectionStatus').innerHTML = '❌ Нет подключения к Firebase';
+                        showNotification('❌ Нет подключения к Firebase', true);
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка подключения к Firebase:", error);
+                    document.getElementById('connectionStatus').innerHTML = '❌ Ошибка подключения к Firebase';
+                    showNotification(`❌ Ошибка: ${error.message}`, true);
+                });
+        }
         
         // ============================================
         // УПРАВЛЕНИЕ УСТРОЙСТВАМИ
         // ============================================
         
         function loadDevices() {
+            console.log("Загрузка устройств из Firebase...");
+            
             const devicesRef = database.ref('devices');
             
             devicesRef.on('value', (snapshot) => {
                 const devices = snapshot.val();
                 const devicesList = document.getElementById('devicesList');
                 const devicesCount = document.getElementById('devicesCount');
-                const connectionStatus = document.getElementById('connectionStatus');
                 
-                if (!devices) {
-                    devicesList.innerHTML = '<div style="text-align: center; padding: 30px; color: #7f8c8d;">Устройств не найдено</div>';
+                console.log("Получены данные из Firebase:", devices);
+                
+                if (!devices || Object.keys(devices).length === 0) {
+                    devicesList.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #7f8c8d;">
+                            <h3>📭 Устройств не найдено</h3>
+                            <p style="margin-top: 10px;">Возможные причины:</p>
+                            <ul style="text-align: left; display: inline-block; margin-top: 10px;">
+                                <li>ESP8266 не подключен к интернету</li>
+                                <li>ESP8266 не отправляет данные в Firebase</li>
+                                <li>Проблемы с правилами доступа Firebase</li>
+                                <li>Неправильная конфигурация Firebase</li>
+                            </ul>
+                            <p style="margin-top: 20px;">Проверьте панель отладки для подробной информации</p>
+                        </div>
+                    `;
                     devicesCount.textContent = 'Устройств: 0';
-                    connectionStatus.innerHTML = '🔴 Нет подключенных устройств';
                     return;
                 }
                 
@@ -567,7 +457,8 @@
                     const isSelected = deviceId === currentDeviceId;
                     
                     html += `
-                        <div class="device-card ${isSelected ? 'selected' : ''}" onclick="selectDevice('${deviceId}')">
+                        <div class="device-card" onclick="selectDevice('${deviceId}')" 
+                             style="${isSelected ? 'border-color: #27ae60; background: rgba(39, 174, 96, 0.05);' : ''}">
                             <div class="device-header">
                                 <div class="device-name">${device.name || 'Устройство ' + deviceId}</div>
                                 <div class="device-status ${isOnline ? 'status-online' : 'status-offline'}">
@@ -594,24 +485,29 @@
                                     <div class="info-value" style="font-size: 0.9rem;">${device.ip || '--'}</div>
                                 </div>
                             </div>
+                            ${isOnline ? `
+                                <div class="controls" style="margin-top: 15px;">
+                                    <button class="btn btn-success" onclick="event.stopPropagation(); sendCommand('${deviceId}', 'pump', 1)">
+                                        💧 Включить насос
+                                    </button>
+                                    <button class="btn btn-danger" onclick="event.stopPropagation(); sendCommand('${deviceId}', 'pump', 0)">
+                                        ⛔ Выключить
+                                    </button>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 }
                 
                 devicesList.innerHTML = html;
                 devicesCount.textContent = `Устройств: ${Object.keys(devices).length} (${onlineCount} онлайн)`;
-                connectionStatus.innerHTML = onlineCount > 0 ? 
-                    '✅ Подключено к облаку' : '⚠️ Нет онлайн-устройств';
                 
-                // Автовыбор первого онлайн устройства
-                if (!currentDeviceId && onlineCount > 0) {
-                    for (const deviceId in devices) {
-                        if (isDeviceOnline(devices[deviceId])) {
-                            selectDevice(deviceId);
-                            break;
-                        }
-                    }
-                }
+                // Обновляем отладочную информацию
+                if (debugMode) updateDebugInfo();
+            }, (error) => {
+                console.error("Ошибка при загрузке устройств:", error);
+                devicesCount.textContent = '❌ Ошибка загрузки устройств';
+                showNotification(`❌ Ошибка: ${error.message}`, true);
             });
         }
         
@@ -623,198 +519,39 @@
         }
         
         function selectDevice(deviceId) {
-            if (currentDeviceRef) {
-                currentDeviceRef.off(); // Отключаем старые слушатели
-            }
-            
             currentDeviceId = deviceId;
-            currentDeviceRef = database.ref('devices/' + deviceId);
-            
-            // Обновляем список устройств
-            loadDevices();
-            
-            // Показываем основной интерфейс
-            document.getElementById('mainInterface').style.display = 'block';
-            document.getElementById('deviceSelection').style.display = 'none';
-            
-            // Слушаем данные устройства
-            currentDeviceRef.on('value', (snapshot) => {
-                const device = snapshot.val();
-                if (!device) return;
-                
-                updateInterface(device);
-                updateChartData(device);
-            });
-            
             showNotification(`✅ Выбрано устройство: ${deviceId}`);
+            
+            // Показываем страницу управления
+            window.location.href = `control.html?device=${deviceId}`;
         }
         
-        // ============================================
-        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
-        // ============================================
-        
-        function updateInterface(device) {
-            const moisture = device.data?.moisture || 0;
-            const pumpState = device.data?.pump || false;
-            const lightState = device.data?.light || false;
-            
-            // Влажность
-            document.getElementById('moist_status').textContent = moisture + '%';
-            document.getElementById('current_moist').textContent = moisture + '%';
-            
-            // Насос
-            document.getElementById('pump_status').textContent = pumpState ? 'ВКЛ' : 'ВЫКЛ';
-            document.getElementById('pump_status').className = 'device-status ' + (pumpState ? 'status-online' : 'status-offline');
-            
-            // Свет
-            document.getElementById('light_status').textContent = lightState ? 'ВКЛ' : 'ВЫКЛ';
-            document.getElementById('light_status').className = 'device-status ' + (lightState ? 'status-online' : 'status-offline');
-            
-            // Время
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
-                           now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('time_status').textContent = timeStr;
-            
-            // Настройки
-            if (device.settings) {
-                document.getElementById('moist_threshold').value = device.settings.moistureThreshold || 50;
-                document.getElementById('thresh_val').textContent = (device.settings.moistureThreshold || 50) + '%';
-                document.getElementById('watering_duration').value = device.settings.pumpDuration || 10;
-            }
-            
-            // Статистика
-            updateStats();
+        function forceRefresh() {
+            console.log("Принудительное обновление устройств...");
+            loadDevices();
+            showNotification('🔄 Устройства обновлены');
         }
         
-        function updateStats() {
-            if (moistureHistory.length > 0) {
-                const sum = moistureHistory.reduce((a, b) => a + b, 0);
-                const avg = Math.round(sum / moistureHistory.length);
-                const min = Math.min(...moistureHistory);
-                
-                document.getElementById('avg_moist').textContent = avg + '%';
-                document.getElementById('min_moist').textContent = min + '%';
-            }
-        }
-        
-        function updateChartData(device) {
-            const moisture = device.data?.moisture;
-            if (moisture === undefined) return;
-            
-            moistureHistory.push(moisture);
-            if (moistureHistory.length > 50) {
-                moistureHistory.shift();
-            }
-            
-            if (moistureChart) {
-                moistureChart.data.datasets[0].data = moistureHistory;
-                moistureChart.update('none');
-            }
-        }
-        
-        // ============================================
-        // УПРАВЛЕНИЕ УСТРОЙСТВОМ
-        // ============================================
-        
-        function sendCommand(command, value) {
-            if (!currentDeviceId) {
+        function sendCommand(deviceId, command, value) {
+            if (!deviceId) {
                 showNotification('❌ Сначала выберите устройство', true);
                 return;
             }
             
-            database.ref('devices/' + currentDeviceId + '/commands/latest').set({
+            console.log(`Отправка команды: ${command}=${value} на устройство ${deviceId}`);
+            
+            database.ref('devices/' + deviceId + '/commands/latest').set({
                 command: command,
                 value: value,
                 timestamp: Date.now(),
                 source: 'web'
-            });
-        }
-        
-        function togglePump(state) {
-            sendCommand('pump', state ? 1 : 0);
-            showNotification(state ? '💧 Насос включен' : '⛔ Насос выключен');
-        }
-        
-        function toggleLight(state) {
-            sendCommand('light', state ? 1 : 0);
-            showNotification(state ? '💡 Свет включен' : '🌙 Свет выключен');
-        }
-        
-        function manualWatering() {
-            sendCommand('pump', 1);
-            showNotification('💧 Запущен ручной полив');
-            
-            // Автовыключение через указанное время
-            const duration = parseInt(document.getElementById('watering_duration').value) * 1000;
-            setTimeout(() => {
-                sendCommand('pump', 0);
-                showNotification('✅ Ручной полив завершен');
-            }, duration);
-        }
-        
-        function setPumpAuto() {
-            sendCommand('pumpAuto', 1);
-            showNotification('🔄 Насос: авторежим');
-        }
-        
-        function setLightAuto() {
-            sendCommand('lightAuto', 1);
-            showNotification('🔄 Свет: авторежим');
-        }
-        
-        function setCurrentTime() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            
-            sendCommand('setTime', { hour: hours, minute: minutes });
-            showNotification(`🕐 Установлено время: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
-        }
-        
-        function setCustomTime() {
-            const hours = parseInt(document.getElementById('time_hours').value);
-            const minutes = parseInt(document.getElementById('time_minutes').value);
-            
-            if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-                showNotification('❌ Некорректное время', true);
-                return;
-            }
-            
-            sendCommand('setTime', { hour: hours, minute: minutes });
-            showNotification(`🕐 Установлено время: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
-        }
-        
-        // ============================================
-        // ГРАФИКИ
-        // ============================================
-        
-        function initChart() {
-            const ctx = document.getElementById('moist_chart').getContext('2d');
-            moistureChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Влажность %',
-                        data: [],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,0.05)' } },
-                        x: { display: false }
-                    }
-                }
+            })
+            .then(() => {
+                showNotification(`✅ Команда отправлена: ${command}=${value}`);
+            })
+            .catch(error => {
+                console.error("Ошибка отправки команды:", error);
+                showNotification(`❌ Ошибка: ${error.message}`, true);
             });
         }
         
@@ -832,22 +569,10 @@
             }, 3000);
         }
         
-        // Автообновление каждые 5 секунд
+        // Автообновление каждые 10 секунд
         setInterval(() => {
-            if (currentDeviceId) {
-                database.ref('devices/' + currentDeviceId + '/data/timestamp').once('value').then(snapshot => {
-                    const timestamp = snapshot.val();
-                    if (timestamp) {
-                        const now = Math.floor(Date.now() / 1000);
-                        const isOnline = (now - timestamp) < 120;
-                        
-                        if (!isOnline) {
-                            showNotification('⚠️ Устройство не в сети', true);
-                        }
-                    }
-                });
-            }
-        }, 5000);
+            if (debugMode) updateDebugInfo();
+        }, 10000);
     </script>
 </body>
 </html>
