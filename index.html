@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌱 EcoGrow Control</title>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <!-- Firebase SDK (COMPAT версия) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
     <style>
         * {
@@ -283,11 +283,9 @@
 
     <script>
         // ============================================
-        // КОНФИГУРАЦИЯ FIREBASE (ОБНОВИТЕ ЭТИ ДАННЫЕ!)
+        // КОНФИГУРАЦИЯ FIREBASE
         // ============================================
         const firebaseConfig = {
-            // ВСТАВЬТЕ СВОЙ КОНФИГ ОТСЮДА:
-            // Firebase Console → Project Settings → Ваше веб-приложение
             apiKey: "AIzaSyBJSFgQqIrsXj88Xq9h_vwzWjsbZq3z7r8",
             authDomain: "ecogrow-remote.firebaseapp.com",
             databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
@@ -297,28 +295,41 @@
             appId: "1:123456789012:web:abcdef1234567890abcdef"
         };
 
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        
         // Глобальные переменные
+        let database = null;
         let currentDeviceId = null;
         let debugMode = false;
-        
+
         // ============================================
         // ИНИЦИАЛИЗАЦИЯ
         // ============================================
-        window.onload = function() {
+        document.addEventListener('DOMContentLoaded', function() {
             console.log("Сайт загружен, инициализируем Firebase...");
             showNotification('🌐 Подключение к Firebase...');
             
-            // Проверяем подключение к Firebase
-            checkFirebaseConnection();
-            
-            // Загружаем устройства
-            loadDevices();
-        };
-        
+            try {
+                // Инициализация Firebase
+                const app = firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                console.log("✅ Firebase инициализирован");
+                
+                // Проверяем подключение к Firebase
+                checkFirebaseConnection();
+                
+                // Загружаем устройства
+                loadDevices();
+                
+                // Автообновление каждые 10 секунд
+                setInterval(() => {
+                    if (debugMode) updateDebugInfo();
+                }, 10000);
+                
+            } catch (error) {
+                console.error("❌ Ошибка инициализации Firebase:", error);
+                showNotification(`❌ Ошибка Firebase: ${error.message}`, true);
+            }
+        });
+
         // ============================================
         // ОТЛАДОЧНЫЕ ФУНКЦИИ
         // ============================================
@@ -336,6 +347,7 @@
         
         function updateDebugInfo() {
             if (!debugMode) return;
+            if (!database) return;
             
             const debugInfo = document.getElementById('debugInfo');
             let info = `=== ИНФОРМАЦИЯ ОТЛАДКИ ===\n\n`;
@@ -344,6 +356,7 @@
             info += `Database URL: ${firebaseConfig.databaseURL}\n`;
             info += `Current time: ${new Date().toLocaleTimeString()}\n`;
             info += `Current device: ${currentDeviceId || 'нет'}\n`;
+            info += `Debug mode: ${debugMode ? '✅ ВКЛ' : '❌ ВЫКЛ'}\n`;
             
             // Проверяем доступность Firebase
             database.ref('.info/connected').once('value')
@@ -389,6 +402,11 @@
         }
         
         function checkFirebaseConnection() {
+            if (!database) {
+                showNotification('❌ Firebase не инициализирован', true);
+                return;
+            }
+            
             console.log("Проверка подключения к Firebase...");
             showNotification('🔍 Проверка подключения к Firebase...');
             
@@ -417,6 +435,12 @@
         // ============================================
         
         function loadDevices() {
+            if (!database) {
+                console.error("❌ База данных не инициализирована");
+                showNotification('❌ Firebase не подключен', true);
+                return;
+            }
+            
             console.log("Загрузка устройств из Firebase...");
             
             const devicesRef = database.ref('devices');
@@ -533,6 +557,11 @@
         }
         
         function sendCommand(deviceId, command, value) {
+            if (!database) {
+                showNotification('❌ Firebase не инициализирован', true);
+                return;
+            }
+            
             if (!deviceId) {
                 showNotification('❌ Сначала выберите устройство', true);
                 return;
@@ -568,11 +597,6 @@
                 notification.classList.remove('show');
             }, 3000);
         }
-        
-        // Автообновление каждые 10 секунд
-        setInterval(() => {
-            if (debugMode) updateDebugInfo();
-        }, 10000);
     </script>
 </body>
 </html>
