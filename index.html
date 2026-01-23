@@ -2,54 +2,48 @@
 <html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🌱 EcoGrow Liquid Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 EcoGrow Control Panel</title>
     
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-gradient"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ===== LIQUID GLASS VARIABLES ===== */
+        /* ===== VARIABLES ===== */
         :root {
-            --primary-gradient: linear-gradient(135deg, #00d4ff 0%, #0088ff 50%, #0066cc 100%);
-            --secondary-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-            --success-gradient: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
-            --warning-gradient: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
-            --danger-gradient: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
+            --primary-color: #27ae60;
+            --primary-dark: #229954;
+            --secondary-color: #3498db;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
             
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            --text-primary: rgba(255, 255, 255, 0.95);
-            --text-secondary: rgba(255, 255, 255, 0.7);
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
             
-            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            --blur-amount: blur(20px);
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
         [data-theme="light"] {
-            --glass-bg: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.3);
-            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
-            --text-primary: rgba(0, 0, 0, 0.9);
-            --text-secondary: rgba(0, 0, 0, 0.7);
-            --bg-primary: #f1f5f9;
-            --bg-secondary: #e2e8f0;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
         }
         
         /* ===== BASE STYLES ===== */
@@ -57,7 +51,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -65,156 +58,56 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
-            overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 50% 50%, rgba(0, 102, 204, 0.05) 0%, transparent 50%);
-        }
-        
-        .liquid-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: linear-gradient(45deg, 
-                rgba(0, 212, 255, 0.05) 0%, 
-                rgba(0, 102, 204, 0.05) 25%, 
-                rgba(255, 107, 107, 0.05) 50%, 
-                rgba(255, 107, 107, 0.05) 75%, 
-                rgba(0, 212, 255, 0.05) 100%);
-            background-size: 400% 400%;
-            animation: liquidFlow 20s ease infinite;
-        }
-        
-        @keyframes liquidFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            transition: background-color 0.3s;
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
         
-        /* ===== LIQUID GLASS COMPONENTS ===== */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: var(--blur-amount);
-            -webkit-backdrop-filter: var(--blur-amount);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: var(--glass-shadow);
-            transition: var(--transition-smooth);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        }
-        
-        .glass-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-        }
-        
-        .gradient-text {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .glass-btn {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 12px 24px;
-            color: var(--text-primary);
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-        
-        .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-        
-        .glass-btn-primary {
-            background: var(--primary-gradient);
-            border: none;
-            color: white;
-        }
-        
-        .glass-btn-success {
-            background: var(--success-gradient);
-            border: none;
-            color: white;
-        }
-        
-        .glass-btn-danger {
-            background: var(--danger-gradient);
-            border: none;
-            color: white;
-        }
-        
-        .glass-btn-warning {
-            background: var(--warning-gradient);
-            border: none;
-            color: white;
-        }
-        
         /* ===== HEADER ===== */
-        .main-header {
+        .header {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
-        .logo {
+        .header-left {
             display: flex;
             align-items: center;
             gap: 15px;
         }
         
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
         .logo-icon {
-            width: 50px;
-            height: 50px;
-            background: var(--primary-gradient);
-            border-radius: 16px;
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
             color: white;
-            box-shadow: 0 8px 20px rgba(0, 136, 255, 0.3);
+            font-size: 20px;
         }
         
         .logo-text h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 5px;
+            font-size: 24px;
+            font-weight: 600;
         }
         
         .logo-text p {
@@ -222,348 +115,394 @@
             font-size: 14px;
         }
         
-        .header-controls {
+        .header-right {
             display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: var(--secondary-gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        /* ===== NOTIFICATIONS PANEL ===== */
-        .notifications-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
             gap: 10px;
-            max-width: 400px;
-        }
-        
-        .notification {
-            background: var(--glass-bg);
-            backdrop-filter: var(--blur-amount);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 16px;
-            display: flex;
             align-items: center;
-            gap: 12px;
-            transform: translateX(400px);
-            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: var(--glass-shadow);
         }
         
-        .notification.show {
-            transform: translateX(0);
-        }
-        
-        .notification-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            font-size: 18px;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
             color: white;
         }
         
-        .notification-success .notification-icon {
-            background: var(--success-gradient);
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
         }
         
-        .notification-error .notification-icon {
-            background: var(--danger-gradient);
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
         
-        .notification-warning .notification-icon {
-            background: var(--warning-gradient);
+        .btn-secondary:hover {
+            background: var(--border-color);
         }
         
-        .notification-info .notification-icon {
-            background: var(--primary-gradient);
+        .btn-success {
+            background: var(--primary-color);
+            color: white;
         }
         
-        /* ===== DASHBOARD GRID ===== */
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        /* ===== MAIN GRID ===== */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
         }
         
         .grid-full {
             grid-column: 1 / -1;
         }
         
-        /* ===== STATUS CARD ===== */
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .card-icon {
+            color: var(--primary-color);
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background: rgba(39, 174, 96, 0.2);
+            color: var(--primary-color);
+        }
+        
+        .badge-danger {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .badge-warning {
+            background: rgba(243, 156, 18, 0.2);
+            color: var(--warning-color);
+        }
+        
+        /* ===== STATUS PANEL ===== */
         .status-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-top: 20px;
+            gap: 15px;
+            margin-top: 15px;
         }
         
         .status-item {
             text-align: center;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            transition: var(--transition-smooth);
-        }
-        
-        .status-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: scale(1.02);
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
         
         .status-value {
-            font-size: 36px;
+            font-size: 28px;
             font-weight: 700;
-            margin: 10px 0;
-            font-family: 'JetBrains Mono', monospace;
+            margin: 5px 0;
+            font-family: 'Inter', monospace;
         }
         
         .status-label {
             color: var(--text-secondary);
             font-size: 14px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
         
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 10px;
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
         }
         
-        .status-online {
-            background: rgba(0, 180, 155, 0.2);
-            color: #00d4ff;
+        .status-on {
+            background: var(--primary-color);
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
         }
         
-        .status-offline {
-            background: rgba(255, 65, 108, 0.2);
-            color: #ff416c;
+        .status-off {
+            background: var(--danger-color);
         }
         
-        /* ===== CONTROL PANEL ===== */
-        .control-panel {
+        /* ===== CONTROLS ===== */
+        .controls-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 15px;
         }
         
-        .control-item {
+        .control-group {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-        }
-        
-        .control-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            background: var(--primary-gradient);
-        }
-        
-        .control-status {
-            display: flex;
-            align-items: center;
             gap: 10px;
         }
         
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #ff6b6b;
-        }
-        
-        .status-dot.active {
-            background: #00d4ff;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-        }
-        
-        /* ===== CHART STYLES ===== */
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-top: 20px;
-        }
-        
-        /* ===== SETTINGS PANEL ===== */
+        /* ===== SETTINGS ===== */
         .settings-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            gap: 15px;
+            margin-top: 15px;
         }
         
         .setting-item {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
         }
         
         .setting-label {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             color: var(--text-secondary);
             font-size: 14px;
         }
         
-        .glass-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 14px 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            backdrop-filter: blur(10px);
-            transition: var(--transition-smooth);
+        .setting-value {
+            color: var(--primary-color);
+            font-weight: 600;
         }
         
-        .glass-input:focus {
-            outline: none;
-            border-color: rgba(0, 212, 255, 0.5);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
         }
         
-        .glass-slider {
-            -webkit-appearance: none;
+        input[type="range"] {
             width: 100%;
-            height: 8px;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
             outline: none;
         }
         
-        .glass-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        input[type="number"],
+        input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
         }
         
-        /* ===== TOGGLE SWITCH ===== */
-        .glass-switch {
+        select {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        /* ===== SWITCH ===== */
+        .switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 30px;
+            width: 50px;
+            height: 24px;
         }
         
-        .glass-switch input {
+        .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
         
-        .switch-slider {
+        .slider {
             position: absolute;
             cursor: pointer;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.1);
+            background-color: var(--border-color);
+            transition: .4s;
             border-radius: 34px;
-            transition: var(--transition-smooth);
         }
         
-        .switch-slider:before {
+        .slider:before {
             position: absolute;
             content: "";
-            height: 22px;
-            width: 22px;
+            height: 16px;
+            width: 16px;
             left: 4px;
             bottom: 4px;
-            background: white;
+            background-color: white;
+            transition: .4s;
             border-radius: 50%;
-            transition: var(--transition-smooth);
         }
         
-        input:checked + .switch-slider {
-            background: var(--primary-gradient);
+        input:checked + .slider {
+            background-color: var(--primary-color);
         }
         
-        input:checked + .switch-slider:before {
-            transform: translateX(30px);
+        input:checked + .slider:before {
+            transform: translateX(26px);
         }
         
-        /* ===== STATISTICS ===== */
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+        /* ===== NOTIFICATIONS ===== */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(120%);
+            transition: transform 0.3s;
+            z-index: 1000;
+            max-width: 350px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
-        .stat-card {
-            text-align: center;
-            padding: 24px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            transition: var(--transition-smooth);
+        .notification.show {
+            transform: translateX(0);
         }
         
-        .stat-card:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-5px);
+        .notification-error {
+            border-left-color: var(--danger-color);
         }
         
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 10px 0;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .notification-success {
+            border-left-color: var(--primary-color);
         }
         
-        /* ===== FOOTER ===== */
-        .main-footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
+        /* ===== LOADING ===== */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
             color: var(--text-secondary);
-            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         /* ===== RESPONSIVE ===== */
@@ -572,375 +511,607 @@
                 grid-template-columns: 1fr;
             }
             
-            .control-panel {
-                grid-template-columns: 1fr;
-            }
-            
             .status-grid {
                 grid-template-columns: 1fr;
             }
             
-            .main-header {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
                 flex-direction: column;
-                gap: 20px;
+                text-align: center;
+            }
+            
+            .header-right {
+                width: 100%;
+                justify-content: center;
             }
         }
         
-        /* ===== ANIMATIONS ===== */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        /* ===== UTILITY ===== */
+        .mt-20 { margin-top: 20px; }
+        .mb-10 { margin-bottom: 10px; }
+        .text-center { text-align: center; }
+        .hidden { display: none; }
+        
+        /* ===== DEVELOPER INFO ===== */
+        .developer-info {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid var(--secondary-color);
         }
         
-        .pulse {
-            animation: pulse 2s infinite;
+        .developer-info h3 {
+            margin-bottom: 10px;
+            color: var(--secondary-color);
         }
         
-        /* ===== SCROLLBAR ===== */
-        ::-webkit-scrollbar {
-            width: 10px;
+        .contact-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
         }
         
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+        .contact-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
         }
         
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-gradient);
-            border-radius: 10px;
+        .contact-link:hover {
+            color: var(--primary-color);
         }
     </style>
 </head>
 <body>
-    <div class="liquid-bg"></div>
-    
-    <div class="notifications-panel" id="notificationsPanel"></div>
-    
     <div class="container">
         <!-- HEADER -->
-        <header class="main-header">
-            <div class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-seedling"></i>
-                </div>
-                <div class="logo-text">
-                    <h1 class="gradient-text">EcoGrow</h1>
-                    <p>Intelligent Plant Care System</p>
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>EcoGrow Control Panel</h1>
+                        <p>Управление системой автоматического полива</p>
+                    </div>
                 </div>
             </div>
             
-            <div class="header-controls">
-                <button class="glass-btn" onclick="toggleTheme()">
-                    <i class="fas fa-moon"></i> Theme
+            <div class="header-right">
+                <button class="btn btn-secondary" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i> Тема
                 </button>
-                <button class="glass-btn" onclick="openSettings()">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <button class="glass-btn" onclick="openDevices()">
-                    <i class="fas fa-satellite-dish"></i>
-                </button>
-                <div class="user-avatar" onclick="openProfile()">
-                    <i class="fas fa-user"></i>
-                </div>
-            </div>
-        </header>
-        
-        <!-- DASHBOARD -->
-        <div id="dashboardContent">
-            <div class="dashboard-grid">
-                <!-- STATUS CARD -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-heartbeat"></i> System Status</h2>
-                        <div class="status-badge status-online">
-                            <i class="fas fa-circle"></i> ONLINE
-                        </div>
-                    </div>
-                    
-                    <div class="status-grid">
-                        <div class="status-item">
-                            <div class="status-label">Soil Moisture</div>
-                            <div class="status-value" id="moistureValue">--%</div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="moistureBar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="status-item">
-                            <div class="status-label">Temperature</div>
-                            <div class="status-value" id="temperatureValue">--°C</div>
-                            <div class="status-label" id="tempStatus">--</div>
-                        </div>
-                        
-                        <div class="status-item">
-                            <div class="status-label">Pump Status</div>
-                            <div class="status-value" id="pumpStatus">OFF</div>
-                            <div class="status-dot" id="pumpDot"></div>
-                        </div>
-                        
-                        <div class="status-item">
-                            <div class="status-label">Light Status</div>
-                            <div class="status-value" id="lightStatus">OFF</div>
-                            <div class="status-dot" id="lightDot"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="connection-info">
-                        <div class="info-row">
-                            <span>Last Update:</span>
-                            <span id="lastUpdate">--:--:--</span>
-                        </div>
-                        <div class="info-row">
-                            <span>Uptime:</span>
-                            <span id="uptimeValue">0d 0h 0m</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- CONTROL CARD -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-gamepad"></i> Quick Control</h2>
-                    </div>
-                    
-                    <div class="control-panel">
-                        <div class="control-item">
-                            <div class="control-icon" style="background: var(--primary-gradient);">
-                                <i class="fas fa-tint"></i>
-                            </div>
-                            <h3>Water Pump</h3>
-                            <div class="control-status">
-                                <div class="status-dot" id="pumpControlDot"></div>
-                                <span id="pumpControlText">Auto Mode</span>
-                            </div>
-                            <div class="btn-group">
-                                <button class="glass-btn glass-btn-success" onclick="controlPump('ON')">
-                                    <i class="fas fa-play"></i> ON
-                                </button>
-                                <button class="glass-btn glass-btn-danger" onclick="controlPump('OFF')">
-                                    <i class="fas fa-stop"></i> OFF
-                                </button>
-                            </div>
-                            <button class="glass-btn" onclick="controlPump('AUTO')">
-                                <i class="fas fa-robot"></i> AUTO
-                            </button>
-                        </div>
-                        
-                        <div class="control-item">
-                            <div class="control-icon" style="background: var(--warning-gradient);">
-                                <i class="fas fa-lightbulb"></i>
-                            </div>
-                            <h3>Grow Light</h3>
-                            <div class="control-status">
-                                <div class="status-dot" id="lightControlDot"></div>
-                                <span id="lightControlText">Auto Mode</span>
-                            </div>
-                            <div class="btn-group">
-                                <button class="glass-btn glass-btn-success" onclick="controlLight('ON')">
-                                    <i class="fas fa-sun"></i> ON
-                                </button>
-                                <button class="glass-btn glass-btn-danger" onclick="controlLight('OFF')">
-                                    <i class="fas fa-moon"></i> OFF
-                                </button>
-                            </div>
-                            <button class="glass-btn" onclick="controlLight('AUTO')">
-                                <i class="fas fa-robot"></i> AUTO
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="quick-actions">
-                        <button class="glass-btn glass-btn-warning" onclick="manualWatering()">
-                            <i class="fas fa-hand-point-up"></i> Quick Watering
-                        </button>
-                        <button class="glass-btn" onclick="refreshData()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- CHART CARD -->
-                <div class="glass-card grid-full">
-                    <div class="card-header">
-                        <h2><i class="fas fa-chart-line"></i> Moisture Analytics</h2>
-                        <div class="time-selector">
-                            <select id="chartRange" onchange="updateChartRange()">
-                                <option value="1h">1 Hour</option>
-                                <option value="6h">6 Hours</option>
-                                <option value="24h" selected>24 Hours</option>
-                                <option value="7d">7 Days</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <canvas id="moistureChart"></canvas>
-                    </div>
-                    
-                    <div class="chart-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Current:</span>
-                            <span class="stat-value" id="currentMoisture">--%</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Average:</span>
-                            <span class="stat-value" id="avgMoisture">--%</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Min:</span>
-                            <span class="stat-value" id="minMoisture">--%</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Max:</span>
-                            <span class="stat-value" id="maxMoisture">--%</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- SETTINGS CARD -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-sliders-h"></i> Quick Settings</h2>
-                    </div>
-                    
-                    <div class="settings-grid">
-                        <div class="setting-item">
-                            <label class="setting-label">
-                                <span>Moisture Threshold</span>
-                                <span id="thresholdValueDisplay">50%</span>
-                            </label>
-                            <input type="range" class="glass-slider" id="thresholdSlider" 
-                                   min="10" max="90" value="50" oninput="updateThresholdDisplay()">
-                        </div>
-                        
-                        <div class="setting-item">
-                            <label class="setting-label">
-                                <span>Pump Duration</span>
-                                <span id="pumpDurationValue">10s</span>
-                            </label>
-                            <input type="range" class="glass-slider" id="pumpDurationSlider" 
-                                   min="1" max="60" value="10" oninput="updatePumpDuration()">
-                        </div>
-                        
-                        <div class="setting-item">
-                            <label class="setting-label">
-                                <span>Watering Interval</span>
-                                <span id="intervalValue">30m</span>
-                            </label>
-                            <input type="range" class="glass-slider" id="intervalSlider" 
-                                   min="5" max="240" value="30" oninput="updateInterval()">
-                        </div>
-                    </div>
-                    
-                    <div class="toggle-grid">
-                        <div class="toggle-item">
-                            <span>Auto Watering</span>
-                            <label class="glass-switch">
-                                <input type="checkbox" id="autoWateringToggle" checked>
-                                <span class="switch-slider"></span>
-                            </label>
-                        </div>
-                        <div class="toggle-item">
-                            <span>Light Schedule</span>
-                            <label class="glass-switch">
-                                <input type="checkbox" id="lightScheduleToggle" checked>
-                                <span class="switch-slider"></span>
-                            </label>
-                        </div>
-                        <div class="toggle-item">
-                            <span>Notifications</span>
-                            <label class="glass-switch">
-                                <input type="checkbox" id="notificationsToggle" checked>
-                                <span class="switch-slider"></span>
-                            </label>
-                        </div>
-                        <div class="toggle-item">
-                            <span>Sleep Mode</span>
-                            <label class="glass-switch">
-                                <input type="checkbox" id="sleepModeToggle">
-                                <span class="switch-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- STATISTICS CARD -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-chart-pie"></i> Statistics</h2>
-                    </div>
-                    
-                    <div class="stats-cards">
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: var(--success-gradient);">
-                                <i class="fas fa-tint"></i>
-                            </div>
-                            <div class="stat-value" id="totalWaterings">0</div>
-                            <div class="stat-label">Total Waterings</div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: var(--warning-gradient);">
-                                <i class="fas fa-sun"></i>
-                            </div>
-                            <div class="stat-value" id="totalLightHours">0h</div>
-                            <div class="stat-label">Light Hours</div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: var(--primary-gradient);">
-                                <i class="fas fa-bolt"></i>
-                            </div>
-                            <div class="stat-value" id="energyUsed">0Wh</div>
-                            <div class="stat-label">Energy Used</div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: var(--secondary-gradient);">
-                                <i class="fas fa-leaf"></i>
-                            </div>
-                            <div class="stat-value" id="plantHealth">100%</div>
-                            <div class="stat-label">Plant Health</div>
-                        </div>
-                    </div>
-                    
-                    <div class="water-schedule">
-                        <h4>Watering Schedule</h4>
-                        <div class="schedule-times">
-                            <div class="time-slot">
-                                <span>Morning:</span>
-                                <span id="morningTime">08:00</span>
-                            </div>
-                            <div class="time-slot">
-                                <span>Evening:</span>
-                                <span id="eveningTime">18:00</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="badge badge-success" id="connectionStatus">
+                    <i class="fas fa-wifi"></i> <span>Подключение...</span>
                 </div>
             </div>
         </div>
         
-        <!-- LOADING OVERLAY -->
-        <div id="loadingOverlay" class="loading-overlay">
-            <div class="loading-content">
-                <div class="liquid-loader"></div>
-                <h3>Connecting to EcoGrow...</h3>
-                <p id="loadingStatus">Initializing system</p>
+        <!-- LOADING SCREEN -->
+        <div id="loadingScreen" class="card loading">
+            <div class="spinner"></div>
+            <p>Подключение к устройству...</p>
+        </div>
+        
+        <!-- MAIN CONTENT -->
+        <div id="mainContent" class="hidden">
+            <!-- TABS -->
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i> Панель управления
+                </button>
+                <button class="tab" onclick="showTab('settings')">
+                    <i class="fas fa-cog"></i> Настройки
+                </button>
+                <button class="tab" onclick="showTab('automation')">
+                    <i class="fas fa-robot"></i> Автоматика
+                </button>
+                <button class="tab" onclick="showTab('stats')">
+                    <i class="fas fa-chart-bar"></i> Статистика
+                </button>
+            </div>
+            
+            <!-- DASHBOARD TAB -->
+            <div id="dashboardTab" class="tab-content active">
+                <div class="dashboard-grid">
+                    <!-- STATUS CARD -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-heartbeat card-icon"></i>
+                                <span>Состояние системы</span>
+                            </div>
+                            <div class="badge badge-success" id="systemStatus">ОНЛАЙН</div>
+                        </div>
+                        
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <div class="status-label">Влажность почвы</div>
+                                <div class="status-value" id="moistureValue">--%</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="moistureBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">Состояние насоса</div>
+                                <div class="status-value" id="pumpStatusValue">ВЫКЛ</div>
+                                <div class="status-indicator status-off" id="pumpIndicator"></div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">Состояние света</div>
+                                <div class="status-value" id="lightStatusValue">ВЫКЛ</div>
+                                <div class="status-indicator status-off" id="lightIndicator"></div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">Порог полива</div>
+                                <div class="status-value" id="thresholdValue">--%</div>
+                                <div class="status-label">Установленное значение</div>
+                            </div>
+                        </div>
+                        
+                        <div class="connection-info mt-20">
+                            <div class="setting-item">
+                                <span>Последнее обновление:</span>
+                                <span id="lastUpdateTime">--:--:--</span>
+                            </div>
+                            <div class="setting-item">
+                                <span>Устройство:</span>
+                                <span id="deviceIdDisplay">ecogrow01</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CONTROLS CARD -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-gamepad card-icon"></i>
+                                <span>Ручное управление</span>
+                            </div>
+                        </div>
+                        
+                        <div class="controls-grid">
+                            <div class="control-group">
+                                <h4 class="mb-10">Насос полива</h4>
+                                <div class="input-group">
+                                    <button class="btn btn-success" onclick="controlPump('ON')">
+                                        <i class="fas fa-play"></i> Включить
+                                    </button>
+                                    <button class="btn btn-danger" onclick="controlPump('OFF')">
+                                        <i class="fas fa-stop"></i> Выключить
+                                    </button>
+                                </div>
+                                <button class="btn btn-primary" onclick="controlPump('AUTO')">
+                                    <i class="fas fa-robot"></i> Авторежим
+                                </button>
+                            </div>
+                            
+                            <div class="control-group">
+                                <h4 class="mb-10">Освещение</h4>
+                                <div class="input-group">
+                                    <button class="btn btn-success" onclick="controlLight('ON')">
+                                        <i class="fas fa-lightbulb"></i> Включить
+                                    </button>
+                                    <button class="btn btn-danger" onclick="controlLight('OFF')">
+                                        <i class="fas fa-moon"></i> Выключить
+                                    </button>
+                                </div>
+                                <button class="btn btn-primary" onclick="controlLight('AUTO')">
+                                    <i class="fas fa-robot"></i> Авторежим
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-actions mt-20">
+                            <button class="btn btn-warning" onclick="manualWatering()">
+                                <i class="fas fa-hand-point-up"></i> Быстрый полив (10 сек)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- SETTINGS QUICK CARD -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-sliders-h card-icon"></i>
+                                <span>Быстрые настройки</span>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Порог влажности</span>
+                                    <span id="quickThresholdValue">50%</span>
+                                </label>
+                                <input type="range" min="10" max="90" value="50" 
+                                       oninput="updateQuickThreshold(this.value)"
+                                       onchange="saveQuickThreshold()">
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Время полива</span>
+                                    <span id="quickPumpTimeValue">10 сек</span>
+                                </label>
+                                <input type="range" min="1" max="60" value="10" 
+                                       oninput="updateQuickPumpTime(this.value)"
+                                       onchange="saveQuickPumpTime()">
+                            </div>
+                        </div>
+                        
+                        <div class="switch-grid mt-20">
+                            <div class="setting-item" style="flex-direction: row; justify-content: space-between;">
+                                <span>Автоматический полив</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="autoWateringSwitch" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TELEGRAM CARD -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fab fa-telegram card-icon"></i>
+                                <span>Telegram мониторинг</span>
+                            </div>
+                        </div>
+                        
+                        <div class="telegram-info">
+                            <p>🤖 Telegram бот для мониторинга системы:</p>
+                            <div class="telegram-commands mt-10">
+                                <div class="command-item">
+                                    <code>/start</code> - Начало работы
+                                </div>
+                                <div class="command-item">
+                                    <code>/status</code> - Текущий статус
+                                </div>
+                                <div class="command-item">
+                                    <code>/moisture</code> - Влажность почвы
+                                </div>
+                                <div class="command-item">
+                                    <code>/stats</code> - Статистика работы
+                                </div>
+                                <div class="command-item">
+                                    <code>/errors</code> - Список ошибок
+                                </div>
+                                <div class="command-item">
+                                    <code>/web</code> - Ссылка на веб-панель
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SETTINGS TAB -->
+            <div id="settingsTab" class="tab-content">
+                <div class="dashboard-grid">
+                    <!-- WATERING SETTINGS -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-tint card-icon"></i>
+                                <span>Настройки полива</span>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Порог влажности</span>
+                                    <span id="settingsThresholdValue">50%</span>
+                                </label>
+                                <input type="range" min="10" max="90" value="50" 
+                                       oninput="updateSettingsThreshold(this.value)">
+                                <button class="btn btn-primary btn-sm mt-10" onclick="saveThreshold()">
+                                    Сохранить
+                                </button>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Длительность полива</span>
+                                    <span id="settingsPumpDurationValue">10 сек</span>
+                                </label>
+                                <input type="range" min="1" max="60" value="10" 
+                                       oninput="updateSettingsPumpDuration(this.value)">
+                                <button class="btn btn-primary btn-sm mt-10" onclick="savePumpDuration()">
+                                    Сохранить
+                                </button>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Задержка между поливами</span>
+                                    <span id="settingsWateringInterval">30 мин</span>
+                                </label>
+                                <select id="wateringIntervalSelect" onchange="saveWateringInterval()">
+                                    <option value="10">10 минут</option>
+                                    <option value="30" selected>30 минут</option>
+                                    <option value="60">1 час</option>
+                                    <option value="120">2 часа</option>
+                                    <option value="240">4 часа</option>
+                                    <option value="480">8 часов</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- LIGHT SETTINGS -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-lightbulb card-icon"></i>
+                                <span>Настройки освещения</span>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Время включения</span>
+                                </label>
+                                <input type="time" id="lightStartTime" value="08:00">
+                                <button class="btn btn-primary btn-sm mt-10" onclick="saveLightSchedule()">
+                                    Сохранить время
+                                </button>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Время выключения</span>
+                                </label>
+                                <input type="time" id="lightEndTime" value="20:00">
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Режим освещения</span>
+                                </label>
+                                <select id="lightModeSelect" onchange="saveLightMode()">
+                                    <option value="auto">Автоматический</option>
+                                    <option value="manual">Ручной</option>
+                                    <option value="off">Выключено</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- DISPLAY SETTINGS -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-desktop card-icon"></i>
+                                <span>Настройки дисплея</span>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Таймаут отключения</span>
+                                    <span id="displayTimeoutValue">30 сек</span>
+                                </label>
+                                <select id="displayTimeoutSelect" onchange="saveDisplayTimeout()">
+                                    <option value="10">10 секунд</option>
+                                    <option value="30" selected>30 секунд</option>
+                                    <option value="60">1 минута</option>
+                                    <option value="120">2 минуты</option>
+                                    <option value="300">5 минут</option>
+                                    <option value="0">Не выключать</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SLEEP MODE SETTINGS -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-moon card-icon"></i>
+                                <span>Режим сна</span>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <span>Включить режим сна</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="sleepModeSwitch">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Начало сна</span>
+                                </label>
+                                <input type="time" id="sleepStartTime" value="23:00">
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Окончание сна</span>
+                                </label>
+                                <input type="time" id="sleepEndTime" value="07:00">
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="saveSleepMode()">
+                                Сохранить настройки сна
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AUTOMATION TAB -->
+            <div id="automationTab" class="tab-content">
+                <div class="dashboard-grid">
+                    <!-- SCHEDULE CARD -->
+                    <div class="card grid-full">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-calendar-alt card-icon"></i>
+                                <span>Расписание работы</span>
+                            </div>
+                        </div>
+                        
+                        <div class="schedule-info">
+                            <p>Система работает по следующему расписанию:</p>
+                            
+                            <div class="schedule-items mt-20">
+                                <div class="schedule-item">
+                                    <div class="schedule-time">
+                                        <i class="fas fa-sun"></i>
+                                        <span>Дневной режим: 08:00 - 20:00</span>
+                                    </div>
+                                    <div class="schedule-actions">
+                                        <span>✅ Автоматический полив включен</span>
+                                        <span>✅ Освещение по расписанию</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="schedule-item">
+                                    <div class="schedule-time">
+                                        <i class="fas fa-moon"></i>
+                                        <span>Ночной режим: 23:00 - 07:00</span>
+                                    </div>
+                                    <div class="schedule-actions">
+                                        <span>⏸️ Полив приостановлен</span>
+                                        <span>🌙 Освещение выключено</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AUTOMATION RULES -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-robot card-icon"></i>
+                                <span>Правила автоматики</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rules-list">
+                            <div class="rule-item">
+                                <div class="rule-icon">💧</div>
+                                <div class="rule-content">
+                                    <strong>Автоматический полив</strong>
+                                    <p>Запускается при влажности ниже установленного порога</p>
+                                </div>
+                            </div>
+                            
+                            <div class="rule-item">
+                                <div class="rule-icon">🔧</div>
+                                <div class="rule-content">
+                                    <strong>Защита от перелива</strong>
+                                    <p>Минимальный интервал между поливами: 10 минут</p>
+                                </div>
+                            </div>
+                            
+                            <div class="rule-item">
+                                <div class="rule-icon">⚠️</div>
+                                <div class="rule-content">
+                                    <strong>Защита от ошибок</strong>
+                                    <p>При ошибке датчика полив блокируется</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- STATISTICS TAB -->
+            <div id="statsTab" class="tab-content">
+                <div class="dashboard-grid">
+                    <!-- STATISTICS CARD -->
+                    <div class="card grid-full">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-chart-bar card-icon"></i>
+                                <span>Статистика работы</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-grid mt-20">
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalWateringsStat">0</div>
+                                <div class="stat-label">Всего поливов</div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalLightHoursStat">0ч</div>
+                                <div class="stat-label">Часов света</div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-value" id="systemUptimeStat">0д</div>
+                                <div class="stat-label">Время работы</div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-value" id="lastWateringStat">--</div>
+                                <div class="stat-label">Последний полив</div>
+                            </div>
+                        </div>
+                        
+                        <div class="history-chart mt-20">
+                            <canvas id="moistureChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DEVELOPER INFO -->
+            <div class="developer-info">
+                <h3>👨‍💻 Информация о разработчике</h3>
+                <p>По всем вопросам вы всегда можете обратиться к автору проекта:</p>
+                
+                <div class="contact-links">
+                    <a href="https://t.me/Zhesny" class="contact-link" target="_blank">
+                        <i class="fab fa-telegram"></i>
+                        <span>Telegram: @Zhesny</span>
+                    </a>
+                    
+                    <a href="mailto:zhenya.kupchenya@mail.ru" class="contact-link">
+                        <i class="fas fa-envelope"></i>
+                        <span>Email: zhenya.kupchenya@mail.ru</span>
+                    </a>
+                </div>
             </div>
         </div>
         
-        <!-- FOOTER -->
-        <footer class="main-footer">
-            <p>🌱 EcoGrow v3.0 • Liquid Glass Dashboard • © 2024</p>
-            <p>Connected to device: <span id="deviceIdDisplay">ecogrow01</span></p>
-        </footer>
+        <!-- NOTIFICATION -->
+        <div id="notification" class="notification">
+            <i class="fas fa-info-circle"></i>
+            <span id="notificationText">Сообщение</span>
+        </div>
     </div>
     
     <script>
         // ============================================
-        // FIREBASE CONFIGURATION
+        // КОНФИГУРАЦИЯ FIREBASE
         // ============================================
         const firebaseConfig = {
             apiKey: "AIzaSyBJSFgQqIrsXj88Xq9h_vwzWjsbZq3z7r8",
@@ -953,499 +1124,382 @@
         };
 
         // ============================================
-        // GLOBAL VARIABLES
+        // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
         // ============================================
-        let app = null;
         let database = null;
-        let auth = null;
-        let currentUser = null;
-        
-        const DEVICE_ID = "ecogrow01";
         let deviceRef = null;
         let settingsRef = null;
         let commandsRef = null;
-        let historyRef = null;
         
-        let currentData = {
-            moisture: 0,
-            temperature: 0,
-            humidity: 0,
-            pump: false,
-            light: false,
-            sensorError: false,
-            timestamp: 0,
-            battery: 100,
-            wifiStrength: 100
-        };
-        
-        let currentSettings = {
-            moistureThreshold: 50,
-            pumpDuration: 10,
-            wateringInterval: 30,
-            lightStart: "08:00",
-            lightEnd: "20:00",
-            autoWatering: true,
-            lightSchedule: true,
-            notifications: true,
-            sleepMode: false
-        };
-        
-        let moistureHistory = [];
+        const DEVICE_ID = "ecogrow01";
+        let currentData = null;
+        let currentSettings = null;
         let chart = null;
-        let chartData = {
-            labels: [],
-            datasets: []
-        };
-        
-        let systemUptime = 0;
-        let startTime = Date.now();
         
         // ============================================
-        // INITIALIZATION
+        // ИНИЦИАЛИЗАЦИЯ
         // ============================================
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🌱 EcoGrow Liquid Dashboard Initializing...');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("EcoGrow Control Panel загружен");
             
-            // Show loading overlay
-            showLoading('Initializing Firebase...');
+            // Загружаем сохраненную тему
+            loadTheme();
             
+            // Инициализация Firebase
             try {
-                // Initialize Firebase
-                app = firebase.initializeApp(firebaseConfig);
+                const app = firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
-                auth = firebase.auth();
+                console.log("✅ Firebase инициализирован");
                 
-                console.log('✅ Firebase initialized');
+                // Ссылки на данные устройства
+                deviceRef = database.ref('devices/' + DEVICE_ID + '/data');
+                settingsRef = database.ref('devices/' + DEVICE_ID + '/settings');
+                commandsRef = database.ref('devices/' + DEVICE_ID + '/commands/latest');
                 
-                // Try anonymous auth
-                try {
-                    await auth.signInAnonymously();
-                    currentUser = auth.currentUser;
-                    console.log('✅ Anonymous auth successful');
-                } catch (authError) {
-                    console.warn('⚠️ Anonymous auth failed, continuing without auth');
-                }
+                // Проверка подключения
+                checkFirebaseConnection();
                 
-                // Setup Firebase references
-                deviceRef = database.ref(`devices/${DEVICE_ID}/data`);
-                settingsRef = database.ref(`devices/${DEVICE_ID}/settings`);
-                commandsRef = database.ref(`devices/${DEVICE_ID}/commands`);
-                historyRef = database.ref(`devices/${DEVICE_ID}/history`);
+                // Загрузка данных устройства
+                loadDeviceData();
                 
-                // Initialize components
-                initChart();
-                setupEventListeners();
-                loadInitialData();
+                // Загрузка настроек
+                loadSettingsData();
                 
-                // Hide loading after 1.5 seconds
+                // Автообновление каждые 3 секунды
+                setInterval(loadDeviceData, 3000);
+                setInterval(loadSettingsData, 5000);
+                
+                // Показываем основную панель
                 setTimeout(() => {
-                    hideLoading();
-                    showNotification('✅ System connected successfully', 'success');
+                    document.getElementById('loadingScreen').classList.add('hidden');
+                    document.getElementById('mainContent').classList.remove('hidden');
+                    showNotification('✅ Подключено к устройству EcoGrow', 'success');
                 }, 1500);
                 
             } catch (error) {
-                console.error('❌ Initialization failed:', error);
-                showNotification(`❌ Initialization failed: ${error.message}`, 'error');
-                
-                // Try to proceed in offline mode
-                setTimeout(hideLoading, 2000);
+                console.error("❌ Ошибка инициализации:", error);
+                showNotification('❌ Ошибка подключения к Firebase', 'error');
             }
         });
 
         // ============================================
-        // FIREBASE FUNCTIONS
+        // FIREBASE ФУНКЦИИ
         // ============================================
-        function loadInitialData() {
-            // Load device data
-            deviceRef.on('value', snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    updateCurrentData(data);
-                    updateUI();
-                }
-            }, error => {
-                console.error('Device data error:', error);
-                showNotification('❌ Failed to load device data', 'error');
-            });
+        function checkFirebaseConnection() {
+            if (!database) return;
             
-            // Load settings
-            settingsRef.on('value', snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    currentSettings = { ...currentSettings, ...data };
-                    updateSettingsUI();
+            database.ref('.info/connected').on('value', (snapshot) => {
+                const connected = snapshot.val();
+                const statusEl = document.getElementById('connectionStatus');
+                
+                if (connected) {
+                    statusEl.innerHTML = '<i class="fas fa-wifi"></i> <span>Подключено</span>';
+                    statusEl.className = 'badge badge-success';
+                    document.getElementById('systemStatus').textContent = 'ОНЛАЙН';
+                    document.getElementById('systemStatus').className = 'badge badge-success';
+                } else {
+                    statusEl.innerHTML = '<i class="fas fa-wifi-slash"></i> <span>Нет связи</span>';
+                    statusEl.className = 'badge badge-danger';
+                    document.getElementById('systemStatus').textContent = 'ОФФЛАЙН';
+                    document.getElementById('systemStatus').className = 'badge badge-danger';
                 }
             });
-            
-            // Load history
-            loadHistoryData();
         }
-        
+
+        function loadDeviceData() {
+            if (!deviceRef) return;
+            
+            deviceRef.on('value', (snapshot) => {
+                currentData = snapshot.val();
+                
+                if (!currentData) {
+                    console.warn("⚠️ Данные устройства не найдены");
+                    return;
+                }
+                
+                // Обновляем UI
+                updateDeviceInfo(currentData);
+                
+            }, (error) => {
+                console.error("Ошибка загрузки данных:", error);
+                showNotification('❌ Ошибка загрузки данных устройства', 'error');
+            });
+        }
+
+        function loadSettingsData() {
+            if (!settingsRef) return;
+            
+            settingsRef.on('value', (snapshot) => {
+                currentSettings = snapshot.val();
+                
+                if (!currentSettings) return;
+                
+                // Обновляем UI настроек
+                updateSettingsUI(currentSettings);
+                
+            }, (error) => {
+                console.error("Ошибка загрузки настроек:", error);
+            });
+        }
+
         function sendCommand(command, value, extraData = {}) {
             if (!commandsRef) {
-                showNotification('❌ Not connected to device', 'error');
+                showNotification('❌ Нет подключения к устройству', 'error');
                 return;
             }
             
             const commandData = {
-                command,
-                value,
+                command: command,
+                value: value,
                 timestamp: Date.now(),
-                source: 'web_dashboard',
+                source: 'web_panel',
                 ...extraData
             };
             
             commandsRef.set(commandData)
                 .then(() => {
-                    showNotification(`✅ Command sent: ${command}`, 'success');
+                    console.log(`Команда отправлена: ${command}=${value}`);
                 })
                 .catch(error => {
-                    console.error('Command error:', error);
-                    showNotification(`❌ Command failed: ${error.message}`, 'error');
+                    console.error("Ошибка отправки команды:", error);
+                    showNotification(`❌ Ошибка отправки: ${error.message}`, 'error');
                 });
         }
-        
+
         // ============================================
-        // UI FUNCTIONS
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
         // ============================================
-        function updateCurrentData(data) {
-            currentData = { ...currentData, ...data };
-            
-            // Add to history for chart
-            const now = new Date();
-            moistureHistory.push({
-                timestamp: now,
-                moisture: currentData.moisture,
-                temperature: currentData.temperature
-            });
-            
-            // Keep only last 100 points
-            if (moistureHistory.length > 100) {
-                moistureHistory.shift();
-            }
-            
-            updateChart();
-        }
-        
-        function updateUI() {
-            // Update values
-            document.getElementById('moistureValue').textContent = `${currentData.moisture}%`;
-            document.getElementById('temperatureValue').textContent = `${currentData.temperature}°C`;
-            document.getElementById('pumpStatus').textContent = currentData.pump ? 'ON' : 'OFF';
-            document.getElementById('lightStatus').textContent = currentData.light ? 'ON' : 'OFF';
-            
-            // Update status dots
-            document.getElementById('pumpDot').className = `status-dot ${currentData.pump ? 'active' : ''}`;
-            document.getElementById('lightDot').className = `status-dot ${currentData.light ? 'active' : ''}`;
-            document.getElementById('pumpControlDot').className = `status-dot ${currentData.pump ? 'active' : ''}`;
-            document.getElementById('lightControlDot').className = `status-dot ${currentData.light ? 'active' : ''}`;
-            
-            // Update progress bar
+        function updateDeviceInfo(data) {
+            // Влажность
+            document.getElementById('moistureValue').textContent = data.moisture + '%';
             const moistureBar = document.getElementById('moistureBar');
             if (moistureBar) {
-                moistureBar.style.width = `${currentData.moisture}%`;
-                moistureBar.style.background = getMoistureColor(currentData.moisture);
+                moistureBar.style.width = data.moisture + '%';
+                moistureBar.style.background = getMoistureColor(data.moisture);
             }
             
-            // Update time
+            // Насос
+            document.getElementById('pumpStatusValue').textContent = data.pump ? 'ВКЛ' : 'ВЫКЛ';
+            document.getElementById('pumpIndicator').className = `status-indicator ${data.pump ? 'status-on' : 'status-off'}`;
+            
+            // Свет
+            document.getElementById('lightStatusValue').textContent = data.light ? 'ВКЛ' : 'ВЫКЛ';
+            document.getElementById('lightIndicator').className = `status-indicator ${data.light ? 'status-on' : 'status-off'}`;
+            
+            // Время обновления
             const now = new Date();
-            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+            document.getElementById('lastUpdateTime').textContent = now.toLocaleTimeString();
             
-            // Update uptime
-            updateUptime();
+            // ID устройства
+            document.getElementById('deviceIdDisplay').textContent = DEVICE_ID;
         }
-        
-        function updateSettingsUI() {
-            document.getElementById('thresholdValueDisplay').textContent = `${currentSettings.moistureThreshold}%`;
-            document.getElementById('thresholdSlider').value = currentSettings.moistureThreshold;
+
+        function updateSettingsUI(settings) {
+            // Порог влажности
+            document.getElementById('thresholdValue').textContent = settings.moistureThreshold + '%';
+            document.getElementById('quickThresholdValue').textContent = settings.moistureThreshold + '%';
+            document.getElementById('settingsThresholdValue').textContent = settings.moistureThreshold + '%';
             
-            document.getElementById('pumpDurationValue').textContent = `${currentSettings.pumpDuration}s`;
-            document.getElementById('pumpDurationSlider').value = currentSettings.pumpDuration;
+            // Длительность полива
+            document.getElementById('quickPumpTimeValue').textContent = settings.manualPumpTimeSec + ' сек';
+            document.getElementById('settingsPumpDurationValue').textContent = settings.manualPumpTimeSec + ' сек';
             
-            document.getElementById('intervalValue').textContent = `${currentSettings.wateringInterval}m`;
-            document.getElementById('intervalSlider').value = currentSettings.wateringInterval;
+            // Режим сна
+            if (settings.sleepEnabled !== undefined) {
+                document.getElementById('sleepModeSwitch').checked = settings.sleepEnabled;
+            }
             
-            document.getElementById('autoWateringToggle').checked = currentSettings.autoWatering;
-            document.getElementById('lightScheduleToggle').checked = currentSettings.lightSchedule;
-            document.getElementById('notificationsToggle').checked = currentSettings.notifications;
-            document.getElementById('sleepModeToggle').checked = currentSettings.sleepMode;
+            // Интервал полива
+            if (settings.wateringDelayMinutes !== undefined) {
+                document.getElementById('settingsWateringInterval').textContent = settings.wateringDelayMinutes + ' мин';
+                document.getElementById('wateringIntervalSelect').value = settings.wateringDelayMinutes;
+            }
+            
+            // Таймаут дисплея
+            if (settings.displayTimeout !== undefined) {
+                document.getElementById('displayTimeoutValue').textContent = settings.displayTimeout + ' сек';
+                document.getElementById('displayTimeoutSelect').value = settings.displayTimeout;
+            }
         }
-        
+
         // ============================================
-        // CHART FUNCTIONS
-        // ============================================
-        function initChart() {
-            const ctx = document.getElementById('moistureChart').getContext('2d');
-            
-            // Create gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(0, 212, 255, 0.4)');
-            gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
-            
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Soil Moisture',
-                        data: [],
-                        borderColor: '#00d4ff',
-                        backgroundColor: gradient,
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#00d4ff',
-                        pointBorderColor: 'rgba(255, 255, 255, 0.8)',
-                        pointBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleColor: 'rgba(255, 255, 255, 0.9)',
-                            bodyColor: 'rgba(255, 255, 255, 0.7)',
-                            borderColor: 'rgba(0, 212, 255, 0.3)',
-                            borderWidth: 1,
-                            padding: 12,
-                            cornerRadius: 8,
-                            displayColors: false,
-                            callbacks: {
-                                label: (context) => `Moisture: ${context.parsed.y}%`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.6)',
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.6)',
-                                font: {
-                                    size: 11
-                                },
-                                maxRotation: 0
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function updateChart() {
-            if (!chart || moistureHistory.length === 0) return;
-            
-            const labels = moistureHistory.map(item => 
-                item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            );
-            
-            const data = moistureHistory.map(item => item.moisture);
-            
-            chart.data.labels = labels;
-            chart.data.datasets[0].data = data;
-            chart.update('none');
-            
-            // Update statistics
-            updateChartStats();
-        }
-        
-        function updateChartStats() {
-            if (moistureHistory.length === 0) return;
-            
-            const moistures = moistureHistory.map(item => item.moisture);
-            const current = moistures[moistures.length - 1] || 0;
-            const avg = Math.round(moistures.reduce((a, b) => a + b, 0) / moistures.length);
-            const min = Math.min(...moistures);
-            const max = Math.max(...moistures);
-            
-            document.getElementById('currentMoisture').textContent = `${current}%`;
-            document.getElementById('avgMoisture').textContent = `${avg}%`;
-            document.getElementById('minMoisture').textContent = `${min}%`;
-            document.getElementById('maxMoisture').textContent = `${max}%`;
-        }
-        
-        // ============================================
-        // CONTROL FUNCTIONS
+        // ФУНКЦИИ УПРАВЛЕНИЯ
         // ============================================
         function controlPump(action) {
             switch(action) {
                 case 'ON':
                     sendCommand('pump', 1);
-                    document.getElementById('pumpControlText').textContent = 'Manual ON';
+                    showNotification('💧 Насос включен вручную', 'success');
                     break;
                 case 'OFF':
                     sendCommand('pump', 0);
-                    document.getElementById('pumpControlText').textContent = 'Manual OFF';
+                    showNotification('⏹️ Насос выключен', 'success');
                     break;
                 case 'AUTO':
                     sendCommand('pumpAuto', 1);
-                    document.getElementById('pumpControlText').textContent = 'Auto Mode';
+                    showNotification('🔄 Насос: авторежим', 'success');
                     break;
             }
         }
-        
+
         function controlLight(action) {
             switch(action) {
                 case 'ON':
                     sendCommand('light', 1);
-                    document.getElementById('lightControlText').textContent = 'Manual ON';
+                    showNotification('💡 Свет включен вручную', 'success');
                     break;
                 case 'OFF':
                     sendCommand('light', 0);
-                    document.getElementById('lightControlText').textContent = 'Manual OFF';
+                    showNotification('🌙 Свет выключен', 'success');
                     break;
                 case 'AUTO':
                     sendCommand('lightAuto', 1);
-                    document.getElementById('lightControlText').textContent = 'Auto Mode';
+                    showNotification('🔄 Свет: авторежим', 'success');
                     break;
             }
         }
-        
+
         function manualWatering() {
             sendCommand('pump', 1);
-            showNotification('💧 Manual watering started', 'info');
+            showNotification('💧 Запущен ручной полив (10 сек)', 'info');
             
             setTimeout(() => {
                 sendCommand('pump', 0);
-                showNotification('✅ Manual watering completed', 'success');
-            }, currentSettings.pumpDuration * 1000);
+            }, 10000);
         }
-        
+
         // ============================================
-        // SETTINGS FUNCTIONS
+        // НАСТРОЙКИ
         // ============================================
-        function updateThresholdDisplay() {
-            const value = document.getElementById('thresholdSlider').value;
-            document.getElementById('thresholdValueDisplay').textContent = `${value}%`;
-            
-            // Save to Firebase
-            settingsRef.update({ moistureThreshold: parseInt(value) });
+        function updateQuickThreshold(value) {
+            document.getElementById('quickThresholdValue').textContent = value + '%';
+        }
+
+        function saveQuickThreshold() {
+            const value = document.getElementById('quickThresholdValue').textContent.replace('%', '');
             sendCommand('threshold', parseInt(value));
+            showNotification('✅ Порог влажности сохранен', 'success');
         }
-        
-        function updatePumpDuration() {
-            const value = document.getElementById('pumpDurationSlider').value;
-            document.getElementById('pumpDurationValue').textContent = `${value}s`;
-            
-            settingsRef.update({ pumpDuration: parseInt(value) });
+
+        function updateQuickPumpTime(value) {
+            document.getElementById('quickPumpTimeValue').textContent = value + ' сек';
+        }
+
+        function saveQuickPumpTime() {
+            const value = document.getElementById('quickPumpTimeValue').textContent.replace(' сек', '');
             sendCommand('pumpTime', parseInt(value));
+            showNotification('✅ Время полива сохранено', 'success');
         }
-        
-        function updateInterval() {
-            const value = document.getElementById('intervalSlider').value;
-            document.getElementById('intervalValue').textContent = `${value}m`;
-            
-            settingsRef.update({ wateringInterval: parseInt(value) });
+
+        function updateSettingsThreshold(value) {
+            document.getElementById('settingsThresholdValue').textContent = value + '%';
         }
-        
+
+        function saveThreshold() {
+            const value = document.getElementById('settingsThresholdValue').textContent.replace('%', '');
+            sendCommand('threshold', parseInt(value));
+            showNotification('✅ Порог влажности сохранен', 'success');
+        }
+
+        function updateSettingsPumpDuration(value) {
+            document.getElementById('settingsPumpDurationValue').textContent = value + ' сек';
+        }
+
+        function savePumpDuration() {
+            const value = document.getElementById('settingsPumpDurationValue').textContent.replace(' сек', '');
+            sendCommand('pumpTime', parseInt(value));
+            showNotification('✅ Длительность полива сохранена', 'success');
+        }
+
+        function saveWateringInterval() {
+            const value = document.getElementById('wateringIntervalSelect').value;
+            // Здесь нужно добавить отправку команды на устройство
+            showNotification(`✅ Интервал полива: ${value} минут`, 'success');
+        }
+
+        function saveLightSchedule() {
+            const startTime = document.getElementById('lightStartTime').value;
+            const endTime = document.getElementById('lightEndTime').value;
+            // Здесь нужно добавить отправку команды на устройство
+            showNotification(`✅ Расписание света: ${startTime} - ${endTime}`, 'success');
+        }
+
+        function saveLightMode() {
+            const mode = document.getElementById('lightModeSelect').value;
+            // Здесь нужно добавить отправку команды на устройство
+            showNotification(`✅ Режим света: ${mode}`, 'success');
+        }
+
+        function saveDisplayTimeout() {
+            const timeout = document.getElementById('displayTimeoutSelect').value;
+            sendCommand('displayTimeout', parseInt(timeout));
+            showNotification(`✅ Таймаут дисплея: ${timeout} сек`, 'success');
+        }
+
+        function saveSleepMode() {
+            const enabled = document.getElementById('sleepModeSwitch').checked;
+            const startTime = document.getElementById('sleepStartTime').value;
+            const endTime = document.getElementById('sleepEndTime').value;
+            // Здесь нужно добавить отправку команды на устройство
+            showNotification(`✅ Режим сна: ${enabled ? 'включен' : 'выключен'}`, 'success');
+        }
+
         // ============================================
-        // UTILITY FUNCTIONS
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
         // ============================================
         function getMoistureColor(moisture) {
-            if (moisture < 30) return 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)';
-            if (moisture < 50) return 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)';
-            return 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
+            if (moisture < 30) return '#e74c3c';
+            if (moisture < 50) return '#f39c12';
+            return '#27ae60';
         }
-        
-        function updateUptime() {
-            const now = Date.now();
-            const diff = now - startTime;
+
+        function showTab(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            // Убрать активный класс со всех вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            document.getElementById('uptimeValue').textContent = `${days}d ${hours}h ${minutes}m`;
+            // Показать выбранную вкладку
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Добавить активный класс выбранной вкладке
+            event.target.classList.add('active');
         }
-        
+
         function showNotification(message, type = 'info') {
-            const panel = document.getElementById('notificationsPanel');
-            const id = Date.now();
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
             
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.id = `notification-${id}`;
+            notificationText.textContent = message;
             
-            const icons = {
-                success: 'fa-check-circle',
-                error: 'fa-exclamation-circle',
-                warning: 'fa-exclamation-triangle',
-                info: 'fa-info-circle'
-            };
-            
-            notification.innerHTML = `
-                <div class="notification-icon">
-                    <i class="fas ${icons[type]}"></i>
-                </div>
-                <div class="notification-content">
-                    <p>${message}</p>
-                </div>
-                <button class="notification-close" onclick="removeNotification(${id})">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            panel.appendChild(notification);
-            
-            // Show with animation
-            setTimeout(() => notification.classList.add('show'), 10);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => removeNotification(id), 5000);
-        }
-        
-        function removeNotification(id) {
-            const notification = document.getElementById(`notification-${id}`);
-            if (notification) {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
+            // Устанавливаем иконку
+            const icon = notification.querySelector('i');
+            if (icon) {
+                if (type === 'error') {
+                    icon.className = 'fas fa-exclamation-circle';
+                    notification.className = 'notification notification-error';
+                } else if (type === 'success') {
+                    icon.className = 'fas fa-check-circle';
+                    notification.className = 'notification notification-success';
+                } else {
+                    icon.className = 'fas fa-info-circle';
+                    notification.className = 'notification';
+                }
             }
-        }
-        
-        function showLoading(message = 'Loading...') {
-            const overlay = document.getElementById('loadingOverlay');
-            const status = document.getElementById('loadingStatus');
             
-            status.textContent = message;
-            overlay.style.display = 'flex';
+            notification.classList.add('show');
+            
+            // Автоскрытие
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
-        
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.style.display = 'none';
-        }
-        
-        function refreshData() {
-            showLoading('Refreshing data...');
-            setTimeout(hideLoading, 1000);
-            showNotification('🔄 Data refreshed', 'info');
-        }
-        
+
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -1453,90 +1507,20 @@
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             
-            showNotification(newTheme === 'dark' ? '🌙 Dark theme enabled' : '☀️ Light theme enabled', 'info');
+            showNotification(newTheme === 'dark' ? '🌙 Включена темная тема' : '☀️ Включена светлая тема', 'success');
         }
-        
-        function openSettings() {
-            window.open('settings.html', '_blank');
-        }
-        
-        function openDevices() {
-            window.open('devices.html', '_blank');
-        }
-        
-        function openProfile() {
-            // Placeholder for profile modal
-            showNotification('👤 User profile - Coming soon!', 'info');
-        }
-        
-        // ============================================
-        // EVENT LISTENERS
-        // ============================================
-        function setupEventListeners() {
-            // Theme toggle
+
+        function loadTheme() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.key === 'r') {
-                    e.preventDefault();
-                    refreshData();
-                }
-                if (e.key === 'Escape') {
-                    hideLoading();
-                }
-            });
-            
-            // PWA Install prompt
-            let deferredPrompt;
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                
-                // Show install button
-                const installBtn = document.createElement('button');
-                installBtn.className = 'glass-btn glass-btn-success';
-                installBtn.innerHTML = '<i class="fas fa-download"></i> Install App';
-                installBtn.onclick = () => {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            showNotification('✅ App installed successfully!', 'success');
-                        }
-                        deferredPrompt = null;
-                    });
-                };
-                
-                document.querySelector('.header-controls').prepend(installBtn);
-            });
         }
-        
-        // ============================================
-        // LOAD HISTORY DATA
-        // ============================================
-        function loadHistoryData() {
-            if (!historyRef) return;
-            
-            historyRef.limitToLast(100).on('value', snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    moistureHistory = Object.values(data).map(item => ({
-                        timestamp: new Date(item.timestamp),
-                        moisture: item.moisture,
-                        temperature: item.temperature
-                    }));
-                    
-                    moistureHistory.sort((a, b) => a.timestamp - b.timestamp);
-                    updateChart();
-                }
-            });
-        }
-        
-        // Initialize
-        window.addEventListener('load', () => {
-            console.log('🌊 EcoGrow Liquid Dashboard Ready!');
-            document.getElementById('deviceIdDisplay').textContent = DEVICE_ID;
+
+        // Горячие клавиши
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const notification = document.getElementById('notification');
+                notification.classList.remove('show');
+            }
         });
     </script>
 </body>
