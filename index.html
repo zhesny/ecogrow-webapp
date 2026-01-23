@@ -34,7 +34,7 @@
             --bg-card: #1e293b;
             --bg-sidebar: #0f172a;
             --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
+            --text-secondary: #cbd5e1;
             --text-inverse: #0f172a;
             --accent-green: #10b981;
             --accent-blue: #3b82f6;
@@ -62,6 +62,16 @@
             line-height: 1.6;
             min-height: 100vh;
             transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* ДОБАВЛЕНО: Исправление черного текста в темной теме */
+        input, select, textarea {
+            color: var(--text-primary) !important;
+        }
+        
+        /* ДОБАВЛЕНО: Улучшенная видимость текста в карточках */
+        .card, .control-item, .stat-box, .info-card {
+            color: var(--text-primary);
         }
         
         .app-container {
@@ -876,6 +886,17 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* ДОБАВЛЕНО: Исправление времени ввода */
+        input[type="time"], input[type="text"] {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary) !important;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -972,6 +993,9 @@
                     <button class="btn btn-primary" id="connectBtn" disabled>
                         <i class="fas fa-plug"></i> Подключиться
                     </button>
+                    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-secondary);">
+                        Если устройств нет, убедитесь что ESP подключен к интернету и отправляет данные в Firebase
+                    </p>
                 </div>
             </div>
             
@@ -998,12 +1022,13 @@
         let currentDevice = null;
         let devices = {};
         let currentState = {};
+        let pendingChanges = {}; // ДОБАВЛЕНО: Отслеживание ожидающих изменений
         let chart = null;
         let autoRefreshInterval = null;
         let currentSection = 'dashboard';
         let currentTheme = localStorage.getItem('theme') || 'light';
         
-        // Инициализация темы
+        // Инициализация темы - ИСПРАВЛЕНА
         function initTheme() {
             const themeSwitch = document.getElementById('themeSwitch');
             if (themeSwitch) {
@@ -1012,12 +1037,18 @@
                 document.documentElement.setAttribute('data-theme', currentTheme);
                 themeSwitch.checked = currentTheme === 'dark';
                 
-                // Обработчик изменения темы
+                // Обработчик изменения темы - ИСПРАВЛЕНО: Удаляем двойное сохранение
                 themeSwitch.addEventListener('change', function() {
                     const newTheme = this.checked ? 'dark' : 'light';
                     document.documentElement.setAttribute('data-theme', newTheme);
                     localStorage.setItem('theme', newTheme);
                     currentTheme = newTheme;
+                    
+                    // Перерисовываем текущий раздел для обновления цветов
+                    if (currentDevice) {
+                        updateCurrentSection();
+                    }
+                    
                     showNotification(`Тема изменена на ${newTheme === 'dark' ? 'темную' : 'светлую'}`);
                 });
             }
@@ -1048,13 +1079,13 @@
         }
         
         function formatTime(timestamp) {
-            if (!timestamp) return 'Неизвестно';
+            if (!timestamp || timestamp < 100000) return 'Неизвестно';
             const date = new Date(timestamp * 1000);
             return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
         
         function formatDateTime(timestamp) {
-            if (!timestamp) return 'Неизвестно';
+            if (!timestamp || timestamp < 100000) return 'Неизвестно';
             const date = new Date(timestamp * 1000);
             return date.toLocaleString('ru-RU', {
                 day: '2-digit',
@@ -1116,10 +1147,10 @@
                         const lastSeen = device.info.last_seen ? 
                             formatDateTime(device.info.last_seen) : 'Неизвестно';
                         
-                        // Проверяем онлайн статус
+                        // Проверяем онлайн статус - ИСПРАВЛЕНО: Учитываем время последнего обновления состояния
                         const isOnline = device.state && 
                             device.state.last_update && 
-                            (Date.now() / 1000 - device.state.last_update) < 120;
+                            (Date.now() / 1000 - device.state.last_update) < 300; // 5 минут вместо 2
                         
                         deviceOption.innerHTML = `
                             <div>
@@ -1130,7 +1161,7 @@
                             </div>
                             <div style="text-align: right;">
                                 <div style="font-size: 0.85rem; color: var(--text-secondary);">${deviceId}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">${lastSeen}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Обновлено: ${lastSeen}</div>
                             </div>
                         `;
                         
@@ -1153,7 +1184,8 @@
                             <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
                             <p>Устройств не найдено</p>
                             <p style="font-size: 0.9rem; margin-top: 10px;">
-                                Убедитесь, что ваше устройство EcoGrow подключено к интернету
+                                Убедитесь, что ваше устройство EcoGrow подключено к интернету<br>
+                                и отправляет данные в Firebase
                             </p>
                         </div>
                     `;
@@ -1161,6 +1193,7 @@
                 
             } catch (error) {
                 console.error('Ошибка загрузки устройств:', error);
+                showNotification('Ошибка загрузки устройств из Firebase', 'error');
             }
         }
         
@@ -1193,7 +1226,7 @@
                 
                 // Обновляем статус подключения
                 const isOnline = state.last_update && 
-                    (Date.now() / 1000 - state.last_update) < 120;
+                    (Date.now() / 1000 - state.last_update) < 300; // 5 минут для оффлайн
                 
                 const connectionDot = document.getElementById('connectionDot');
                 const connectionStatus = document.getElementById('connectionStatus');
@@ -1206,6 +1239,13 @@
                     connectionDot.className = 'status-dot offline';
                     connectionStatus.textContent = 'Оффлайн';
                     connectionDot.style.background = 'var(--accent-red)';
+                    
+                    if (state.last_update) {
+                        const lastUpdate = new Date(state.last_update * 1000);
+                        const now = new Date();
+                        const diffMinutes = Math.floor((now - lastUpdate) / 60000);
+                        connectionStatus.textContent = `Оффлайн (${diffMinutes} мин назад)`;
+                    }
                 }
                 
                 // Обновляем текущий раздел
@@ -1231,7 +1271,10 @@
                 await firebaseRequest('PATCH', `devices/${currentDevice}/commands`, command);
                 showNotification(`Команда отправлена: ${type} = ${value}`);
                 
-                setTimeout(loadDeviceState, 2000);
+                // Обновляем состояние через 2 секунды
+                setTimeout(() => {
+                    loadDeviceState();
+                }, 2000);
                 
             } catch (error) {
                 console.error('Ошибка отправки команды:', error);
@@ -1239,32 +1282,60 @@
             }
         }
         
+        // ИСПРАВЛЕННАЯ функция сохранения настроек
         async function saveSettings() {
-            if (!currentDevice) return;
+            if (!currentDevice) {
+                showNotification('Сначала выберите устройство', 'error');
+                return;
+            }
             
             try {
+                // Собираем настройки из текущего состояния и ожидающих изменений
                 const settings = {
-                    moisture_threshold: parseInt(document.getElementById('moistureThreshold')?.value) || 50,
-                    watering_delay: parseInt(document.getElementById('wateringDelay')?.value) || 30,
-                    watering_duration: parseInt(document.getElementById('wateringDuration')?.value) || 2,
-                    manual_pump_time: parseInt(document.getElementById('manualPumpTime')?.value) || 10,
-                    manual_light_time: parseInt(document.getElementById('manualLightTime')?.value) || 1,
-                    lamp_enabled: document.getElementById('lampEnabled')?.checked || false,
-                    lamp_start: document.getElementById('lampStart')?.value || '08:00',
-                    lamp_end: document.getElementById('lampEnd')?.value || '20:00',
-                    sleep_enabled: document.getElementById('sleepEnabled')?.checked || false,
-                    sleep_start: document.getElementById('sleepStart')?.value || '23:00',
-                    sleep_end: document.getElementById('sleepEnd')?.value || '07:00',
-                    time_manual: document.getElementById('timeManual')?.checked || false,
-                    telegram_alerts: document.getElementById('telegramAlerts')?.checked || false,
-                    device_name: document.getElementById('deviceName')?.value || 'EcoGrow'
+                    moisture_threshold: pendingChanges.moisture_threshold !== undefined ? 
+                        pendingChanges.moisture_threshold : (currentState.moisture_threshold || 50),
+                    watering_delay: pendingChanges.watering_delay !== undefined ? 
+                        pendingChanges.watering_delay : (currentState.watering_delay || 30),
+                    watering_duration: pendingChanges.watering_duration !== undefined ? 
+                        pendingChanges.watering_duration : (currentState.watering_duration || 2),
+                    manual_pump_time: pendingChanges.manual_pump_time !== undefined ? 
+                        pendingChanges.manual_pump_time : (currentState.manual_pump_time || 10),
+                    manual_light_time: pendingChanges.manual_light_time !== undefined ? 
+                        pendingChanges.manual_light_time : (currentState.manual_light_time || 1),
+                    lamp_enabled: pendingChanges.lamp_enabled !== undefined ? 
+                        pendingChanges.lamp_enabled : (currentState.lamp_enabled || false),
+                    lamp_start: pendingChanges.lamp_start !== undefined ? 
+                        pendingChanges.lamp_start : (currentState.lamp_start || '08:00'),
+                    lamp_end: pendingChanges.lamp_end !== undefined ? 
+                        pendingChanges.lamp_end : (currentState.lamp_end || '20:00'),
+                    sleep_enabled: pendingChanges.sleep_enabled !== undefined ? 
+                        pendingChanges.sleep_enabled : (currentState.sleep_enabled || false),
+                    sleep_start: pendingChanges.sleep_start !== undefined ? 
+                        pendingChanges.sleep_start : (currentState.sleep_start || '23:00'),
+                    sleep_end: pendingChanges.sleep_end !== undefined ? 
+                        pendingChanges.sleep_end : (currentState.sleep_end || '07:00'),
+                    time_manual: pendingChanges.time_manual !== undefined ? 
+                        pendingChanges.time_manual : (currentState.time_manual || false),
+                    telegram_alerts: pendingChanges.telegram_alerts !== undefined ? 
+                        pendingChanges.telegram_alerts : (currentState.telegram_alerts || false),
+                    device_name: pendingChanges.device_name !== undefined ? 
+                        pendingChanges.device_name : (currentState.device_name || 'EcoGrow')
                 };
                 
+                // Отправляем настройки
                 await firebaseRequest('PATCH', `devices/${currentDevice}/commands`, {
                     settings: JSON.stringify(settings)
                 });
                 
+                // Очищаем ожидающие изменения
+                pendingChanges = {};
+                
                 showNotification('Настройки сохранены и отправлены на устройство');
+                
+                // Обновляем состояние
+                setTimeout(() => {
+                    loadDeviceState();
+                }, 2000);
                 
             } catch (error) {
                 console.error('Ошибка сохранения настроек:', error);
@@ -1619,6 +1690,10 @@
         function renderMoistureSection() {
             const contentArea = document.getElementById('contentArea');
             const moisture = currentState.moisture || 0;
+            const threshold = pendingChanges.moisture_threshold !== undefined ? 
+                pendingChanges.moisture_threshold : (currentState.moisture_threshold || 50);
+            const delay = pendingChanges.watering_delay !== undefined ? 
+                pendingChanges.watering_delay : (currentState.watering_delay || 30);
             
             contentArea.innerHTML = `
                 <div class="dashboard-grid">
@@ -1636,8 +1711,8 @@
                                 <div class="slider-container">
                                     <input type="range" id="moistureThreshold" 
                                            min="10" max="90" step="1" 
-                                           value="${currentState.moisture_threshold || 50}">
-                                    <div class="slider-value" id="thresholdValue">${currentState.moisture_threshold || 50}%</div>
+                                           value="${threshold}">
+                                    <div class="slider-value" id="thresholdValue">${threshold}%</div>
                                 </div>
                                 <div style="margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);">
                                     При влажности ниже этого значения будет запущен полив
@@ -1645,12 +1720,12 @@
                             </div>
                             
                             <div class="control-item">
-                                <label>Задержка между поливами</label>
+                                <label>Задержка между поливами (минуты)</label>
                                 <div class="slider-container">
                                     <input type="range" id="wateringDelay" 
                                            min="5" max="240" step="5" 
-                                           value="${currentState.watering_delay || 30}">
-                                    <div class="slider-value" id="delayValue">${currentState.watering_delay || 30} мин</div>
+                                           value="${delay}">
+                                    <div class="slider-value" id="delayValue">${delay} мин</div>
                                 </div>
                                 <div style="margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);">
                                     Минимальное время между автоматическими поливами
@@ -1667,8 +1742,8 @@
                                 </div>
                                 <div>
                                     <div style="font-size: 0.9rem; color: var(--text-secondary);">Статус</div>
-                                    <div style="font-size: 1.2rem; font-weight: 700; color: ${moisture < (currentState.moisture_threshold || 50) ? 'var(--accent-orange)' : 'var(--accent-green)'}">
-                                        ${moisture < (currentState.moisture_threshold || 50) ? 'Требуется полив' : 'В норме'}
+                                    <div style="font-size: 1.2rem; font-weight: 700; color: ${moisture < threshold ? 'var(--accent-orange)' : 'var(--accent-green)'}">
+                                        ${moisture < threshold ? 'Требуется полив' : 'В норме'}
                                     </div>
                                 </div>
                             </div>
@@ -1720,25 +1795,31 @@
                 </div>
             `;
             
-            // Добавляем обработчики для слайдеров
+            // Добавляем обработчики для слайдеров - ИСПРАВЛЕНО
             const thresholdSlider = document.getElementById('moistureThreshold');
             const delaySlider = document.getElementById('wateringDelay');
             
             if (thresholdSlider) {
                 thresholdSlider.addEventListener('input', function() {
                     document.getElementById('thresholdValue').textContent = this.value + '%';
+                    pendingChanges.moisture_threshold = parseInt(this.value);
                 });
             }
             
             if (delaySlider) {
                 delaySlider.addEventListener('input', function() {
                     document.getElementById('delayValue').textContent = this.value + ' мин';
+                    pendingChanges.watering_delay = parseInt(this.value);
                 });
             }
         }
         
         function renderPumpSection() {
             const contentArea = document.getElementById('contentArea');
+            const duration = pendingChanges.watering_duration !== undefined ? 
+                pendingChanges.watering_duration : (currentState.watering_duration || 2);
+            const manualTime = pendingChanges.manual_pump_time !== undefined ? 
+                pendingChanges.manual_pump_time : (currentState.manual_pump_time || 10);
             
             contentArea.innerHTML = `
                 <div class="dashboard-grid">
@@ -1795,8 +1876,11 @@
                                 <div class="slider-container">
                                     <input type="range" id="wateringDuration" 
                                            min="1" max="60" step="1" 
-                                           value="${currentState.watering_duration || 2}">
-                                    <div class="slider-value" id="durationValue">${currentState.watering_duration || 2} сек</div>
+                                           value="${duration}">
+                                    <div class="slider-value" id="durationValue">${duration} сек</div>
+                                </div>
+                                <div style="margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);">
+                                    Длительность автоматического полива
                                 </div>
                             </div>
                             
@@ -1805,8 +1889,11 @@
                                 <div class="slider-container">
                                     <input type="range" id="manualPumpTime" 
                                            min="5" max="300" step="5" 
-                                           value="${currentState.manual_pump_time || 10}">
-                                    <div class="slider-value" id="manualPumpValue">${currentState.manual_pump_time || 10} сек</div>
+                                           value="${manualTime}">
+                                    <div class="slider-value" id="manualPumpValue">${manualTime} сек</div>
+                                </div>
+                                <div style="margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);">
+                                    Длительность полива при ручном включении
                                 </div>
                             </div>
                         </div>
@@ -1829,10 +1916,36 @@
                     </div>
                 </div>
             `;
+            
+            // Обработчики для слайдеров насоса
+            const durationSlider = document.getElementById('wateringDuration');
+            const manualPumpSlider = document.getElementById('manualPumpTime');
+            
+            if (durationSlider) {
+                durationSlider.addEventListener('input', function() {
+                    document.getElementById('durationValue').textContent = this.value + ' сек';
+                    pendingChanges.watering_duration = parseInt(this.value);
+                });
+            }
+            
+            if (manualPumpSlider) {
+                manualPumpSlider.addEventListener('input', function() {
+                    document.getElementById('manualPumpValue').textContent = this.value + ' сек';
+                    pendingChanges.manual_pump_time = parseInt(this.value);
+                });
+            }
         }
         
         function renderLightSection() {
             const contentArea = document.getElementById('contentArea');
+            const lampEnabled = pendingChanges.lamp_enabled !== undefined ? 
+                pendingChanges.lamp_enabled : (currentState.lamp_enabled || false);
+            const lampStart = pendingChanges.lamp_start !== undefined ? 
+                pendingChanges.lamp_start : (currentState.lamp_start || '08:00');
+            const lampEnd = pendingChanges.lamp_end !== undefined ? 
+                pendingChanges.lamp_end : (currentState.lamp_end || '20:00');
+            const manualLightTime = pendingChanges.manual_light_time !== undefined ? 
+                pendingChanges.manual_light_time : (currentState.manual_light_time || 1);
             
             contentArea.innerHTML = `
                 <div class="dashboard-grid">
@@ -1877,8 +1990,8 @@
                                 <i class="fas fa-clock"></i>
                                 <span>Расписание работы</span>
                             </div>
-                            <div class="card-badge ${currentState.lamp_enabled ? 'badge-success' : 'badge-warning'}">
-                                ${currentState.lamp_enabled ? 'АКТИВНО' : 'ВЫКЛЮЧЕНО'}
+                            <div class="card-badge ${lampEnabled ? 'badge-success' : 'badge-warning'}">
+                                ${lampEnabled ? 'АКТИВНО' : 'ВЫКЛЮЧЕНО'}
                             </div>
                         </div>
                         
@@ -1888,7 +2001,7 @@
                                 <span class="subtext">Автоматическое включение по времени</span>
                             </div>
                             <label class="switch">
-                                <input type="checkbox" id="lampEnabled" ${currentState.lamp_enabled ? 'checked' : ''}>
+                                <input type="checkbox" id="lampEnabled" ${lampEnabled ? 'checked' : ''}>
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -1896,20 +2009,76 @@
                         <div class="control-group" style="margin-top: 20px;">
                             <div class="control-item">
                                 <label>Время включения</label>
-                                <input type="time" id="lampStart" value="${currentState.lamp_start || '08:00'}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                                <input type="time" id="lampStart" value="${lampStart}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 1rem;">
                             </div>
                             <div class="control-item">
                                 <label>Время выключения</label>
-                                <input type="time" id="lampEnd" value="${currentState.lamp_end || '20:00'}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                                <input type="time" id="lampEnd" value="${lampEnd}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 1rem;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 30px; padding: 20px; background: var(--bg-primary); border-radius: 15px;">
+                            <h4 style="margin-bottom: 15px;"><i class="fas fa-clock"></i> Время ручного включения</h4>
+                            <div class="slider-container">
+                                <input type="range" id="manualLightTime" 
+                                       min="1" max="24" step="1" 
+                                       value="${manualLightTime}">
+                                <div class="slider-value" id="manualLightValue">${manualLightTime} ч</div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);">
+                                Длительность работы при ручном включении
                             </div>
                         </div>
                     </div>
                 </div>
             `;
+            
+            // Обработчики для света
+            const lampEnabledCheckbox = document.getElementById('lampEnabled');
+            const lampStartInput = document.getElementById('lampStart');
+            const lampEndInput = document.getElementById('lampEnd');
+            const manualLightSlider = document.getElementById('manualLightTime');
+            
+            if (lampEnabledCheckbox) {
+                lampEnabledCheckbox.addEventListener('change', function() {
+                    pendingChanges.lamp_enabled = this.checked;
+                });
+            }
+            
+            if (lampStartInput) {
+                lampStartInput.addEventListener('change', function() {
+                    pendingChanges.lamp_start = this.value;
+                });
+            }
+            
+            if (lampEndInput) {
+                lampEndInput.addEventListener('change', function() {
+                    pendingChanges.lamp_end = this.value;
+                });
+            }
+            
+            if (manualLightSlider) {
+                manualLightSlider.addEventListener('input', function() {
+                    document.getElementById('manualLightValue').textContent = this.value + ' ч';
+                    pendingChanges.manual_light_time = parseInt(this.value);
+                });
+            }
         }
         
         function renderSettingsSection() {
             const contentArea = document.getElementById('contentArea');
+            const deviceName = pendingChanges.device_name !== undefined ? 
+                pendingChanges.device_name : (currentState.device_name || 'EcoGrow');
+            const telegramAlerts = pendingChanges.telegram_alerts !== undefined ? 
+                pendingChanges.telegram_alerts : (currentState.telegram_alerts || false);
+            const timeManual = pendingChanges.time_manual !== undefined ? 
+                pendingChanges.time_manual : (currentState.time_manual || false);
+            const sleepEnabled = pendingChanges.sleep_enabled !== undefined ? 
+                pendingChanges.sleep_enabled : (currentState.sleep_enabled || false);
+            const sleepStart = pendingChanges.sleep_start !== undefined ? 
+                pendingChanges.sleep_start : (currentState.sleep_start || '23:00');
+            const sleepEnd = pendingChanges.sleep_end !== undefined ? 
+                pendingChanges.sleep_end : (currentState.sleep_end || '07:00');
             
             contentArea.innerHTML = `
                 <div class="dashboard-grid">
@@ -1924,7 +2093,7 @@
                         <div style="padding: 20px;">
                             <div class="control-item" style="margin-bottom: 25px;">
                                 <label>Название устройства</label>
-                                <input type="text" id="deviceName" value="${currentState.device_name || 'EcoGrow'}" 
+                                <input type="text" id="deviceName" value="${deviceName}" 
                                        style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 1rem;">
                             </div>
                             
@@ -1934,7 +2103,7 @@
                                     <span class="subtext">Отправлять сообщения об ошибках и событиях</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" id="telegramAlerts" ${currentState.telegram_alerts ? 'checked' : ''}>
+                                    <input type="checkbox" id="telegramAlerts" ${telegramAlerts ? 'checked' : ''}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -1945,7 +2114,7 @@
                                     <span class="subtext">Использовать смещение от системного времени</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" id="timeManual" ${currentState.time_manual ? 'checked' : ''}>
+                                    <input type="checkbox" id="timeManual" ${timeManual ? 'checked' : ''}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -1967,7 +2136,7 @@
                                     <span class="subtext">Отключает полив в указанное время</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" id="sleepEnabled" ${currentState.sleep_enabled ? 'checked' : ''}>
+                                    <input type="checkbox" id="sleepEnabled" ${sleepEnabled ? 'checked' : ''}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -1975,17 +2144,75 @@
                             <div class="control-group" style="margin-top: 20px;">
                                 <div class="control-item">
                                     <label>Начало режима сна</label>
-                                    <input type="time" id="sleepStart" value="${currentState.sleep_start || '23:00'}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                                    <input type="time" id="sleepStart" value="${sleepStart}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 1rem;">
                                 </div>
                                 <div class="control-item">
                                     <label>Конец режима сна</label>
-                                    <input type="time" id="sleepEnd" value="${currentState.sleep_end || '07:00'}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                                    <input type="time" id="sleepEnd" value="${sleepEnd}" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 1rem;">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px; padding: 20px; background: var(--bg-primary); border-radius: 15px;">
+                                <h4 style="margin-bottom: 15px;"><i class="fas fa-info-circle"></i> Информация об устройстве</h4>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                                    <div>
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary);">ID устройства</div>
+                                        <div style="font-size: 1rem; font-weight: 700; word-break: break-all;">${currentDevice || 'Не выбрано'}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary);">Версия прошивки</div>
+                                        <div style="font-size: 1rem; font-weight: 700;">4.5</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
+            
+            // Обработчики для настроек
+            const deviceNameInput = document.getElementById('deviceName');
+            const telegramAlertsCheckbox = document.getElementById('telegramAlerts');
+            const timeManualCheckbox = document.getElementById('timeManual');
+            const sleepEnabledCheckbox = document.getElementById('sleepEnabled');
+            const sleepStartInput = document.getElementById('sleepStart');
+            const sleepEndInput = document.getElementById('sleepEnd');
+            
+            if (deviceNameInput) {
+                deviceNameInput.addEventListener('change', function() {
+                    pendingChanges.device_name = this.value;
+                });
+            }
+            
+            if (telegramAlertsCheckbox) {
+                telegramAlertsCheckbox.addEventListener('change', function() {
+                    pendingChanges.telegram_alerts = this.checked;
+                });
+            }
+            
+            if (timeManualCheckbox) {
+                timeManualCheckbox.addEventListener('change', function() {
+                    pendingChanges.time_manual = this.checked;
+                });
+            }
+            
+            if (sleepEnabledCheckbox) {
+                sleepEnabledCheckbox.addEventListener('change', function() {
+                    pendingChanges.sleep_enabled = this.checked;
+                });
+            }
+            
+            if (sleepStartInput) {
+                sleepStartInput.addEventListener('change', function() {
+                    pendingChanges.sleep_start = this.value;
+                });
+            }
+            
+            if (sleepEndInput) {
+                sleepEndInput.addEventListener('change', function() {
+                    pendingChanges.sleep_end = this.value;
+                });
+            }
         }
         
         function renderErrorsSection() {
@@ -2010,22 +2237,25 @@
                             ${hasErrors ? `
                                 <div class="errors-container">
                                     ${errors.map((error, index) => {
-                                        const isCritical = error.code && (error.code > 200 || error.code < 100);
+                                        const isCritical = error.critical || false;
                                         return `
                                             <div class="error-item ${isCritical ? '' : 'warning'}">
                                                 <div class="error-header">
                                                     <div class="error-time">
                                                         <i class="fas fa-clock"></i>
-                                                        ${error.timestamp ? formatDateTime(error.timestamp) : 'Неизвестно'}
+                                                        ${error.time ? error.time : 'Неизвестно'}
                                                     </div>
                                                     ${isCritical ? '<div class="error-critical">КРИТИЧЕСКАЯ</div>' : ''}
                                                 </div>
-                                                <div style="font-weight: 600; margin-bottom: 5px;">${error.message || 'Неизвестная ошибка'}</div>
-                                                ${error.details ? `<div style="font-size: 0.9rem; color: var(--text-secondary);">${error.details}</div>` : ''}
-                                                ${error.code ? `<div style="font-size: 0.85rem; margin-top: 5px;">Код ошибки: ${error.code}</div>` : ''}
+                                                <div style="font-weight: 600; margin-bottom: 5px;">${error.msg || 'Неизвестная ошибка'}</div>
                                             </div>
                                         `;
                                     }).join('')}
+                                </div>
+                                <div style="margin-top: 20px; text-align: center;">
+                                    <button class="btn btn-secondary" onclick="sendCommand('clear_errors', 'true')">
+                                        <i class="fas fa-trash"></i> Очистить ошибки
+                                    </button>
                                 </div>
                             ` : `
                                 <div style="text-align: center; padding: 60px 20px;">
@@ -2070,6 +2300,15 @@
                                     'Для подключения Telegram бота отправьте команду /start вашему боту с устройства'
                                 }
                             </p>
+                            <div style="background: var(--bg-primary); padding: 20px; border-radius: 12px; margin-top: 20px;">
+                                <h4 style="margin-bottom: 15px;">Доступные команды</h4>
+                                <div style="text-align: left; display: inline-block;">
+                                    <div style="margin-bottom: 10px;"><code>/start</code> - Начало работы</div>
+                                    <div style="margin-bottom: 10px;"><code>/status</code> - Статус системы</div>
+                                    <div style="margin-bottom: 10px;"><code>/moisture</code> - Текущая влажность</div>
+                                    <div style="margin-bottom: 10px;"><code>/errors</code> - Список ошибок</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2083,8 +2322,10 @@
             }
             
             autoRefreshInterval = setInterval(() => {
-                loadDeviceState();
-            }, 10000);
+                if (currentDevice) {
+                    loadDeviceState();
+                }
+            }, 10000); // Обновление каждые 10 секунд
         }
         
         // ======================= ИНИЦИАЛИЗАЦИЯ =======================
@@ -2137,12 +2378,13 @@
             // Проверяем сохраненное устройство
             const savedDevice = localStorage.getItem('lastDevice');
             if (savedDevice) {
+                // Даем время на загрузку устройств
                 setTimeout(() => {
                     if (devices[savedDevice]) {
                         currentDevice = savedDevice;
                         connectToDevice(savedDevice);
                     }
-                }, 1000);
+                }, 2000);
             }
             
             // Полноэкранный режим
@@ -2156,8 +2398,21 @@
                 }
             });
             
-            // Обновляем список устройств каждые 60 секунд
-            setInterval(loadDevices, 60000);
+            // Обновляем список устройств каждые 30 секунд
+            setInterval(loadDevices, 30000);
+            
+            // Обработка отключения от Firebase при ошибке
+            window.addEventListener('online', function() {
+                showNotification('Соединение восстановлено', 'success');
+                loadDevices();
+                if (currentDevice) {
+                    loadDeviceState();
+                }
+            });
+            
+            window.addEventListener('offline', function() {
+                showNotification('Потеряно соединение с интернетом', 'error');
+            });
         });
     </script>
 </body>
