@@ -64,12 +64,10 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* ДОБАВЛЕНО: Исправление черного текста в темной теме */
         input, select, textarea {
             color: var(--text-primary) !important;
         }
         
-        /* ДОБАВЛЕНО: Улучшенная видимость текста в карточках */
         .card, .control-item, .stat-box, .info-card {
             color: var(--text-primary);
         }
@@ -887,7 +885,6 @@
             to { transform: rotate(360deg); }
         }
         
-        /* ДОБАВЛЕНО: Исправление времени ввода */
         input[type="time"], input[type="text"] {
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
@@ -1022,7 +1019,7 @@
         let currentDevice = null;
         let devices = {};
         let currentState = {};
-        let pendingChanges = {}; // ДОБАВЛЕНО: Отслеживание ожидающих изменений
+        let pendingChanges = {};
         let chart = null;
         let autoRefreshInterval = null;
         let currentSection = 'dashboard';
@@ -1037,7 +1034,7 @@
                 document.documentElement.setAttribute('data-theme', currentTheme);
                 themeSwitch.checked = currentTheme === 'dark';
                 
-                // Обработчик изменения темы - ИСПРАВЛЕНО: Удаляем двойное сохранение
+                // Обработчик изменения темы
                 themeSwitch.addEventListener('change', function() {
                     const newTheme = this.checked ? 'dark' : 'light';
                     document.documentElement.setAttribute('data-theme', newTheme);
@@ -1147,10 +1144,10 @@
                         const lastSeen = device.info.last_seen ? 
                             formatDateTime(device.info.last_seen) : 'Неизвестно';
                         
-                        // Проверяем онлайн статус - ИСПРАВЛЕНО: Учитываем время последнего обновления состояния
+                        // Проверяем онлайн статус
                         const isOnline = device.state && 
                             device.state.last_update && 
-                            (Date.now() / 1000 - device.state.last_update) < 300; // 5 минут вместо 2
+                            (Date.now() / 1000 - device.state.last_update) < 600; // 10 минут
                         
                         deviceOption.innerHTML = `
                             <div>
@@ -1224,9 +1221,11 @@
                 const state = await firebaseRequest('GET', `devices/${currentDevice}/state`);
                 currentState = state || {};
                 
+                console.log("Device state loaded:", currentState);
+                
                 // Обновляем статус подключения
                 const isOnline = state.last_update && 
-                    (Date.now() / 1000 - state.last_update) < 300; // 5 минут для оффлайн
+                    (Date.now() / 1000 - state.last_update) < 600; // 10 минут для оффлайн
                 
                 const connectionDot = document.getElementById('connectionDot');
                 const connectionStatus = document.getElementById('connectionStatus');
@@ -1282,7 +1281,7 @@
             }
         }
         
-        // ИСПРАВЛЕННАЯ функция сохранения настроек
+        // Функция сохранения настроек
         async function saveSettings() {
             if (!currentDevice) {
                 showNotification('Сначала выберите устройство', 'error');
@@ -1290,7 +1289,7 @@
             }
             
             try {
-                // Собираем настройки из текущего состояния и ожидающих изменений
+                // Собираем настройки
                 const settings = {
                     moisture_threshold: pendingChanges.moisture_threshold !== undefined ? 
                         pendingChanges.moisture_threshold : (currentState.moisture_threshold || 50),
@@ -1599,18 +1598,18 @@
                         </div>
                         
                         <div class="action-buttons">
-                            <div class="action-btn ${currentState.pump_on ? 'active' : ''}" onclick="sendCommand('pump', '${currentState.pump_on ? 'off' : 'on'}')">
+                            <button class="action-btn ${currentState.pump_on ? 'active' : ''}" onclick="sendCommand('pump', '${currentState.pump_on ? 'off' : 'on'}')">
                                 <i class="fas ${currentState.pump_on ? 'fa-stop' : 'fa-play'}"></i>
                                 <span>${currentState.pump_on ? 'Выключить' : 'Включить'} насос</span>
-                            </div>
-                            <div class="action-btn ${currentState.light_on ? 'active' : ''}" onclick="sendCommand('light', '${currentState.light_on ? 'off' : 'on'}')">
+                            </button>
+                            <button class="action-btn ${currentState.light_on ? 'active' : ''}" onclick="sendCommand('light', '${currentState.light_on ? 'off' : 'on'}')">
                                 <i class="fas ${currentState.light_on ? 'fa-lightbulb' : 'fa-lightbulb'}"></i>
                                 <span>${currentState.light_on ? 'Выключить' : 'Включить'} свет</span>
-                            </div>
-                            <div class="action-btn" onclick="sendCommand('pump', 'water')">
+                            </button>
+                            <button class="action-btn" onclick="sendCommand('pump', 'water')">
                                 <i class="fas fa-tint"></i>
                                 <span>Полить сейчас</span>
-                            </div>
+                            </button>
                         </div>
                     </div>
                     
@@ -1795,7 +1794,7 @@
                 </div>
             `;
             
-            // Добавляем обработчики для слайдеров - ИСПРАВЛЕНО
+            // Добавляем обработчики для слайдеров
             const thresholdSlider = document.getElementById('moistureThreshold');
             const delaySlider = document.getElementById('wateringDelay');
             
@@ -1847,18 +1846,18 @@
                         </div>
                         
                         <div class="action-buttons">
-                            <div class="action-btn ${currentState.pump_on ? 'active' : ''}" onclick="sendCommand('pump', '${currentState.pump_on ? 'off' : 'on'}')">
+                            <button class="action-btn ${currentState.pump_on ? 'active' : ''}" onclick="sendCommand('pump', '${currentState.pump_on ? 'off' : 'on'}')">
                                 <i class="fas ${currentState.pump_on ? 'fa-stop' : 'fa-play'}"></i>
                                 <span>${currentState.pump_on ? 'Выключить' : 'Включить'}</span>
-                            </div>
-                            <div class="action-btn" onclick="sendCommand('pump', 'water')">
+                            </button>
+                            <button class="action-btn" onclick="sendCommand('pump', 'water')">
                                 <i class="fas fa-tint"></i>
                                 <span>Полить сейчас</span>
-                            </div>
-                            <div class="action-btn ${!currentState.manual_pump ? 'active' : ''}" onclick="sendCommand('pump', 'auto')">
+                            </button>
+                            <button class="action-btn ${!currentState.manual_pump ? 'active' : ''}" onclick="sendCommand('pump', 'auto')">
                                 <i class="fas fa-robot"></i>
                                 <span>Авто режим</span>
-                            </div>
+                            </button>
                         </div>
                     </div>
                     
@@ -1973,14 +1972,14 @@
                         </div>
                         
                         <div class="action-buttons">
-                            <div class="action-btn ${currentState.light_on ? 'active' : ''}" onclick="sendCommand('light', '${currentState.light_on ? 'off' : 'on'}')">
+                            <button class="action-btn ${currentState.light_on ? 'active' : ''}" onclick="sendCommand('light', '${currentState.light_on ? 'off' : 'on'}')">
                                 <i class="fas ${currentState.light_on ? 'fa-toggle-off' : 'fa-toggle-on'}"></i>
                                 <span>${currentState.light_on ? 'Выключить' : 'Включить'}</span>
-                            </div>
-                            <div class="action-btn ${!currentState.manual_light ? 'active' : ''}" onclick="sendCommand('light', 'auto')">
+                            </button>
+                            <button class="action-btn ${!currentState.manual_light ? 'active' : ''}" onclick="sendCommand('light', 'auto')">
                                 <i class="fas fa-robot"></i>
                                 <span>Авто режим</span>
-                            </div>
+                            </button>
                         </div>
                     </div>
                     
