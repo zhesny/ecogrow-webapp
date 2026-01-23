@@ -251,7 +251,7 @@
             gap: 10px;
         }
         
-        /* Влажность - ИСПРАВЛЕНО: убрал зеленый прямоугольник */
+        /* Влажность */
         .moisture-display {
             text-align: center;
             margin: 20px 0 30px;
@@ -264,7 +264,7 @@
         .moisture-value {
             font-size: 72px;
             font-weight: 900;
-            color: var(--text-primary); /* Убрал градиент, теперь просто цвет текста */
+            color: var(--text-primary);
             margin-bottom: 5px;
             line-height: 1;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -301,7 +301,7 @@
             transform: translateX(-50%);
         }
         
-        /* Порог влажности - ИСПРАВЛЕНО */
+        /* Порог влажности */
         .threshold-control {
             margin: 20px 0;
             padding: 15px;
@@ -342,7 +342,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
-        /* Кнопки - ИСПРАВЛЕНО */
+        /* Кнопки */
         .btn {
             padding: 12px 20px;
             border: none;
@@ -597,6 +597,14 @@
             max-width: 300px;
         }
         
+        .notification.error {
+            background: var(--danger);
+        }
+        
+        .notification.warning {
+            background: var(--warning);
+        }
+        
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -667,9 +675,54 @@
                 font-size: 60px;
             }
         }
+        
+        /* Панель отладки */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 9999;
+            border: 1px solid var(--primary);
+            display: none;
+        }
+        
+        .debug-toggle {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 10000;
+            background: var(--dark);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
+    <!-- Кнопка отладки -->
+    <button class="debug-toggle" onclick="toggleDebug()">🐛 Отладка</button>
+    
+    <!-- Панель отладки -->
+    <div id="debugPanel" class="debug-panel">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <strong>Отладка</strong>
+            <button onclick="clearDebug()" style="background: #e74c3c; color: white; border: none; padding: 2px 8px; border-radius: 3px; font-size: 10px;">Очистить</button>
+        </div>
+        <div id="debugLog"></div>
+    </div>
+    
     <div class="container">
         <header>
             <div class="header-content">
@@ -718,12 +771,13 @@
                 <a href="#" class="footer-link" onclick="showHelp()">Помощь</a>
                 <a href="#" class="footer-link" onclick="showAbout()">О системе</a>
                 <a href="https://github.com/zhesny/ecogrow-webapp" class="footer-link" target="_blank">GitHub</a>
+                <a href="#" class="footer-link" onclick="testFirebase()">Тест Firebase</a>
             </div>
         </footer>
     </div>
 
     <script>
-        // КОНФИГУРАЦИЯ FIREBASE - ИСПРАВЛЕННАЯ
+        // КОНФИГУРАЦИЯ FIREBASE - УБЕДИТЕСЬ ЧТО ПРАВИЛЬНАЯ!
         const firebaseConfig = {
             apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
             authDomain: "ecogrow-remote.firebaseapp.com",
@@ -740,9 +794,68 @@
         let firebaseApp = null;
         let firebaseInitialized = false;
         
-        // Инициализация при загрузке
+        // ======================= ФУНКЦИИ ОТЛАДКИ =======================
+        function debugLog(message) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            const debugLog = document.getElementById('debugLog');
+            
+            if (debugLog) {
+                const entry = document.createElement('div');
+                entry.style.marginBottom = '5px';
+                entry.style.paddingBottom = '5px';
+                entry.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                entry.innerHTML = `<span style="color: #95a5a6;">[${timeStr}]</span> ${message}`;
+                debugLog.appendChild(entry);
+                
+                // Прокручиваем вниз
+                debugLog.scrollTop = debugLog.scrollHeight;
+                
+                console.log(`[DEBUG] ${message}`);
+            }
+        }
+        
+        function toggleDebug() {
+            const panel = document.getElementById('debugPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        function clearDebug() {
+            const debugLog = document.getElementById('debugLog');
+            if (debugLog) {
+                debugLog.innerHTML = '';
+            }
+        }
+        
+        // ======================= ФУНКЦИЯ ФОРМАТИРОВАНИЯ ВРЕМЕНИ =======================
+        function formatTimeForInput(timeStr) {
+            if (!timeStr || timeStr === "--:--") return "08:00";
+            
+            debugLog(`Форматирование времени: "${timeStr}"`);
+            
+            // Убираем лишние пробелы
+            timeStr = timeStr.trim();
+            
+            // Если уже в формате HH:MM, возвращаем как есть
+            if (/^\d{2}:\d{2}$/.test(timeStr)) {
+                return timeStr;
+            }
+            
+            // Если в формате "8:00", добавляем ведущий ноль
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                let hours = parts[0].padStart(2, '0');
+                let minutes = parts[1].padStart(2, '0');
+                return `${hours}:${minutes}`;
+            }
+            
+            debugLog(`Неверный формат времени: "${timeStr}"`);
+            return "08:00";
+        }
+        
+        // ======================= ОСНОВНЫЕ ФУНКЦИИ =======================
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('=== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===');
+            debugLog('=== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===');
             
             // Загрузка темы
             const savedTheme = localStorage.getItem('ecogrow-theme');
@@ -759,37 +872,37 @@
         });
         
         function initializeFirebase() {
-            console.log('Инициализация Firebase...');
+            debugLog('Инициализация Firebase...');
             
             try {
-                // Проверяем, не инициализирован ли Firebase уже
+                // Проверяем, загружена ли Firebase
                 if (typeof firebase === 'undefined') {
-                    console.error('Firebase не загружен');
-                    showError('Ошибка: Firebase не загружен');
+                    debugLog('❌ Firebase не загружен');
+                    showNotification('Ошибка: Firebase не загружен', 'error');
                     return;
                 }
                 
                 // Пробуем получить список всех приложений Firebase
                 const apps = firebase.apps;
-                console.log('Найдено приложений Firebase:', apps.length);
+                debugLog(`Найдено приложений Firebase: ${apps.length}`);
                 
                 // Если Firebase уже инициализирован, используем существующий экземпляр
                 if (apps.length > 0) {
-                    console.log('Используем существующий экземпляр Firebase');
+                    debugLog('Используем существующий экземпляр Firebase');
                     firebaseApp = apps[0];
                     firebaseInitialized = true;
                     onFirebaseReady();
                 } else {
                     // Инициализируем Firebase
-                    console.log('Создаем новый экземпляр Firebase');
+                    debugLog('Создаем новый экземпляр Firebase');
                     firebaseApp = firebase.initializeApp(firebaseConfig);
                     firebaseInitialized = true;
                     onFirebaseReady();
                 }
                 
             } catch (error) {
-                console.error('Ошибка инициализации Firebase:', error);
-                showError('Ошибка подключения к Firebase. Проверьте конфигурацию.');
+                debugLog(`❌ Ошибка инициализации Firebase: ${error.message}`);
+                showNotification('Ошибка подключения к Firebase', 'error');
                 
                 // Пробуем повторно через 3 секунды
                 setTimeout(initializeFirebase, 3000);
@@ -797,18 +910,18 @@
         }
         
         function onFirebaseReady() {
-            console.log('Firebase готов к работе');
+            debugLog('Firebase готов к работе');
             
             // Пробуем анонимную аутентификацию
             firebase.auth().signInAnonymously()
                 .then(() => {
-                    console.log('Анонимная аутентификация успешна');
+                    debugLog('✅ Анонимная аутентификация успешна');
                     updateConnectionStatus(true);
                     loadDevices();
                 })
                 .catch(error => {
-                    console.error('Ошибка аутентификации:', error);
-                    showError('Ошибка аутентификации. Пробуем продолжить без нее...');
+                    debugLog(`❌ Ошибка аутентификации: ${error.message}`);
+                    showNotification('Пробуем продолжить без аутентификации...', 'warning');
                     
                     // Пробуем продолжить без аутентификации
                     updateConnectionStatus(true);
@@ -850,10 +963,10 @@
         }
         
         function loadDevices() {
-            console.log('Загрузка устройств...');
+            debugLog('Загрузка устройств...');
             
             if (!firebaseInitialized) {
-                console.error('Firebase не инициализирован');
+                debugLog('❌ Firebase не инициализирован');
                 return;
             }
             
@@ -867,11 +980,16 @@
                     if (data) {
                         Object.keys(data).forEach(deviceId => {
                             const device = data[deviceId];
+                            const deviceName = device.info?.device_name || device.info?.name || `Устройство ${deviceId}`;
+                            const isOnline = device.state?.online || false;
+                            
                             devices.push({
                                 id: deviceId,
-                                name: device.info?.device_name || device.info?.name || 'Устройство ' + deviceId,
-                                online: device.state?.online || false
+                                name: deviceName,
+                                online: isOnline
                             });
+                            
+                            debugLog(`Найдено устройство: ${deviceName} (${deviceId}) - ${isOnline ? '🟢' : '🔴'}`);
                         });
                         
                         updateDeviceList(devices);
@@ -883,12 +1001,13 @@
                             showNoDevices();
                         }
                     } else {
+                        debugLog('Устройства не найдены в Firebase');
                         showNoDevices();
                     }
                 })
                 .catch(error => {
-                    console.error('Ошибка загрузки устройств:', error);
-                    showError('Ошибка загрузки устройств');
+                    debugLog(`❌ Ошибка загрузки устройств: ${error.message}`);
+                    showNotification('Ошибка загрузки устройств', 'error');
                 });
         }
         
@@ -905,7 +1024,7 @@
         }
         
         function selectDevice(deviceId) {
-            console.log('Выбрано устройство:', deviceId);
+            debugLog(`Выбрано устройство: ${deviceId}`);
             
             if (!deviceId) {
                 showNoDevices();
@@ -930,6 +1049,9 @@
                     <p>Пожалуйста, убедитесь, что устройство включено и подключено к интернету.</p>
                     <button class="btn btn-primary" onclick="loadDevices()" style="margin-top: 20px;">
                         <i class="fas fa-sync-alt"></i> Обновить
+                    </button>
+                    <button class="btn btn-secondary" onclick="testFirebase()" style="margin-top: 10px;">
+                        <i class="fas fa-bug"></i> Тест Firebase
                     </button>
                 </div>
             `;
@@ -1051,7 +1173,7 @@
                             </div>
                             <div class="time-group">
                                 <div class="time-label">Выключение света</div>
-                                <input type="time" id="lightEnd" class="time-input" value="22:00">
+                                <input type="time" id="lightEnd" class="time-input" value="20:00">
                             </div>
                         </div>
                         
@@ -1062,7 +1184,7 @@
                             </div>
                             <div class="time-group">
                                 <div class="time-label">Конец блокировки</div>
-                                <input type="time" id="sleepEnd" class="time-input" value="06:00">
+                                <input type="time" id="sleepEnd" class="time-input" value="07:00">
                             </div>
                         </div>
                         
@@ -1154,7 +1276,7 @@
         }
         
         function setupDeviceEventListeners() {
-            // Ползунок порога влажности - ИСПРАВЛЕНО
+            // Ползунок порога влажности
             const thresholdSlider = document.getElementById('thresholdSlider');
             if (thresholdSlider) {
                 thresholdSlider.addEventListener('input', function() {
@@ -1193,7 +1315,7 @@
         function listenToDeviceData() {
             if (!currentDeviceId || !firebaseInitialized) return;
             
-            console.log('Начинаем слушать данные устройства:', currentDeviceId);
+            debugLog(`Начинаем слушать данные устройства: ${currentDeviceId}`);
             
             // Слушаем состояние устройства
             const stateRef = firebase.database().ref(`devices/${currentDeviceId}/state`);
@@ -1203,10 +1325,11 @@
                 if (data) {
                     updateDeviceUI(data);
                 } else {
-                    console.warn('Устройство не отправляет данные');
+                    debugLog('Устройство не отправляет данные');
                 }
             }, (error) => {
-                console.error('Ошибка подключения к устройству:', error);
+                debugLog(`Ошибка подключения к устройству: ${error.message}`);
+                showNotification('Ошибка подключения к устройству', 'error');
             });
             
             // Слушаем информацию об устройстве
@@ -1220,7 +1343,7 @@
         }
         
         function updateDeviceUI(data) {
-            console.log('Обновление UI:', data);
+            debugLog('Обновление UI с данными устройства');
             
             // Обновление статуса онлайн
             if (data.online !== undefined) {
@@ -1233,7 +1356,7 @@
                 }
             }
             
-            // Влажность - ИСПРАВЛЕНО: убрал градиент, оставил просто цвет
+            // Влажность
             if (data.moisture !== undefined) {
                 const moistureValue = document.getElementById('moistureValue');
                 const moistureFill = document.getElementById('moistureFill');
@@ -1251,7 +1374,7 @@
                 }
             }
             
-            // Порог влажности - ИСПРАВЛЕНО
+            // Порог влажности
             if (data.moisture_threshold !== undefined) {
                 const thresholdValue = document.getElementById('thresholdValue');
                 const thresholdSlider = document.getElementById('thresholdSlider');
@@ -1297,22 +1420,22 @@
                 if (lightOffBtn) lightOffBtn.disabled = !data.light_on;
             }
             
-            // Настройки времени
+            // Настройки времени - ИСПРАВЛЕНО: используем функцию форматирования
             if (data.lamp_start !== undefined) {
                 const input = document.getElementById('lightStart');
-                if (input) input.value = data.lamp_start;
+                if (input) input.value = formatTimeForInput(data.lamp_start);
             }
             if (data.lamp_end !== undefined) {
                 const input = document.getElementById('lightEnd');
-                if (input) input.value = data.lamp_end;
+                if (input) input.value = formatTimeForInput(data.lamp_end);
             }
             if (data.sleep_start !== undefined) {
                 const input = document.getElementById('sleepStart');
-                if (input) input.value = data.sleep_start;
+                if (input) input.value = formatTimeForInput(data.sleep_start);
             }
             if (data.sleep_end !== undefined) {
                 const input = document.getElementById('sleepEnd');
-                if (input) input.value = data.sleep_end;
+                if (input) input.value = formatTimeForInput(data.sleep_end);
             }
             
             // Переключатели
@@ -1346,7 +1469,7 @@
         }
         
         function updateDeviceInfo(info) {
-            console.log('Информация об устройстве:', info);
+            debugLog('Информация об устройстве обновлена');
             
             const deviceSelector = document.getElementById('deviceSelector');
             if (deviceSelector && info.device_name) {
@@ -1379,16 +1502,21 @@
                     </li>
                 `).join('');
             } catch (e) {
-                console.error('Ошибка парсинга лога:', e);
+                debugLog(`Ошибка парсинга лога: ${e.message}`);
             }
         }
         
-        // ФУНКЦИИ ОТПРАВКИ КОМАНД - ИСПРАВЛЕННЫЕ
+        // ======================= ФУНКЦИИ ОТПРАВКИ КОМАНД =======================
         function sendCommand(type, action) {
-            console.log(`Отправка команды: ${type} = ${action}`);
+            debugLog(`Отправка команды: ${type} = ${action}`);
             
             if (!currentDeviceId || !firebaseInitialized) {
-                showNotification('Сначала выберите устройство');
+                showNotification('Сначала выберите устройство', 'error');
+                return;
+            }
+            
+            if (!firebaseApp) {
+                showNotification('Firebase не инициализирован', 'error');
                 return;
             }
             
@@ -1397,24 +1525,27 @@
             // Создаем команду
             const command = {};
             command[type] = action;
+            command.timestamp = Date.now(); // Добавляем метку времени
+            
+            debugLog(`Команда для отправки: ${JSON.stringify(command)}`);
             
             // Отправляем команду
             commandsRef.update(command)
                 .then(() => {
-                    console.log('✅ Команда отправлена');
+                    debugLog('✅ Команда успешно отправлена в Firebase');
                     showNotification(`Команда отправлена: ${action}`);
                 })
                 .catch(error => {
-                    console.error('❌ Ошибка отправки команды:', error);
-                    showNotification('Ошибка отправки команды');
+                    debugLog(`❌ Ошибка отправки команды: ${error.message}`);
+                    showNotification(`Ошибка: ${error.message}`, 'error');
                 });
         }
         
         function saveThreshold(value) {
-            console.log('Сохранение порога:', value);
+            debugLog(`Сохранение порога: ${value}%`);
             
             if (!currentDeviceId || !firebaseInitialized) {
-                showNotification('Сначала выберите устройство');
+                showNotification('Сначала выберите устройство', 'error');
                 return;
             }
             
@@ -1424,17 +1555,17 @@
                 moisture_threshold: parseInt(value)
             })
             .then(() => {
-                console.log('✅ Порог сохранен');
+                debugLog('✅ Порог сохранен');
                 showNotification('Порог влажности сохранен');
             })
             .catch(error => {
-                console.error('❌ Ошибка сохранения порога:', error);
-                showNotification('Ошибка сохранения порога');
+                debugLog(`❌ Ошибка сохранения порога: ${error.message}`);
+                showNotification('Ошибка сохранения порога', 'error');
             });
         }
         
         function saveTimeSetting(id, value) {
-            console.log(`Сохранение времени ${id}:`, value);
+            debugLog(`Сохранение времени ${id}: ${value}`);
             
             if (!currentDeviceId || !firebaseInitialized) return;
             
@@ -1454,15 +1585,15 @@
                 [firebaseKey]: value
             })
             .then(() => {
-                console.log(`✅ ${id} сохранен`);
+                debugLog(`✅ ${id} сохранен`);
             })
             .catch(error => {
-                console.error(`❌ Ошибка сохранения ${id}:`, error);
+                debugLog(`❌ Ошибка сохранения ${id}: ${error.message}`);
             });
         }
         
         function saveSwitchSetting(id, value) {
-            console.log(`Сохранение переключателя ${id}:`, value);
+            debugLog(`Сохранение переключателя ${id}: ${value}`);
             
             if (!currentDeviceId || !firebaseInitialized) return;
             
@@ -1481,15 +1612,17 @@
                 [firebaseKey]: value
             })
             .then(() => {
-                console.log(`✅ ${id} сохранен`);
+                debugLog(`✅ ${id} сохранен`);
             })
             .catch(error => {
-                console.error(`❌ Ошибка сохранения ${id}:`, error);
+                debugLog(`❌ Ошибка сохранения ${id}: ${error.message}`);
             });
         }
         
         function clearErrors() {
             if (!currentDeviceId || !firebaseInitialized) return;
+            
+            debugLog('Очистка ошибок');
             
             const commandsRef = firebase.database().ref(`devices/${currentDeviceId}/commands`);
             
@@ -1500,7 +1633,7 @@
                 showNotification('Лог ошибок очищен');
             })
             .catch(error => {
-                console.error('Ошибка очистки лога:', error);
+                debugLog(`Ошибка очистки лога: ${error.message}`);
             });
         }
         
@@ -1508,6 +1641,8 @@
             if (!confirm('Вы уверены, что хотите сбросить все настройки?')) return;
             
             if (!currentDeviceId || !firebaseInitialized) return;
+            
+            debugLog('Сброс настроек');
             
             const commandsRef = firebase.database().ref(`devices/${currentDeviceId}/commands`);
             
@@ -1518,7 +1653,7 @@
                 showNotification('Настройки сброшены');
             })
             .catch(error => {
-                console.error('Ошибка сброса настроек:', error);
+                debugLog(`Ошибка сброса настроек: ${error.message}`);
             });
         }
         
@@ -1526,6 +1661,8 @@
             if (!confirm('Вы уверены, что хотите сбросить настройки WiFi?')) return;
             
             if (!currentDeviceId || !firebaseInitialized) return;
+            
+            debugLog('Сброс WiFi');
             
             const commandsRef = firebase.database().ref(`devices/${currentDeviceId}/commands`);
             
@@ -1536,39 +1673,68 @@
                 showNotification('Настройки WiFi сброшены');
             })
             .catch(error => {
-                console.error('Ошибка сброса WiFi:', error);
+                debugLog(`Ошибка сброса WiFi: ${error.message}`);
             });
         }
         
-        function showNotification(message) {
+        // ======================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =======================
+        function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            notification.className = `notification ${type}`;
+            
+            let icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-triangle';
+            if (type === 'warning') icon = 'fa-exclamation-circle';
+            
+            notification.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
             
             document.body.appendChild(notification);
             
             setTimeout(() => {
                 notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
                 setTimeout(() => {
-                    document.body.removeChild(notification);
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
                 }, 300);
             }, 3000);
         }
         
-        function showError(message) {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.style.background = '#e74c3c';
-            notification.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+        function testFirebase() {
+            debugLog('=== ТЕСТ FIREBASE ===');
             
-            document.body.appendChild(notification);
+            if (!firebaseInitialized) {
+                debugLog('❌ Firebase не инициализирован');
+                showNotification('Firebase не инициализирован', 'error');
+                return;
+            }
             
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 5000);
+            // Пробуем получить список устройств
+            const devicesRef = firebase.database().ref('devices');
+            
+            devicesRef.once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    if (data) {
+                        const deviceCount = Object.keys(data).length;
+                        debugLog(`✅ Firebase подключен. Устройств: ${deviceCount}`);
+                        showNotification(`Firebase подключен (${deviceCount} устройств)`);
+                        
+                        // Показываем список устройств
+                        Object.keys(data).forEach(deviceId => {
+                            const device = data[deviceId];
+                            debugLog(`- ${device.info?.device_name || deviceId} (${deviceId})`);
+                        });
+                    } else {
+                        debugLog('⚠️ Firebase подключен, но устройств нет');
+                        showNotification('Firebase подключен, но устройств нет', 'warning');
+                    }
+                })
+                .catch(error => {
+                    debugLog(`❌ Ошибка теста Firebase: ${error.message}`);
+                    showNotification(`Ошибка Firebase: ${error.message}`, 'error');
+                });
         }
         
         function showHelp() {
@@ -1578,6 +1744,7 @@
 1. Выбор устройства:
    - Выберите ваше устройство из списка
    - Если устройств нет, проверьте подключение к интернету
+   - Нажмите кнопку "Тест Firebase" для проверки подключения
 
 2. Управление:
    - Кнопки "Включить/Выключить" для ручного управления
@@ -1593,6 +1760,10 @@
    - Лог ошибок системы
    - Кнопки сброса настроек
    - Информация о системе
+
+5. Отладка:
+   - Нажмите кнопку "🐛 Отладка" внизу слева
+   - Включите консоль разработчика (F12)
             `);
         }
         
