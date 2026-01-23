@@ -2346,4 +2346,515 @@
                                 <div style="font-size: 0.9rem; color: var(--text-secondary);">Сила WiFi сигнала</div>
                                 <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
                                     <div style="flex: 1; height: 10px; background: var(--border-color); border-radius: 5px; overflow: hidden;">
-                                        <div style="height: 100%; width
+                                                                                <div style="height: 100%; width: ${currentState.wifi_quality || 50}%; background: var(--gradient-primary); border-radius: 5px;"></div>
+                                    </div>
+                                    <div style="font-weight: 600; color: ${currentState.wifi_quality > 70 ? 'var(--accent-green)' : currentState.wifi_quality > 30 ? 'var(--accent-orange)' : 'var(--accent-red)'}">
+                                        ${currentState.wifi_quality || 0}%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">RSSI WiFi сигнала</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; margin-top: 5px; color: ${(currentState.wifi_rssi || -80) > -60 ? 'var(--accent-green)' : (currentState.wifi_rssi || -80) > -70 ? 'var(--accent-orange)' : 'var(--accent-red)'}">
+                                    ${currentState.wifi_rssi || 0} dBm
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px; padding: 15px; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border-color);">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                    <span>Последний пинг:</span>
+                                    <strong>${currentState.last_update ? formatDateTime(currentState.last_update) : 'Неизвестно'}</strong>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Версия ПО:</span>
+                                    <strong>${currentState.firmware_version || '1.0.0'}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-redo-alt"></i>
+                                <span>Сброс и обслуживание</span>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 25px;">
+                                <h4 style="margin-bottom: 15px;">Очистка данных</h4>
+                                <div class="action-buttons">
+                                    <button class="btn btn-secondary" onclick="if(confirm('Сбросить статистику поливов?')) sendCommand('system', 'reset_waterings')" style="width: 100%;">
+                                        <i class="fas fa-tint-slash"></i> Сбросить статистику поливов
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="if(confirm('Сбросить статистику работы лампы?')) sendCommand('system', 'reset_light_hours')" style="width: 100%;">
+                                        <i class="fas fa-lightbulb"></i> Сбросить часы работы лампы
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 25px;">
+                                <h4 style="margin-bottom: 15px;">Перезагрузка</h4>
+                                <div class="action-buttons">
+                                    <button class="btn btn-secondary" onclick="if(confirm('Перезагрузить устройство?')) sendCommand('system', 'restart')" style="width: 100%;">
+                                        <i class="fas fa-redo"></i> Перезагрузить устройство
+                                    </button>
+                                    <button class="btn btn-danger" onclick="if(confirm('Сбросить все настройки к заводским?')) sendCommand('system', 'factory_reset')" style="width: 100%;">
+                                        <i class="fas fa-industry"></i> Заводской сброс
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 20px; background: rgba(231, 76, 60, 0.1); border-radius: 12px; border: 1px solid var(--accent-red);">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <i class="fas fa-exclamation-triangle" style="color: var(--accent-red);"></i>
+                                    <strong style="color: var(--accent-red);">Опасная зона</strong>
+                                </div>
+                                <div style="font-size: 0.9rem; line-height: 1.5;">
+                                    <p>Заводской сброс удалит все настройки и статистику. Устройство перезагрузится с настройками по умолчанию.</p>
+                                    <p style="margin-top: 10px;"><strong>Не нажимайте без крайней необходимости!</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderErrorsSection() {
+            const errors = currentState.errors || [];
+            const hasErrors = errors.length > 0;
+            
+            contentArea.innerHTML = `
+                <div class="dashboard-grid">
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Ошибки системы</span>
+                            </div>
+                            <div class="card-badge ${hasErrors ? 'badge-danger' : 'badge-success'}">
+                                ${hasErrors ? `${errors.length} ошибок` : 'Нет ошибок'}
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 20px;">
+                            ${hasErrors ? `
+                                <div class="errors-container">
+                                    ${errors.map((error, index) => {
+                                        const isCritical = error.code && (error.code > 200 || error.code < 100);
+                                        return `
+                                            <div class="error-item ${isCritical ? '' : 'warning'}">
+                                                <div class="error-header">
+                                                    <div class="error-time">
+                                                        <i class="fas fa-clock"></i>
+                                                        ${error.timestamp ? formatDateTime(error.timestamp) : 'Неизвестно'}
+                                                    </div>
+                                                    ${isCritical ? '<div class="error-critical">КРИТИЧЕСКАЯ</div>' : ''}
+                                                </div>
+                                                <div style="font-weight: 600; margin-bottom: 5px;">${error.message || 'Неизвестная ошибка'}</div>
+                                                ${error.details ? `<div style="font-size: 0.9rem; color: var(--text-secondary);">${error.details}</div>` : ''}
+                                                ${error.code ? `<div style="font-size: 0.85rem; margin-top: 5px;">Код ошибки: ${error.code}</div>` : ''}
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            ` : `
+                                <div style="text-align: center; padding: 60px 20px;">
+                                    <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--accent-green); margin-bottom: 20px;"></i>
+                                    <h3 style="margin-bottom: 10px;">Ошибок не обнаружено</h3>
+                                    <p style="color: var(--text-secondary);">Система работает стабильно, все компоненты в норме.</p>
+                                </div>
+                            `}
+                            
+                            <div style="margin-top: 30px; display: flex; gap: 15px;">
+                                <button class="btn btn-secondary" onclick="sendCommand('system', 'clear_errors')" ${!hasErrors ? 'disabled' : ''}>
+                                    <i class="fas fa-trash"></i> Очистить ошибки
+                                </button>
+                                <button class="btn btn-secondary" onclick="loadDeviceState()">
+                                    <i class="fas fa-sync-alt"></i> Проверить снова
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-stethoscope"></i>
+                                <span>Диагностика системы</span>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 25px;">
+                                <h4 style="margin-bottom: 15px;">Состояние датчиков</h4>
+                                <div style="display: grid; gap: 15px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-primary); border-radius: 10px;">
+                                        <div>
+                                            <div style="font-weight: 600;">Датчик влажности</div>
+                                            <div style="font-size: 0.9rem; color: var(--text-secondary);">Аналоговый вход A0</div>
+                                        </div>
+                                        <div style="color: ${currentState.moisture !== undefined ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                                            ${currentState.moisture !== undefined ? '✅ Работает' : '❌ Ошибка'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-primary); border-radius: 10px;">
+                                        <div>
+                                            <div style="font-weight: 600;">Реле насоса</div>
+                                            <div style="font-size: 0.9rem; color: var(--text-secondary);">GPIO ${currentState.pump_gpio || 'D1'}</div>
+                                        </div>
+                                        <div style="color: ${currentState.pump_on !== undefined ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                                            ${currentState.pump_on !== undefined ? '✅ Работает' : '❌ Ошибка'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-primary); border-radius: 10px;">
+                                        <div>
+                                            <div style="font-weight: 600;">Реле фитолампы</div>
+                                            <div style="font-size: 0.9rem; color: var(--text-secondary);">GPIO ${currentState.light_gpio || 'D2'}</div>
+                                        </div>
+                                        <div style="color: ${currentState.light_on !== undefined ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                                            ${currentState.light_on !== undefined ? '✅ Работает' : '❌ Ошибка'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px;">
+                                <button class="btn btn-primary" onclick="runDiagnostics()" style="width: 100%;">
+                                    <i class="fas fa-stethoscope"></i> Запустить диагностику
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderTelegramSection() {
+            const telegramConnected = currentState.telegram_chat_id && currentState.telegram_chat_id > 0;
+            
+            contentArea.innerHTML = `
+                <div class="dashboard-grid">
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fab fa-telegram"></i>
+                                <span>Telegram бот</span>
+                            </div>
+                            <div class="card-badge ${telegramConnected ? 'badge-success' : 'badge-warning'}">
+                                ${telegramConnected ? 'ПОДКЛЮЧЕНО' : 'НЕТ ПОДКЛЮЧЕНИЯ'}
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 30px 20px; text-align: center;">
+                            <div style="font-size: 5rem; margin-bottom: 20px; color: ${telegramConnected ? 'var(--accent-blue)' : 'var(--text-secondary)'}">
+                                <i class="fab fa-telegram"></i>
+                            </div>
+                            <h3 style="margin-bottom: 10px;">
+                                ${telegramConnected ? 'Telegram бот подключен' : 'Telegram бот не подключен'}
+                            </h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                                ${telegramConnected ? 
+                                    `Чат ID: ${currentState.telegram_chat_id}` : 
+                                    'Для подключения Telegram бота отправьте команду /start вашему боту с устройства'
+                                }
+                            </p>
+                            
+                            <div style="max-width: 500px; margin: 0 auto;">
+                                <div style="background: var(--bg-primary); padding: 20px; border-radius: 15px; margin-bottom: 30px; text-align: left;">
+                                    <h4 style="margin-bottom: 15px;"><i class="fas fa-info-circle"></i> Инструкция по подключению</h4>
+                                    <ol style="padding-left: 20px; margin-bottom: 15px;">
+                                        <li style="margin-bottom: 10px;">Найдите в Telegram бота <strong>@EcoGrowBot</strong></li>
+                                        <li style="margin-bottom: 10px;">Отправьте команду <code>/start</code></li>
+                                        <li style="margin-bottom: 10px;">Бот пришлет вам Chat ID</li>
+                                        <li>Введите полученный Chat ID в настройках устройства</li>
+                                    </ol>
+                                </div>
+                                
+                                <div class="control-item" style="margin-bottom: 25px;">
+                                    <label>Chat ID Telegram</label>
+                                    <input type="text" id="telegramChatId" value="${currentState.telegram_chat_id || ''}" 
+                                           placeholder="Введите Chat ID из Telegram"
+                                           style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 1rem;">
+                                </div>
+                                
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary" onclick="saveTelegramSettings()">
+                                        <i class="fas fa-save"></i> Сохранить Chat ID
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="testTelegramNotification()" ${!telegramConnected ? 'disabled' : ''}>
+                                        <i class="fas fa-paper-plane"></i> Тестовое уведомление
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-bell"></i>
+                                <span>Уведомления</span>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 20px;">
+                            <div class="switch-container">
+                                <div class="switch-label">
+                                    <span style="font-weight: 600;">Уведомления о поливе</span>
+                                    <span class="subtext">Отправлять сообщение при каждом поливе</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="telegramWateringAlerts" ${currentState.telegram_watering_alerts ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="switch-container">
+                                <div class="switch-label">
+                                    <span style="font-weight: 600;">Уведомления об ошибках</span>
+                                    <span class="subtext">Отправлять сообщения об ошибках системы</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="telegramErrorAlerts" ${currentState.telegram_error_alerts ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="switch-container">
+                                <div class="switch-label">
+                                    <span style="font-weight: 600;">Ежедневный отчет</span>
+                                    <span class="subtext">Отправлять сводку раз в сутки</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="telegramDailyReport" ${currentState.telegram_daily_report ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div style="margin-top: 30px; padding: 15px; background: var(--bg-primary); border-radius: 12px;">
+                                <h4 style="margin-bottom: 10px;">Время ежедневного отчета</h4>
+                                <input type="time" id="telegramReportTime" value="${currentState.telegram_report_time || '20:00'}" 
+                                       style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ======================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =======================
+        async function runDiagnostics() {
+            showNotification('Запуск диагностики...', 'info');
+            
+            try {
+                await firebaseRequest('PATCH', `devices/${currentDevice}/commands`, {
+                    diagnostics: true
+                });
+                
+                showNotification('Диагностика запущена, проверьте журнал через 30 секунд');
+                
+                // Обновляем состояние через 30 секунд
+                setTimeout(loadDeviceState, 30000);
+                
+            } catch (error) {
+                console.error('Ошибка запуска диагностики:', error);
+                showNotification('Ошибка запуска диагностики', 'error');
+            }
+        }
+        
+        async function saveTelegramSettings() {
+            const chatId = document.getElementById('telegramChatId').value;
+            if (!chatId) {
+                showNotification('Введите Chat ID', 'warning');
+                return;
+            }
+            
+            try {
+                await firebaseRequest('PATCH', `devices/${currentDevice}/commands`, {
+                    telegram_chat_id: parseInt(chatId)
+                });
+                
+                showNotification('Chat ID сохранен');
+                
+                // Обновляем состояние
+                setTimeout(loadDeviceState, 2000);
+                
+            } catch (error) {
+                console.error('Ошибка сохранения Chat ID:', error);
+                showNotification('Ошибка сохранения Chat ID', 'error');
+            }
+        }
+        
+        async function testTelegramNotification() {
+            if (!currentState.telegram_chat_id) {
+                showNotification('Сначала сохраните Chat ID', 'warning');
+                return;
+            }
+            
+            try {
+                await firebaseRequest('PATCH', `devices/${currentDevice}/commands`, {
+                    telegram_test: true
+                });
+                
+                showNotification('Тестовое уведомление отправлено');
+                
+            } catch (error) {
+                console.error('Ошибка отправки тестового уведомления:', error);
+                showNotification('Ошибка отправки уведомления', 'error');
+            }
+        }
+        
+        // ======================= АВТООБНОВЛЕНИЕ =======================
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            autoRefreshInterval = setInterval(() => {
+                loadDeviceState();
+            }, 10000); // Обновляем каждые 10 секунд
+        }
+        
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+        
+        // ======================= ИНИЦИАЛИЗАЦИЯ =======================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Загружаем список устройств
+            loadDevices();
+            
+            // Инициализируем переключение темы
+            document.getElementById('themeSwitch').addEventListener('change', function() {
+                const newTheme = this.checked ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                currentTheme = newTheme;
+            });
+            
+            // Кнопка подключения к устройству
+            document.getElementById('connectBtn').addEventListener('click', function() {
+                if (currentDevice) {
+                    connectToDevice(currentDevice);
+                }
+            });
+            
+            // Кнопка обновления
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                loadDevices();
+                if (currentDevice) {
+                    loadDeviceState();
+                    showNotification('Данные обновлены');
+                }
+            });
+            
+            // Кнопка сохранения настроек
+            document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+            
+            // Навигация
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    if (currentDevice) {
+                        const section = this.dataset.section;
+                        showSection(section);
+                        
+                        // Закрываем мобильное меню если открыто
+                        if (window.innerWidth <= 992) {
+                            document.getElementById('sidebar').classList.remove('active');
+                        }
+                    } else {
+                        showNotification('Сначала подключитесь к устройству', 'warning');
+                    }
+                });
+            });
+            
+            // Мобильное меню
+            document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('active');
+            });
+            
+            // Закрытие мобильного меню при клике вне его
+            document.addEventListener('click', function(event) {
+                const sidebar = document.getElementById('sidebar');
+                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                
+                if (window.innerWidth <= 992 && 
+                    !sidebar.contains(event.target) && 
+                    !mobileMenuBtn.contains(event.target) &&
+                    sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+            });
+            
+            // Полноэкранный режим
+            document.getElementById('fullscreenBtn').addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error('Ошибка при переходе в полноэкранный режим:', err);
+                    });
+                    this.innerHTML = '<i class="fas fa-compress"></i>';
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                        this.innerHTML = '<i class="fas fa-expand"></i>';
+                    }
+                }
+            });
+            
+            // Проверяем, было ли уже выбрано устройство в localStorage
+            const savedDevice = localStorage.getItem('lastDevice');
+            if (savedDevice && devices[savedDevice]) {
+                currentDevice = savedDevice;
+                connectToDevice(savedDevice);
+            }
+        });
+        
+        // Сохраняем выбор устройства при подключении
+        function connectToDevice(deviceId) {
+            currentDevice = deviceId;
+            localStorage.setItem('lastDevice', deviceId);
+            
+            // Остальная часть функции (уже была выше)
+            document.getElementById('deviceSelector').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            
+            const device = devices[deviceId];
+            if (device && device.info) {
+                document.getElementById('deviceInfo').textContent = device.info.device_name || deviceId;
+                
+                const liquidGlassItem = document.querySelector('.liquid-glass-item');
+                if (device.state && device.state.use_liquid_glass === false) {
+                    liquidGlassItem.style.display = 'none';
+                } else {
+                    liquidGlassItem.style.display = 'flex';
+                }
+            }
+            
+            loadDeviceState();
+            startAutoRefresh();
+            showNotification(`Подключено к устройству: ${device.info.device_name || deviceId}`);
+            showSection('dashboard');
+        }
+        
+        // Обработка выхода из полноэкранного режима
+        document.addEventListener('fullscreenchange', function() {
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            if (!document.fullscreenElement) {
+                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+        });
+        
+        // Периодически обновляем список устройств
+        setInterval(loadDevices, 60000); // Каждую минуту
+    </script>
+</body>
+</html>
