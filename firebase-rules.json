@@ -1,0 +1,34 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "devices": {
+      "$deviceId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "data": {
+          ".write": "auth != null || newData.child('source').val() == 'device'"
+        },
+        "commands": {
+          ".write": "auth != null"
+        },
+        "settings": {
+          ".write": "auth != null"
+        },
+        "history": {
+          ".write": "auth != null || newData.child('source').val() == 'device'"
+        }
+      }
+    },
+    "users": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    "analytics": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
