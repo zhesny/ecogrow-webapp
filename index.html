@@ -3,35 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Полная CSP политика для Firebase и Chart.js -->
+    
+    <!-- САМАЯ ЛИБЕРАЛЬНАЯ CSP ДЛЯ FIREBASE - разрешает все источники -->
     <meta http-equiv="Content-Security-Policy" 
           content="
-              default-src 'self';
-              script-src 'self' https://cdn.jsdelivr.net https://www.gstatic.com https://*.google.com https://*.googleapis.com 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com;
-              style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com;
-              img-src 'self' data: https: http: blob:;
-              font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-              connect-src 'self' https://ecogrow-remote-default-rtdb.firebaseio.com wss://ecogrow-remote-default-rtdb.firebaseio.com https://*.firebaseio.com https://*.googleapis.com;
-              frame-src 'self' https://*.firebaseio.com https://*.google.com;
-              object-src 'none';
-              base-uri 'self';
-              form-action 'self';
-              manifest-src 'self';
-              worker-src 'self' blob:;
-              media-src 'self';
+              default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+              script-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+              style-src * 'unsafe-inline';
+              img-src * data: blob:;
+              font-src * data:;
+              connect-src * ws: wss:;
+              frame-src *;
+              object-src *;
+              media-src *;
           ">
+    
+    <!-- Альтернативно можно попробовать самый простой вариант -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';"> -->
+    
+    <!-- ИЛИ отключить CSP полностью для тестирования -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline' data: blob:;"> -->
     
     <title>EcoGrow Control - Remote Panel</title>
     
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Chart.js (убедитесь в правильности ссылки) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Firebase SDK v8 -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Firebase SDK v9 (рекомендуется, не требует unsafe-eval) -->
+    <!-- ВАЖНО: используйте Firebase v9 или выше для избежания unsafe-eval -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Альтернатива: Firebase v8 (требует unsafe-eval) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script> -->
     
     <style>
-        /* Ваш существующий CSS код остается без изменений */
+        /* Ваш полный CSS код здесь (он остается без изменений) */
         :root {
             --bg-primary: #f8f9fa;
             --bg-card: #ffffff;
@@ -915,8 +923,9 @@
             measurementId: "G-PG5116NH38"
         };
 
+        // Для Firebase v9 (compat версия - обратная совместимость с v8 API)
         // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
+        const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         // Пути в Firebase
