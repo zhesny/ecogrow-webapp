@@ -3,54 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoGrow - Умная система полива</title>
+    <title>EcoGrow v4.5 - Управление системой полива</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --primary: #2a9d8f;
-            --primary-dark: #21867a;
-            --secondary: #e9c46a;
-            --accent: #e76f51;
-            --light: #f8f9fa;
-            --dark: #1d3557;
-            --dark-blue: #0a192f;
-            --darker-blue: #020c1b;
-            --success: #2a9d8f;
-            --warning: #e9c46a;
-            --danger: #e76f51;
-            --info: #457b9d;
-            --gray: #8d99ae;
-            --transition: all 0.3s ease;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            --shadow-dark: 0 8px 24px rgba(0, 0, 0, 0.3);
-            --border-radius: 12px;
-            --card-bg-light: #ffffff;
-            --card-bg-dark: #112240;
-            --text-light: #333333;
-            --text-dark: #e6f1ff;
-        }
-
-        .light-theme {
-            --bg: #f8f9fa;
-            --card-bg: var(--card-bg-light);
-            --text: var(--text-light);
-            --text-secondary: #666666;
-            --border: #e0e0e0;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-        }
-
-        .dark-theme {
-            --bg: var(--dark-blue);
-            --card-bg: var(--card-bg-dark);
-            --text: var(--text-dark);
-            --text-secondary: #8892b0;
-            --border: #233554;
-            --shadow: var(--shadow-dark);
+            --primary: #0d47a1;
+            --primary-light: #5472d3;
+            --primary-dark: #002171;
+            --secondary: #00c853;
+            --secondary-light: #5efc82;
+            --secondary-dark: #009624;
+            --accent: #ff4081;
+            --dark: #121212;
+            --dark-layer1: #1e1e1e;
+            --dark-layer2: #2d2d2d;
+            --dark-layer3: #3d3d3d;
+            --light: #f5f5f5;
+            --light-layer1: #ffffff;
+            --light-layer2: #f0f0f0;
+            --light-layer3: #e0e0e0;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --success: #00c853;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --info: #2196f3;
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 15px 40px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 25px 60px rgba(0, 0, 0, 0.4);
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+            --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --gradient-secondary: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            --gradient-accent: linear-gradient(135deg, var(--accent), #ff79b0);
+            --gradient-dark: linear-gradient(135deg, var(--dark-layer1), var(--dark-layer3));
         }
 
         * {
@@ -60,13 +55,13 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            transition: var(--transition);
+            font-family: 'Roboto', sans-serif;
+            background: var(--gradient-dark);
+            color: var(--text-primary);
             min-height: 100vh;
-            position: relative;
             overflow-x: hidden;
+            transition: var(--transition);
+            position: relative;
         }
 
         body::before {
@@ -77,29 +72,40 @@
             width: 100%;
             height: 100%;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(42, 157, 143, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(233, 196, 106, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(231, 111, 81, 0.05) 0%, transparent 50%);
+                radial-gradient(circle at 10% 20%, rgba(13, 71, 161, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 90% 10%, rgba(0, 200, 83, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 50% 80%, rgba(255, 64, 129, 0.08) 0%, transparent 40%);
             z-index: -1;
+            animation: gradientShift 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes gradientShift {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(2deg); }
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
         /* Header */
         header {
-            background-color: var(--card-bg);
-            box-shadow: var(--shadow);
+            background: rgba(30, 30, 30, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 20px 0;
             position: sticky;
             top: 0;
-            z-index: 100;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .header-content {
@@ -115,32 +121,52 @@
         }
 
         .logo-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 24px;
-            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+            font-size: 28px;
+            box-shadow: var(--shadow-md);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .logo-text h1 {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            font-family: 'Montserrat', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            background: var(--gradient-secondary);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .logo-text p {
             color: var(--text-secondary);
             font-size: 14px;
-            margin-top: 2px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .version-badge {
+            background: var(--gradient-accent);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
         }
 
         .header-controls {
@@ -149,81 +175,21 @@
             gap: 20px;
         }
 
-        /* Theme toggle */
-        .theme-toggle {
-            position: relative;
-            width: 60px;
-            height: 30px;
-        }
-
-        .theme-toggle input {
-            display: none;
-        }
-
-        .theme-toggle label {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-color: var(--dark);
-            border-radius: 50px;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .theme-toggle label::after {
-            content: '';
-            position: absolute;
-            width: 26px;
-            height: 26px;
-            background: linear-gradient(135deg, var(--secondary), #f4a261);
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: var(--dark);
-        }
-
-        .theme-toggle input:checked + label {
-            background-color: var(--info);
-        }
-
-        .theme-toggle input:checked + label::after {
-            transform: translateX(30px);
-            background: linear-gradient(135deg, #f4a261, var(--secondary));
-            content: '🌙';
-        }
-
-        .theme-toggle label::before {
-            content: '☀️';
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 12px;
-        }
-
-        .theme-toggle input:checked + label::before {
-            content: '☀️';
-            left: 8px;
-            right: auto;
-        }
-
-        /* Connection status */
         .connection-status {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 16px;
-            background-color: var(--card-bg);
-            border-radius: 50px;
-            border: 1px solid var(--border);
-            font-size: 14px;
-            font-weight: 500;
+            gap: 12px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .connection-status:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
         }
 
         .status-indicator {
@@ -231,54 +197,78 @@
             height: 12px;
             border-radius: 50%;
             background-color: var(--danger);
-            animation: pulse 2s infinite;
+            position: relative;
+        }
+
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 2px solid var(--danger);
+            animation: ripple 1.5s infinite;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
         }
 
         .status-indicator.connected {
             background-color: var(--success);
-            animation: pulse-green 2s infinite;
         }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        .status-indicator.connected::after {
+            border-color: var(--success);
         }
 
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(42, 157, 143, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(42, 157, 143, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(42, 157, 143, 0); }
+        .status-text {
+            font-weight: 500;
         }
 
-        /* Main layout */
-        main {
-            padding: 30px 0 60px;
+        .last-update {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
         }
 
-        .dashboard-grid {
+        /* Main Layout */
+        .dashboard {
+            padding: 40px 0;
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 25px;
-            margin-bottom: 30px;
+            gap: 30px;
         }
 
         /* Cards */
         .card {
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            padding: 24px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+            background: rgba(45, 45, 45, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            padding: 30px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: var(--transition);
             position: relative;
             overflow: hidden;
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(6) { animation-delay: 0.6s; }
 
         .card::before {
             content: '';
@@ -286,213 +276,315 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            height: 5px;
+            background: var(--gradient-primary);
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-xl);
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .card-title {
-            font-size: 18px;
-            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .card-title i {
-            color: var(--primary);
+            color: var(--secondary);
+            font-size: 24px;
         }
 
-        /* Stats cards */
-        .stats-grid {
+        /* Live Data Card */
+        .live-data-card {
             grid-column: span 3;
         }
 
-        .stat-card {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
-        .stat-value {
-            font-size: 42px;
-            font-weight: 700;
+        .data-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            transition: var(--transition);
+        }
+
+        .data-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .data-value {
+            font-size: 48px;
+            font-weight: 800;
             margin: 10px 0;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            background: var(--gradient-secondary);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 200, 83, 0.3);
         }
 
-        .stat-label {
+        .data-label {
             color: var(--text-secondary);
             font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .stat-change {
+        .data-unit {
+            font-size: 20px;
+            color: var(--secondary);
+            margin-left: 5px;
+        }
+
+        .data-status {
             display: flex;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
             font-size: 14px;
-            margin-top: 5px;
         }
 
-        .stat-change.positive {
-            color: var(--success);
-        }
+        .data-status .good { color: var(--success); }
+        .data-status .warning { color: var(--warning); }
+        .data-status .danger { color: var(--danger); }
 
-        .stat-change.negative {
-            color: var(--danger);
-        }
-
-        /* Chart card */
+        /* Chart Card */
         .chart-card {
             grid-column: span 6;
-            min-height: 400px;
+            min-height: 500px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .time-btn.active {
+            background: var(--gradient-primary);
+            border-color: transparent;
+        }
+
+        .time-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .chart-container {
-            height: 300px;
-            margin-top: 20px;
+            height: 400px;
             position: relative;
         }
 
-        /* Controls card */
+        /* Controls Card */
         .controls-card {
             grid-column: span 3;
         }
 
-        .controls-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
+        .control-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Toggle switches */
-        .toggle-switch {
+        .control-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .control-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Toggle Switch */
+        .toggle-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 15px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .toggle-switch:last-child {
-            border-bottom: none;
         }
 
         .toggle-label {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
             font-weight: 500;
         }
 
-        .toggle-label i {
+        .toggle-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 20px;
-            width: 24px;
-            text-align: center;
+            color: var(--secondary);
         }
 
-        .switch {
+        .toggle-switch {
             position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 30px;
+            width: 70px;
+            height: 36px;
         }
 
-        .switch input {
+        .toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
 
-        .slider {
+        .toggle-slider {
             position: absolute;
             cursor: pointer;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 34px;
+            transition: var(--transition);
         }
 
-        .slider:before {
+        .toggle-slider:before {
             position: absolute;
             content: "";
-            height: 22px;
-            width: 22px;
+            height: 28px;
+            width: 28px;
             left: 4px;
             bottom: 4px;
-            background-color: white;
-            transition: .4s;
+            background: white;
             border-radius: 50%;
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
-        input:checked + .slider {
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        input:checked + .toggle-slider {
+            background: var(--gradient-secondary);
         }
 
-        input:checked + .slider:before {
-            transform: translateX(30px);
+        input:checked + .toggle-slider:before {
+            transform: translateX(34px);
         }
 
-        /* Sliders */
-        .slider-container {
+        /* Slider */
+        .slider-group {
             margin: 20px 0;
         }
 
-        .slider-label {
+        .slider-header {
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
-            font-weight: 500;
         }
 
         .slider-value {
-            color: var(--primary);
             font-weight: 600;
+            color: var(--secondary);
+            font-size: 20px;
+        }
+
+        .slider-container {
+            position: relative;
+            height: 40px;
+        }
+
+        .slider-track {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            transform: translateY(-50%);
+        }
+
+        .slider-fill {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 8px;
+            background: var(--gradient-secondary);
+            border-radius: 4px;
+            transform: translateY(-50%);
+            width: 50%;
         }
 
         .slider-input {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
             width: 100%;
-            height: 8px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-radius: 4px;
-            outline: none;
+            height: 20px;
+            transform: translateY(-50%);
+            opacity: 0;
+            cursor: pointer;
         }
 
-        .slider-input::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
+        .slider-thumb {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 24px;
+            height: 24px;
             background: white;
-            border: 2px solid var(--primary);
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transition: var(--transition);
         }
 
         /* Buttons */
         .btn {
-            padding: 12px 24px;
-            border-radius: 50px;
+            padding: 15px 30px;
+            border-radius: var(--radius-lg);
             border: none;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-weight: 600;
             font-size: 16px;
             cursor: pointer;
@@ -500,38 +592,70 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+            background: var(--gradient-primary);
             color: white;
+            box-shadow: 0 8px 25px rgba(13, 71, 161, 0.3);
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(42, 157, 143, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(13, 71, 161, 0.4);
         }
 
         .btn-secondary {
-            background-color: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .btn-secondary:hover {
-            background-color: var(--primary);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .btn-success {
+            background: var(--gradient-secondary);
             color: white;
+            box-shadow: 0 8px 25px rgba(0, 200, 83, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 200, 83, 0.4);
         }
 
         .btn-danger {
-            background: linear-gradient(90deg, var(--danger), #d45d40);
+            background: linear-gradient(135deg, #f44336, #ff7961);
             color: white;
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
         }
 
         .btn-danger:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(231, 111, 81, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(244, 67, 54, 0.4);
         }
 
         .btn-group {
@@ -541,204 +665,346 @@
             margin-top: 20px;
         }
 
-        /* Second row */
-        .second-row {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
+        /* Settings Card */
         .settings-card {
             grid-column: span 4;
         }
 
+        .time-picker {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .time-input-group {
+            position: relative;
+        }
+
+        .time-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .time-input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Telegram Card */
         .telegram-card {
             grid-column: span 4;
         }
 
-        .errors-card {
-            grid-column: span 4;
-        }
-
-        /* Settings */
-        .time-setter {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .time-input {
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background-color: var(--card-bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            font-size: 16px;
-            width: 100%;
-        }
-
-        /* Telegram card */
-        .telegram-card .card-body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .telegram-content {
             text-align: center;
-            padding: 20px 0;
+            padding: 30px 0;
         }
 
         .telegram-icon {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
             background: linear-gradient(135deg, #0088cc, #34aadc);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
-            font-size: 36px;
+            font-size: 48px;
             color: white;
+            box-shadow: 0 15px 35px rgba(0, 136, 204, 0.3);
+            animation: float 3s ease-in-out infinite;
         }
 
-        .telegram-info {
-            margin-bottom: 25px;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        .telegram-info p {
-            margin-bottom: 10px;
-            color: var(--text-secondary);
+        .telegram-details {
+            background: rgba(0, 136, 204, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin: 25px 0;
+            border-left: 4px solid #0088cc;
+        }
+
+        .telegram-details p {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .telegram-code {
-            background-color: rgba(0, 136, 204, 0.1);
+            background: rgba(0, 0, 0, 0.3);
             padding: 8px 12px;
-            border-radius: 6px;
+            border-radius: 8px;
             font-family: monospace;
             font-size: 14px;
-            color: var(--primary);
-            margin-top: 5px;
-            display: inline-block;
+            color: #34aadc;
         }
 
-        /* Errors list */
+        /* Errors Card */
+        .errors-card {
+            grid-column: span 4;
+        }
+
         .errors-list {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
-            margin-top: 15px;
+            margin-top: 20px;
         }
 
         .error-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border-radius: 8px;
-            background-color: rgba(231, 111, 81, 0.1);
-            margin-bottom: 10px;
+            background: rgba(244, 67, 54, 0.1);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin-bottom: 15px;
             border-left: 4px solid var(--danger);
+            animation: slideInRight 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .error-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         .error-item.warning {
-            background-color: rgba(233, 196, 106, 0.1);
+            background: rgba(255, 152, 0, 0.1);
             border-left-color: var(--warning);
         }
 
         .error-item.info {
-            background-color: rgba(69, 123, 157, 0.1);
+            background: rgba(33, 150, 243, 0.1);
             border-left-color: var(--info);
         }
 
+        .error-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
         .error-icon {
-            margin-right: 12px;
-            font-size: 18px;
+            font-size: 20px;
         }
 
-        .error-item.danger .error-icon {
-            color: var(--danger);
-        }
+        .error-item.danger .error-icon { color: var(--danger); }
+        .error-item.warning .error-icon { color: var(--warning); }
+        .error-item.info .error-icon { color: var(--info); }
 
-        .error-item.warning .error-icon {
-            color: var(--warning);
-        }
-
-        .error-content {
-            flex-grow: 1;
+        .error-message {
+            font-weight: 500;
         }
 
         .error-time {
             font-size: 12px;
             color: var(--text-secondary);
-            margin-top: 4px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        /* Statistics row */
-        .stats-row {
+        /* Statistics Card */
+        .stats-card {
+            grid-column: span 6;
+        }
+
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 25px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
         }
 
-        .stats-history {
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            margin: 10px 0;
+            color: var(--secondary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Documentation Card */
+        .docs-card {
             grid-column: span 6;
         }
 
-        .instructions {
-            grid-column: span 6;
+        .docs-content {
+            padding: 20px 0;
+        }
+
+        .docs-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .docs-list li {
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .docs-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .docs-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .update-log {
+            background: rgba(0, 200, 83, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .update-log h4 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .update-log ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .update-log li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .update-log li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
         }
 
         /* Footer */
         footer {
-            background-color: var(--card-bg);
-            border-top: 1px solid var(--border);
-            padding: 40px 0 30px;
-            margin-top: 40px;
+            background: rgba(18, 18, 18, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 60px 0 30px;
+            margin-top: 60px;
         }
 
         .footer-content {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 40px;
         }
 
-        .footer-section {
-            flex: 1;
-            min-width: 250px;
+        .footer-section h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--secondary);
+            position: relative;
+            padding-bottom: 15px;
         }
 
-        .footer-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--primary);
+        .footer-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--gradient-secondary);
         }
 
-        .developer-info {
+        .developer-card {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 25px;
         }
 
         .developer-avatar {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 32px;
             color: white;
+            box-shadow: var(--shadow-md);
         }
 
-        .developer-details h3 {
+        .developer-info h4 {
             font-size: 18px;
             margin-bottom: 5px;
         }
 
-        .developer-details p {
+        .developer-info p {
             color: var(--text-secondary);
             font-size: 14px;
             margin-bottom: 5px;
@@ -751,22 +1017,43 @@
         }
 
         .social-link {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text);
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-primary);
+            opacity: 0;
             transition: var(--transition);
         }
 
+        .social-link:hover::before {
+            opacity: 1;
+        }
+
+        .social-link i {
+            position: relative;
+            z-index: 1;
+        }
+
         .social-link:hover {
-            background-color: var(--primary);
-            color: white;
-            transform: translateY(-3px);
+            transform: translateY(-5px) rotate(10deg);
         }
 
         .footer-links {
@@ -774,48 +1061,60 @@
         }
 
         .footer-links li {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
         .footer-links a {
             color: var(--text-secondary);
             text-decoration: none;
-            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 10px;
+            transition: var(--transition);
+            padding: 8px 0;
         }
 
         .footer-links a:hover {
-            color: var(--primary);
-            transform: translateX(5px);
+            color: var(--secondary);
+            transform: translateX(10px);
+        }
+
+        .footer-links a i {
+            width: 20px;
+            text-align: center;
         }
 
         .copyright {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
             font-size: 14px;
         }
 
-        /* Notifications */
+        .copyright a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+
+        /* Notification */
         .notification {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            padding: 18px 24px;
-            border-radius: var(--border-radius);
-            background-color: var(--card-bg);
-            box-shadow: var(--shadow);
-            border-left: 5px solid var(--primary);
+            background: rgba(45, 45, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            padding: 20px 25px;
+            box-shadow: var(--shadow-xl);
+            border-left: 5px solid var(--secondary);
             display: flex;
             align-items: center;
-            gap: 15px;
-            z-index: 1000;
+            gap: 20px;
+            z-index: 10000;
             transform: translateX(150%);
-            transition: transform 0.5s ease;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             max-width: 400px;
         }
 
@@ -824,476 +1123,578 @@
         }
 
         .notification-icon {
-            font-size: 24px;
-            color: var(--primary);
+            font-size: 28px;
+            color: var(--secondary);
         }
 
-        .notification.success {
-            border-left-color: var(--success);
+        .notification-content {
+            flex: 1;
         }
 
-        .notification.success .notification-icon {
-            color: var(--success);
+        .notification-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
         }
 
-        .notification.error {
-            border-left-color: var(--danger);
+        .notification-message {
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
-        .notification.error .notification-icon {
-            color: var(--danger);
-        }
+        .notification.success { border-left-color: var(--success); }
+        .notification.success .notification-icon { color: var(--success); }
+        .notification.error { border-left-color: var(--danger); }
+        .notification.error .notification-icon { color: var(--danger); }
+        .notification.warning { border-left-color: var(--warning); }
+        .notification.warning .notification-icon { color: var(--warning); }
 
-        .notification.warning {
-            border-left-color: var(--warning);
-        }
-
-        .notification.warning .notification-icon {
-            color: var(--warning);
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-in {
-            animation: fadeIn 0.6s ease forwards;
-        }
-
-        /* Mobile responsiveness */
-        @media (max-width: 1200px) {
-            .stats-grid, .chart-card, .controls-card,
-            .settings-card, .telegram-card, .errors-card,
-            .stats-history, .instructions {
-                grid-column: span 12;
+        /* Mobile Responsiveness */
+        @media (max-width: 1400px) {
+            .dashboard {
+                grid-template-columns: repeat(6, 1fr);
             }
             
-            .dashboard-grid, .second-row, .stats-row {
+            .live-data-card, .controls-card {
+                grid-column: span 3;
+            }
+            
+            .chart-card, .stats-card, .docs-card {
+                grid-column: span 6;
+            }
+            
+            .settings-card, .telegram-card, .errors-card {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            
+            .card {
+                grid-column: span 1 !important;
+            }
+            
+            .footer-content {
+                grid-template-columns: repeat(1, 1fr);
+                gap: 30px;
+            }
+            
+            .header-content {
+                flex-direction: column;
                 gap: 20px;
             }
         }
 
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 20px;
+            .container {
+                padding: 0 15px;
             }
             
-            .btn-group {
+            .card {
+                padding: 20px;
+            }
+            
+            .btn-group, .docs-buttons {
                 grid-template-columns: 1fr;
             }
             
-            .footer-content {
-                flex-direction: column;
-                gap: 30px;
+            .data-grid {
+                grid-template-columns: 1fr;
             }
             
-            .notification {
-                left: 20px;
-                right: 20px;
-                max-width: none;
+            .time-picker {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
-<body class="dark-theme">
+<body>
     <!-- Header -->
     <header>
         <div class="container">
             <div class="header-content">
                 <div class="logo">
                     <div class="logo-icon">
-                        <i class="fas fa-leaf"></i>
+                        <i class="fas fa-seedling"></i>
                     </div>
                     <div class="logo-text">
-                        <h1>EcoGrow</h1>
-                        <p>Умная система полива растений</p>
+                        <h1>EcoGrow Control</h1>
+                        <p>
+                            <span>Система автоматического полива растений</span>
+                            <span class="version-badge">v4.5</span>
+                        </p>
                     </div>
                 </div>
                 
                 <div class="header-controls">
                     <div class="connection-status">
                         <div class="status-indicator" id="connectionStatus"></div>
-                        <span id="connectionText">Нет подключения</span>
-                    </div>
-                    
-                    <div class="theme-toggle">
-                        <input type="checkbox" id="themeToggle">
-                        <label for="themeToggle"></label>
+                        <div>
+                            <div class="status-text" id="connectionText">Подключение к ESP8266...</div>
+                            <div class="last-update" id="lastUpdate">Обновлено: --:--:--</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main Dashboard -->
     <main class="container">
-        <!-- Dashboard Grid -->
-        <div class="dashboard-grid">
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="card stat-card animate-in" style="animation-delay: 0.1s">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-tint"></i>
-                            <span>Влажность</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="stat-value" id="moistureValue">--%</div>
-                        <div class="stat-label">Текущая влажность почвы</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>Стабильно</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="card stat-card animate-in" style="animation-delay: 0.2s">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-thermometer-half"></i>
-                            <span>Температура</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="stat-value" id="temperatureValue">--°C</div>
-                        <div class="stat-label">Температура воздуха</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>В норме</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="card stat-card animate-in" style="animation-delay: 0.3s">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-sun"></i>
-                            <span>Освещение</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="stat-value" id="lightValue">--%</div>
-                        <div class="stat-label">Уровень освещенности</div>
-                        <div class="stat-change negative">
-                            <i class="fas fa-arrow-down"></i>
-                            <span>Темнее обычного</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="card stat-card animate-in" style="animation-delay: 0.4s">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-history"></i>
-                            <span>Статистика</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="stat-value" id="pumpCount">0</div>
-                        <div class="stat-label">Поливов за сутки</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-check"></i>
-                            <span>По графику</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Chart Card -->
-            <div class="chart-card card animate-in" style="animation-delay: 0.5s">
+        <div class="dashboard">
+            <!-- Live Data Card -->
+            <div class="card live-data-card">
                 <div class="card-header">
                     <div class="card-title">
-                        <i class="fas fa-chart-line"></i>
-                        <span>График влажности</span>
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Текущие показатели</span>
                     </div>
-                    <div class="chart-controls">
-                        <select id="chartRange" class="time-input" style="width: auto; padding: 8px 12px;">
-                            <option value="1">Последний час</option>
-                            <option value="6">Последние 6 часов</option>
-                            <option value="24" selected>Последние 24 часа</option>
-                            <option value="168">Последняя неделя</option>
-                        </select>
-                    </div>
+                    <div class="card-badge" id="systemStatus">Авто</div>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="moistureChart"></canvas>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Влажность почвы</div>
+                            <div class="data-value" id="moistureValue">--<span class="data-unit">%</span></div>
+                            <div class="data-status">
+                                <i class="fas fa-circle good"></i>
+                                <span id="moistureStatus">Норма</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-item">
+                            <div class="data-label">Порог полива</div>
+                            <div class="data-value" id="thresholdValue">--<span class="data-unit">%</span></div>
+                            <div class="data-status">
+                                <i class="fas fa-sliders-h"></i>
+                                <span>Установлен</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-item">
+                            <div class="data-label">Состояние насоса</div>
+                            <div class="data-value" id="pumpStatus">Выкл</div>
+                            <div class="data-status">
+                                <i class="fas fa-circle danger" id="pumpIndicator"></i>
+                                <span id="pumpMode">Авто</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-item">
+                            <div class="data-label">Состояние света</div>
+                            <div class="data-value" id="lightStatus">Выкл</div>
+                            <div class="data-status">
+                                <i class="fas fa-circle danger" id="lightIndicator"></i>
+                                <span id="lightMode">Авто</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="system-time">
+                        <div class="data-label">Время системы</div>
+                        <div class="data-value" id="systemTime">--:--</div>
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Chart Card -->
+            <div class="card chart-card">
+                <div class="chart-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span>График влажности (реальное время)</span>
+                    </div>
+                    <div class="chart-controls">
+                        <button class="time-btn active" data-hours="1">1 час</button>
+                        <button class="time-btn" data-hours="6">6 часов</button>
+                        <button class="time-btn" data-hours="24">24 часа</button>
+                        <button class="time-btn" data-hours="168">7 дней</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="moistureChart"></canvas>
+                </div>
+                <div class="chart-stats">
+                    <div class="data-grid" style="margin-top: 20px;">
+                        <div class="data-item">
+                            <div class="data-label">Средняя</div>
+                            <div class="data-value" id="avgMoisture">--%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Минимум</div>
+                            <div class="data-value" id="minMoisture">--%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Максимум</div>
+                            <div class="data-value" id="maxMoisture">--%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Изменение</div>
+                            <div class="data-value" id="changeMoisture">--%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Controls Card -->
-            <div class="controls-card card animate-in" style="animation-delay: 0.6s">
+            <div class="card controls-card">
                 <div class="card-header">
                     <div class="card-title">
-                        <i class="fas fa-sliders-h"></i>
+                        <i class="fas fa-gamepad"></i>
                         <span>Ручное управление</span>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="controls-grid">
-                        <div class="toggle-switch">
+                    <div class="control-section">
+                        <div class="control-title">
+                            <i class="fas fa-tint"></i>
+                            <span>Управление насосом</span>
+                        </div>
+                        <div class="toggle-item">
                             <div class="toggle-label">
-                                <i class="fas fa-tint"></i>
+                                <div class="toggle-icon">
+                                    <i class="fas fa-water"></i>
+                                </div>
                                 <span>Насос полива</span>
                             </div>
-                            <label class="switch">
+                            <label class="toggle-switch">
                                 <input type="checkbox" id="pumpToggle">
-                                <span class="slider"></span>
+                                <span class="toggle-slider"></span>
                             </label>
                         </div>
                         
-                        <div class="toggle-switch">
+                        <div class="toggle-item">
                             <div class="toggle-label">
-                                <i class="fas fa-lightbulb"></i>
+                                <div class="toggle-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
                                 <span>Фитолампа</span>
                             </div>
-                            <label class="switch">
+                            <label class="toggle-switch">
                                 <input type="checkbox" id="lightToggle">
-                                <span class="slider"></span>
+                                <span class="toggle-slider"></span>
                             </label>
                         </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-title">
+                            <i class="fas fa-cogs"></i>
+                            <span>Настройки полива</span>
+                        </div>
                         
-                        <div class="toggle-switch">
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Порог влажности</span>
+                                <span class="slider-value" id="thresholdSliderValue">50%</span>
+                            </div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="thresholdFill"></div>
+                                <input type="range" min="10" max="90" value="50" class="slider-input" id="thresholdSlider">
+                                <div class="slider-thumb" id="thresholdThumb"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Длительность полива</span>
+                                <span class="slider-value" id="durationSliderValue">10 сек</span>
+                            </div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="durationFill"></div>
+                                <input type="range" min="1" max="60" value="10" class="slider-input" id="durationSlider">
+                                <div class="slider-thumb" id="durationThumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-title">
+                            <i class="fas fa-bed"></i>
+                            <span>Режимы работы</span>
+                        </div>
+                        
+                        <div class="toggle-item">
                             <div class="toggle-label">
-                                <i class="fas fa-bed"></i>
+                                <div class="toggle-icon">
+                                    <i class="fas fa-moon"></i>
+                                </div>
                                 <span>Режим сна</span>
                             </div>
-                            <label class="switch">
+                            <label class="toggle-switch">
                                 <input type="checkbox" id="sleepToggle">
-                                <span class="slider"></span>
+                                <span class="toggle-slider"></span>
                             </label>
-                        </div>
-                        
-                        <div class="slider-container">
-                            <div class="slider-label">
-                                <span>Порог влажности</span>
-                                <span class="slider-value" id="thresholdValue">50%</span>
-                            </div>
-                            <input type="range" min="10" max="90" value="50" class="slider-input" id="thresholdSlider">
-                        </div>
-                        
-                        <div class="slider-container">
-                            <div class="slider-label">
-                                <span>Длительность полива</span>
-                                <span class="slider-value" id="durationValue">10 сек</span>
-                            </div>
-                            <input type="range" min="1" max="60" value="10" class="slider-input" id="durationSlider">
                         </div>
                         
                         <div class="btn-group">
-                            <button class="btn btn-primary" id="applySettings">
-                                <i class="fas fa-check"></i>
-                                Применить
-                            </button>
-                            <button class="btn btn-secondary" id="autoMode">
+                            <button class="btn btn-success" id="autoModeBtn">
                                 <i class="fas fa-robot"></i>
                                 Авторежим
+                            </button>
+                            <button class="btn btn-primary" id="applySettingsBtn">
+                                <i class="fas fa-check"></i>
+                                Применить
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Second Row -->
-        <div class="second-row">
+
             <!-- Settings Card -->
-            <div class="settings-card card animate-in" style="animation-delay: 0.7s">
+            <div class="card settings-card">
                 <div class="card-header">
                     <div class="card-title">
-                        <i class="fas fa-cog"></i>
+                        <i class="fas fa-sliders-h"></i>
                         <span>Настройки системы</span>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Задержка между проверками</span>
-                            <span class="slider-value" id="intervalValue">10 мин</span>
-                        </div>
-                        <input type="range" min="1" max="60" value="10" class="slider-input" id="intervalSlider">
-                    </div>
-                    
-                    <div class="time-setter">
-                        <div style="flex: 1;">
-                            <label for="blockStart">Начало блокировки полива</label>
-                            <input type="time" id="blockStart" class="time-input" value="23:00">
-                        </div>
-                        <div style="flex: 1;">
-                            <label for="blockEnd">Конец блокировки полива</label>
-                            <input type="time" id="blockEnd" class="time-input" value="08:00">
-                        </div>
-                    </div>
-                    
-                    <div class="time-setter">
-                        <div style="flex: 1;">
-                            <label for="lightStart">Включение света</label>
-                            <input type="time" id="lightStart" class="time-input" value="08:00">
-                        </div>
-                        <div style="flex: 1;">
-                            <label for="lightDuration">Длительность (ч)</label>
-                            <input type="number" id="lightDuration" class="time-input" value="12" min="1" max="24">
-                        </div>
-                    </div>
-                    
-                    <div class="time-setter" style="margin-top: 20px;">
-                        <div style="flex: 1;">
-                            <label for="currentTime">Текущее время системы</label>
-                            <input type="time" id="currentTime" class="time-input">
-                        </div>
-                        <button class="btn btn-primary" id="setTimeBtn" style="align-self: flex-end;">
+                    <div class="control-section">
+                        <div class="control-title">
                             <i class="fas fa-clock"></i>
-                            Установить
-                        </button>
+                            <span>Временные настройки</span>
+                        </div>
+                        
+                        <div class="time-picker">
+                            <div class="time-input-group">
+                                <label for="blockStart">Начало блокировки</label>
+                                <input type="time" id="blockStart" class="time-input" value="23:00">
+                            </div>
+                            <div class="time-input-group">
+                                <label for="blockEnd">Конец блокировки</label>
+                                <input type="time" id="blockEnd" class="time-input" value="08:00">
+                            </div>
+                        </div>
+                        
+                        <div class="time-picker">
+                            <div class="time-input-group">
+                                <label for="lightStart">Включение света</label>
+                                <input type="time" id="lightStart" class="time-input" value="08:00">
+                            </div>
+                            <div class="time-input-group">
+                                <label for="lightDuration">Длительность (ч)</label>
+                                <input type="number" id="lightDuration" class="time-input" value="12" min="1" max="24">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Задержка проверок</span>
+                                <span class="slider-value" id="intervalSliderValue">10 мин</span>
+                            </div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="intervalFill"></div>
+                                <input type="range" min="1" max="60" value="10" class="slider-input" id="intervalSlider">
+                                <div class="slider-thumb" id="intervalThumb"></div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="btn-group" style="margin-top: 25px;">
-                        <button class="btn btn-primary" id="saveSettings">
+                    <div class="control-section">
+                        <div class="control-title">
+                            <i class="fas fa-history"></i>
+                            <span>Коррекция времени</span>
+                        </div>
+                        
+                        <div class="time-picker">
+                            <div class="time-input-group">
+                                <label for="currentTime">Текущее время RTC</label>
+                                <input type="time" id="currentTime" class="time-input">
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="setTimeBtn">
+                                <i class="fas fa-clock"></i>
+                                Установить время
+                            </button>
+                            <button class="btn btn-secondary" id="syncTimeBtn">
+                                <i class="fas fa-sync"></i>
+                                Синхронизировать
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group" style="margin-top: 20px;">
+                        <button class="btn btn-success" id="saveSettingsBtn">
                             <i class="fas fa-save"></i>
                             Сохранить настройки
                         </button>
-                        <button class="btn btn-secondary" id="resetSettings">
+                        <button class="btn btn-danger" id="resetSettingsBtn">
                             <i class="fas fa-undo"></i>
-                            Сбросить
+                            Сбросить настройки
                         </button>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Telegram Card -->
-            <div class="telegram-card card animate-in" style="animation-delay: 0.8s">
+            <div class="card telegram-card">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fab fa-telegram"></i>
-                        <span>Telegram-уведомления</span>
+                        <span>Telegram уведомления</span>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="telegram-icon">
-                        <i class="fab fa-telegram"></i>
-                    </div>
-                    <div class="telegram-info">
-                        <p>Бот: <strong>@EcoGrow_assis_Bot</strong></p>
-                        <p>Chat ID: <span class="telegram-code">6712996693</span></p>
-                        <p>Токен: <span class="telegram-code">8365221747:AAEskXtc6T-IhEik718wJJ9x-vz_TOh26tw</span></p>
-                        <p style="margin-top: 15px;">Бот отправляет уведомления об ошибках системы и изменениях статуса</p>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn btn-primary" id="testTelegram">
+                    <div class="telegram-content">
+                        <div class="telegram-icon">
                             <i class="fab fa-telegram"></i>
-                            Тест уведомления
-                        </button>
-                        <button class="btn btn-secondary" id="clearTelegram">
-                            <i class="fas fa-broom"></i>
-                            Очистить историю
-                        </button>
+                        </div>
+                        
+                        <h3 style="margin-bottom: 20px;">@EcoGrow_assis_Bot</h3>
+                        
+                        <div class="telegram-details">
+                            <p>
+                                <span>Токен:</span>
+                                <span class="telegram-code">8365221747:AAEskXtc6T-IhEik718wJJ9x-vz_TOh26tw</span>
+                            </p>
+                            <p>
+                                <span>Chat ID:</span>
+                                <span class="telegram-code">6712996693</span>
+                            </p>
+                            <p>
+                                <span>Назначение:</span>
+                                <span>Мониторинг и уведомления об ошибках</span>
+                            </p>
+                        </div>
+                        
+                        <p style="color: var(--text-secondary); margin: 20px 0;">
+                            Бот отправляет уведомления о критических ошибках системы, 
+                            изменениях состояния и низком уровне влажности
+                        </p>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="testTelegramBtn">
+                                <i class="fab fa-telegram"></i>
+                                Тест уведомления
+                            </button>
+                            <button class="btn btn-secondary" id="clearTelegramBtn">
+                                <i class="fas fa-trash"></i>
+                                Очистить историю
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Errors Card -->
-            <div class="errors-card card animate-in" style="animation-delay: 0.9s">
+            <div class="card errors-card">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <span>История ошибок</span>
+                        <span>История ошибок системы</span>
                     </div>
-                    <button class="btn btn-secondary" id="clearErrors" style="padding: 8px 16px; font-size: 14px;">
-                        <i class="fas fa-trash"></i>
-                        Очистить
+                    <button class="btn btn-danger" id="clearErrorsBtn" style="padding: 8px 16px;">
+                        <i class="fas fa-broom"></i>
+                        Очистить всё
                     </button>
                 </div>
                 <div class="card-body">
                     <div class="errors-list" id="errorsList">
-                        <!-- Errors will be populated here -->
+                        <!-- Errors will be loaded here -->
+                    </div>
+                    
+                    <div class="btn-group" style="margin-top: 20px;">
+                        <button class="btn btn-secondary" id="exportErrorsBtn">
+                            <i class="fas fa-download"></i>
+                            Экспорт ошибок
+                        </button>
+                        <button class="btn btn-primary" id="refreshErrorsBtn">
+                            <i class="fas fa-sync"></i>
+                            Обновить
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Statistics Row -->
-        <div class="stats-row">
-            <!-- Statistics History -->
-            <div class="stats-history card animate-in" style="animation-delay: 1s">
+
+            <!-- Statistics Card -->
+            <div class="card stats-card">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-chart-bar"></i>
-                        <span>Статистика системы</span>
+                        <span>Статистика работы</span>
                     </div>
+                    <div class="card-badge">За 7 дней</div>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
                         <canvas id="statsChart"></canvas>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: center;">
-                        <div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--primary);">24ч</div>
-                            <div style="color: var(--text-secondary); font-size: 14px;">Работа света</div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalPumps">0</div>
+                            <div class="stat-label">Всего поливов</div>
                         </div>
-                        <div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--primary);">8</div>
-                            <div style="color: var(--text-secondary); font-size: 14px;">Поливов за неделю</div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="avgPumpTime">0с</div>
+                            <div class="stat-label">Среднее время полива</div>
                         </div>
-                        <div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--primary);">99%</div>
-                            <div style="color: var(--text-secondary); font-size: 14px;">Надежность</div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="lightHours">0ч</div>
+                            <div class="stat-label">Часов света</div>
                         </div>
-                        <div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--primary);">0</div>
-                            <div style="color: var(--text-secondary); font-size: 14px;">Критических ошибок</div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="uptime">99%</div>
+                            <div class="stat-label">Надежность системы</div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Instructions -->
-            <div class="instructions card animate-in" style="animation-delay: 1.1s">
+
+            <!-- Documentation Card -->
+            <div class="card docs-card">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-book"></i>
-                        <span>Инструкция и документация</span>
+                        <span>Документация и ссылки</span>
                     </div>
                 </div>
                 <div class="card-body">
-                    <h3 style="margin-bottom: 15px;">Краткое руководство</h3>
-                    <ul style="padding-left: 20px; margin-bottom: 20px; color: var(--text-secondary);">
-                        <li style="margin-bottom: 10px;">Установите порог влажности для автоматического полива</li>
-                        <li style="margin-bottom: 10px;">Настройте время блокировки полива на ночь</li>
-                        <li style="margin-bottom: 10px;">Включите Telegram-уведомления для мониторинга</li>
-                        <li style="margin-bottom: 10px;">Используйте ручное управление для тестирования системы</li>
-                        <li style="margin-bottom: 10px;">Проверяйте график влажности для анализа состояния растений</li>
-                    </ul>
-                    
-                    <div class="btn-group">
-                        <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" target="_blank" class="btn btn-primary">
-                            <i class="fas fa-file-alt"></i>
-                            Полная документация
-                        </a>
-                        <a href="https://github.com/zhesny/EcoGrow" target="_blank" class="btn btn-secondary">
-                            <i class="fab fa-github"></i>
-                            Исходный код
-                        </a>
-                    </div>
-                    
-                    <div style="margin-top: 25px; padding: 15px; background-color: rgba(42, 157, 143, 0.1); border-radius: 8px;">
-                        <h4 style="margin-bottom: 10px; color: var(--primary);">Новые возможности v4.6:</h4>
-                        <ul style="padding-left: 20px; color: var(--text-secondary); font-size: 14px;">
-                            <li style="margin-bottom: 5px;">Исправлены конфликты пинов энкодера</li>
-                            <li style="margin-bottom: 5px;">Добавлен watchdog-таймер для стабильности</li>
-                            <li style="margin-bottom: 5px;">Улучшена неблокирующая работа бипера</li>
-                            <li style="margin-bottom: 5px;">Оптимизировано меню управления</li>
-                        </ul>
+                    <div class="docs-content">
+                        <h3 style="margin-bottom: 20px; color: var(--secondary);">Разработчик системы</h3>
+                        
+                        <div class="developer-card">
+                            <div class="developer-avatar">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="developer-info">
+                                <h4>Купченя Евгений Андрееевич</h4>
+                                <p>Full-Stack разработчик IoT систем</p>
+                                <p>Telegram: <strong>@Zhesny</strong></p>
+                                <p>Email: <strong>zhenya.kupchenya@mail.ru</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="docs-buttons">
+                            <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-file-alt"></i>
+                                Полная документация
+                            </a>
+                            <a href="https://github.com/zhesny/EcoGrow" target="_blank" class="btn btn-secondary">
+                                <i class="fab fa-github"></i>
+                                Исходный код на GitHub
+                            </a>
+                        </div>
+                        
+                        <div class="update-log">
+                            <h4>Что нового в версии 4.5:</h4>
+                            <ul>
+                                <li>Исправлены конфликты пинов энкодера (10,11)</li>
+                                <li>Добавлен watchdog-таймер для стабильности</li>
+                                <li>Улучшена обработка прерываний энкодера</li>
+                                <li>Оптимизировано меню управления</li>
+                                <li>Исправлены проблемы со спикером</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1305,16 +1706,11 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3 class="footer-title">Разработчик</h3>
+                    <h3>Контакты разработчика</h3>
                     <div class="developer-info">
-                        <div class="developer-avatar">
-                            <i class="fas fa-user-tie"></i>
-                        </div>
-                        <div class="developer-details">
-                            <h3>Купченя Евгений Андрееевич</h3>
-                            <p>Full-Stack разработчик</p>
-                            <p>Специализация: IoT системы, автоматизация</p>
-                        </div>
+                        <h4>Купченя Евгений Андрееевич</h4>
+                        <p>Специализация: IoT системы, автоматизация, микроконтроллеры</p>
+                        <p>Опыт работы с Arduino/ESP: 5+ лет</p>
                     </div>
                     <div class="social-links">
                         <a href="https://t.me/Zhesny" target="_blank" class="social-link">
@@ -1330,24 +1726,18 @@
                 </div>
                 
                 <div class="footer-section">
-                    <h3 class="footer-title">Ссылки</h3>
+                    <h3>Быстрые ссылки</h3>
                     <ul class="footer-links">
-                        <li>
-                            <a href="#">
-                                <i class="fas fa-code-branch"></i>
-                                Версия системы: v4.6
-                            </a>
-                        </li>
                         <li>
                             <a href="https://github.com/zhesny/EcoGrow" target="_blank">
                                 <i class="fab fa-github"></i>
-                                Репозиторий на GitHub
+                                Репозиторий проекта
                             </a>
                         </li>
                         <li>
                             <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" target="_blank">
                                 <i class="fas fa-book"></i>
-                                Полная документация
+                                Техническая документация
                             </a>
                         </li>
                         <li>
@@ -1356,11 +1746,17 @@
                                 Связь с разработчиком
                             </a>
                         </li>
+                        <li>
+                            <a href="#" id="bugReportBtn">
+                                <i class="fas fa-bug"></i>
+                                Сообщить об ошибке
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h3 class="footer-title">Технологии проекта</h3>
+                    <h3>Технологии проекта</h3>
                     <ul class="footer-links">
                         <li>
                             <a href="#">
@@ -1370,20 +1766,20 @@
                         </li>
                         <li>
                             <a href="#">
-                                <i class="fas fa-fire"></i>
+                                <i class="fas fa-database"></i>
                                 Firebase Realtime Database
                             </a>
                         </li>
                         <li>
                             <a href="#">
-                                <i class="fab fa-html5"></i>
+                                <i class="fab fa-js"></i>
                                 HTML5, CSS3, JavaScript
                             </a>
                         </li>
                         <li>
                             <a href="#">
-                                <i class="fas fa-chart-line"></i>
-                                Chart.js для графиков
+                                <i class="fab fa-telegram"></i>
+                                Telegram Bot API
                             </a>
                         </li>
                     </ul>
@@ -1391,8 +1787,9 @@
             </div>
             
             <div class="copyright">
-                <p>© 2023 EcoGrow - Умная система полива растений. Все права защищены.</p>
-                <p>Разработано с <i class="fas fa-heart" style="color: var(--accent);"></i> для автоматизации заботы о растениях</p>
+                <p>© 2023 EcoGrow Control System v4.5. Все права защищены.</p>
+                <p>Система разработана для автоматизации полива растений с удаленным управлением через веб-интерфейс.</p>
+                <p>При возникновении вопросов: <a href="mailto:zhenya.kupchenya@mail.ru">zhenya.kupchenya@mail.ru</a> | <a href="https://t.me/Zhesny">@Zhesny</a></p>
             </div>
         </div>
     </footer>
@@ -1400,7 +1797,7 @@
     <!-- Notification -->
     <div class="notification" id="notification">
         <div class="notification-icon">
-            <i class="fas fa-check"></i>
+            <i class="fas fa-info-circle"></i>
         </div>
         <div class="notification-content">
             <div class="notification-title" id="notificationTitle">Уведомление</div>
@@ -1409,7 +1806,7 @@
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase Configuration (Замените на свои данные)
         const firebaseConfig = {
             apiKey: "AIzaSyDEXAMPLEKEY",
             authDomain: "ecogrow-remote-default-rtdb.firebaseapp.com",
@@ -1425,102 +1822,139 @@
         const database = firebase.database();
         
         // DOM Elements
-        const themeToggle = document.getElementById('themeToggle');
         const connectionStatus = document.getElementById('connectionStatus');
         const connectionText = document.getElementById('connectionText');
+        const lastUpdate = document.getElementById('lastUpdate');
+        const systemStatus = document.getElementById('systemStatus');
         const moistureValue = document.getElementById('moistureValue');
-        const temperatureValue = document.getElementById('temperatureValue');
-        const lightValue = document.getElementById('lightValue');
-        const pumpCount = document.getElementById('pumpCount');
+        const thresholdValue = document.getElementById('thresholdValue');
+        const pumpStatus = document.getElementById('pumpStatus');
+        const lightStatus = document.getElementById('lightStatus');
+        const pumpMode = document.getElementById('pumpMode');
+        const lightMode = document.getElementById('lightMode');
+        const systemTime = document.getElementById('systemTime');
         const pumpToggle = document.getElementById('pumpToggle');
         const lightToggle = document.getElementById('lightToggle');
         const sleepToggle = document.getElementById('sleepToggle');
         const thresholdSlider = document.getElementById('thresholdSlider');
-        const thresholdValue = document.getElementById('thresholdValue');
+        const thresholdSliderValue = document.getElementById('thresholdSliderValue');
+        const thresholdFill = document.getElementById('thresholdFill');
+        const thresholdThumb = document.getElementById('thresholdThumb');
         const durationSlider = document.getElementById('durationSlider');
-        const durationValue = document.getElementById('durationValue');
+        const durationSliderValue = document.getElementById('durationSliderValue');
+        const durationFill = document.getElementById('durationFill');
+        const durationThumb = document.getElementById('durationThumb');
         const intervalSlider = document.getElementById('intervalSlider');
-        const intervalValue = document.getElementById('intervalValue');
-        const applySettingsBtn = document.getElementById('applySettings');
-        const autoModeBtn = document.getElementById('autoMode');
-        const setTimeBtn = document.getElementById('setTimeBtn');
-        const currentTimeInput = document.getElementById('currentTime');
-        const saveSettingsBtn = document.getElementById('saveSettings');
-        const resetSettingsBtn = document.getElementById('resetSettings');
-        const testTelegramBtn = document.getElementById('testTelegram');
-        const clearTelegramBtn = document.getElementById('clearTelegram');
-        const clearErrorsBtn = document.getElementById('clearErrors');
-        const errorsList = document.getElementById('errorsList');
+        const intervalSliderValue = document.getElementById('intervalSliderValue');
+        const intervalFill = document.getElementById('intervalFill');
+        const intervalThumb = document.getElementById('intervalThumb');
+        const pumpIndicator = document.getElementById('pumpIndicator');
+        const lightIndicator = document.getElementById('lightIndicator');
+        const moistureStatus = document.getElementById('moistureStatus');
         const notification = document.getElementById('notification');
         const notificationTitle = document.getElementById('notificationTitle');
         const notificationMessage = document.getElementById('notificationMessage');
+        const errorsList = document.getElementById('errorsList');
         
         // Chart variables
         let moistureChart, statsChart;
         let moistureData = [];
-        let statsData = {
-            labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-            pumpData: [2, 3, 2, 4, 3, 2, 3],
-            lightData: [12, 12, 12, 11, 13, 10, 12]
-        };
+        let historyData = [];
+        let currentChartRange = 24; // hours
         
-        // System state
+        // System state (получается из Firebase)
         let systemState = {
             connected: false,
-            moisture: 65,
-            temperature: 24,
-            lightLevel: 75,
-            pumpActive: false,
-            lightActive: false,
-            sleepMode: false,
+            lastData: null,
+            moisture: null,
+            pump: false,
+            light: false,
             threshold: 50,
-            pumpDuration: 10,
-            checkInterval: 10,
-            lastUpdate: null,
-            errors: [
-                {type: 'warning', message: 'Низкий уровень влажности', time: '2 часа назад'},
-                {type: 'info', message: 'Автоматический полив активирован', time: '5 часов назад'},
-                {type: 'warning', message: 'Температура ниже рекомендованной', time: '1 день назад'},
-                {type: 'danger', message: 'Ошибка датчика влажности', time: '3 дня назад'}
-            ]
+            pump_mode: "AUT",
+            light_mode: "AUT",
+            time: "--:--",
+            timestamp: null,
+            errors: []
         };
         
-        // Initialize the page
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
             initCharts();
             initEventListeners();
+            initFirebase();
+            loadInitialData();
             updateDisplay();
-            simulateDataUpdate();
-            loadErrors();
             
-            // Set current time
+            // Set current time in time picker
             const now = new Date();
-            currentTimeInput.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            document.getElementById('currentTime').value = 
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         });
         
-        // Theme toggle
-        function initTheme() {
-            const savedTheme = localStorage.getItem('ecogrow-theme') || 'dark';
-            if (savedTheme === 'dark') {
-                document.body.classList.remove('light-theme');
-                document.body.classList.add('dark-theme');
-                themeToggle.checked = true;
-            } else {
-                document.body.classList.remove('dark-theme');
-                document.body.classList.add('light-theme');
-                themeToggle.checked = false;
-            }
+        // Initialize Firebase connection
+        function initFirebase() {
+            const deviceRef = database.ref('devices/ecogrow_main');
             
-            themeToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    document.body.classList.remove('light-theme');
-                    document.body.classList.add('dark-theme');
-                    localStorage.setItem('ecogrow-theme', 'dark');
+            deviceRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data) {
+                    systemState.connected = true;
+                    systemState.lastData = data;
+                    systemState.timestamp = Date.now();
+                    
+                    // Update system state
+                    systemState.moisture = data.moisture || 0;
+                    systemState.pump = data.pump || false;
+                    systemState.light = data.light || false;
+                    systemState.threshold = data.threshold || 50;
+                    systemState.pump_mode = data.pump_mode || "AUT";
+                    systemState.light_mode = data.light_mode || "AUT";
+                    systemState.time = data.time || "--:--";
+                    
+                    // Add to history for chart
+                    addToHistory({
+                        timestamp: systemState.timestamp,
+                        moisture: systemState.moisture,
+                        pump: systemState.pump,
+                        light: systemState.light
+                    });
+                    
+                    // Update display
+                    updateDisplay();
+                    
+                    // Update connection status
+                    connectionStatus.classList.add('connected');
+                    connectionText.textContent = 'Подключено к ESP8266';
+                    lastUpdate.textContent = `Обновлено: ${new Date().toLocaleTimeString()}`;
+                    
+                    // Check for critical conditions
+                    checkConditions();
+                    
                 } else {
-                    document.body.classList.remove('dark-theme');
-                    document.body.classList.add('light-theme');
-                    localStorage.setItem('ecogrow-theme', 'light');
+                    systemState.connected = false;
+                    connectionStatus.classList.remove('connected');
+                    connectionText.textContent = 'Нет данных от ESP8266';
+                    showNotification('Внимание', 'Нет данных от устройства ESP8266', 'warning');
+                }
+            }, (error) => {
+                console.error('Firebase error:', error);
+                systemState.connected = false;
+                connectionStatus.classList.remove('connected');
+                connectionText.textContent = 'Ошибка подключения';
+                showNotification('Ошибка', 'Не удалось подключиться к Firebase', 'error');
+            });
+            
+            // Listen for commands responses
+            const commandsRef = database.ref('commands/ecogrow_main');
+            commandsRef.on('value', (snapshot) => {
+                const command = snapshot.val();
+                if (command && command !== "null") {
+                    // Command received, show notification
+                    showNotification('Команда выполнена', `Команда "${command}" отправлена на устройство`, 'success');
+                    
+                    // Clear command after processing
+                    commandsRef.set("null");
                 }
             });
         }
@@ -1532,72 +1966,96 @@
             moistureChart = new Chart(ctx1, {
                 type: 'line',
                 data: {
-                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    labels: [],
                     datasets: [{
                         label: 'Влажность почвы (%)',
-                        data: Array.from({length: 24}, () => Math.floor(Math.random() * 30) + 50),
-                        borderColor: 'rgb(42, 157, 143)',
-                        backgroundColor: 'rgba(42, 157, 143, 0.1)',
+                        data: [],
+                        borderColor: '#00c853',
+                        backgroundColor: 'rgba(0, 200, 83, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: 'rgb(42, 157, 143)',
+                        pointBackgroundColor: '#00c853',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
                         pointRadius: 4,
-                        pointHoverRadius: 6
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
                     plugins: {
                         legend: {
                             labels: {
-                                color: getComputedStyle(document.body).getPropertyValue('--text')
+                                color: '#ffffff',
+                                font: {
+                                    size: 14,
+                                    family: 'Montserrat'
+                                }
                             }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 30, 30, 0.9)',
+                            titleColor: '#00c853',
+                            bodyColor: '#ffffff',
+                            borderColor: '#00c853',
+                            borderWidth: 1,
+                            cornerRadius: 8
                         }
                     },
                     scales: {
                         x: {
                             grid: {
-                                color: getComputedStyle(document.body).getPropertyValue('--border')
+                                color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: getComputedStyle(document.body).getPropertyValue('--text-secondary')
+                                color: '#b0b0b0',
+                                font: {
+                                    size: 12
+                                }
                             }
                         },
                         y: {
                             min: 0,
                             max: 100,
                             grid: {
-                                color: getComputedStyle(document.body).getPropertyValue('--border')
+                                color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: getComputedStyle(document.body).getPropertyValue('--text-secondary')
+                                color: '#b0b0b0',
+                                font: {
+                                    size: 12
+                                }
                             }
                         }
                     }
                 }
             });
             
-            // Stats chart
+            // Statistics chart
             const ctx2 = document.getElementById('statsChart').getContext('2d');
             statsChart = new Chart(ctx2, {
                 type: 'bar',
                 data: {
-                    labels: statsData.labels,
+                    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
                     datasets: [
                         {
-                            label: 'Часы света',
-                            data: statsData.lightData,
-                            backgroundColor: 'rgba(233, 196, 106, 0.7)',
-                            borderColor: 'rgb(233, 196, 106)',
+                            label: 'Поливы',
+                            data: [3, 5, 4, 6, 3, 2, 4],
+                            backgroundColor: 'rgba(13, 71, 161, 0.7)',
+                            borderColor: '#0d47a1',
                             borderWidth: 1
                         },
                         {
-                            label: 'Количество поливов',
-                            data: statsData.pumpData,
-                            backgroundColor: 'rgba(42, 157, 143, 0.7)',
-                            borderColor: 'rgb(42, 157, 143)',
+                            label: 'Активность света (ч)',
+                            data: [12, 11, 13, 12, 10, 8, 12],
+                            backgroundColor: 'rgba(0, 200, 83, 0.7)',
+                            borderColor: '#00c853',
                             borderWidth: 1
                         }
                     ]
@@ -1608,245 +2066,286 @@
                     plugins: {
                         legend: {
                             labels: {
-                                color: getComputedStyle(document.body).getPropertyValue('--text')
+                                color: '#ffffff',
+                                font: {
+                                    size: 14,
+                                    family: 'Montserrat'
+                                }
                             }
                         }
                     },
                     scales: {
                         x: {
                             grid: {
-                                color: getComputedStyle(document.body).getPropertyValue('--border')
+                                color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: getComputedStyle(document.body).getPropertyValue('--text-secondary')
+                                color: '#b0b0b0'
                             }
                         },
                         y: {
                             grid: {
-                                color: getComputedStyle(document.body).getPropertyValue('--border')
+                                color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: getComputedStyle(document.body).getPropertyValue('--text-secondary')
+                                color: '#b0b0b0'
                             }
                         }
                     }
                 }
             });
-            
-            // Update chart theme when theme changes
-            themeToggle.addEventListener('change', function() {
-                setTimeout(() => {
-                    moistureChart.update();
-                    statsChart.update();
-                }, 100);
-            });
         }
         
         // Initialize event listeners
         function initEventListeners() {
-            // Slider events
-            thresholdSlider.addEventListener('input', function() {
-                thresholdValue.textContent = `${this.value}%`;
-                systemState.threshold = parseInt(this.value);
-            });
-            
-            durationSlider.addEventListener('input', function() {
-                durationValue.textContent = `${this.value} сек`;
-                systemState.pumpDuration = parseInt(this.value);
-            });
-            
-            intervalSlider.addEventListener('input', function() {
-                intervalValue.textContent = `${this.value} мин`;
-                systemState.checkInterval = parseInt(this.value);
-            });
-            
-            // Button events
-            applySettingsBtn.addEventListener('click', function() {
-                sendCommand('SET_THRESHOLD', {threshold: systemState.threshold});
-                showNotification('Настройки применены', 'Порог влажности установлен на ' + systemState.threshold + '%', 'success');
-            });
-            
-            autoModeBtn.addEventListener('click', function() {
-                sendCommand('AUTO_MODE', {});
-                pumpToggle.checked = false;
-                lightToggle.checked = false;
-                showNotification('Авторежим включен', 'Система переведена в автоматический режим работы', 'success');
-            });
-            
-            setTimeBtn.addEventListener('click', function() {
-                sendCommand('SET_TIME', {time: currentTimeInput.value});
-                showNotification('Время установлено', 'Системное время обновлено', 'success');
-            });
-            
-            saveSettingsBtn.addEventListener('click', function() {
-                const blockStart = document.getElementById('blockStart').value;
-                const blockEnd = document.getElementById('blockEnd').value;
-                const lightStart = document.getElementById('lightStart').value;
-                const lightDuration = document.getElementById('lightDuration').value;
-                
-                sendCommand('SAVE_SETTINGS', {
-                    blockStart, blockEnd, lightStart, lightDuration,
-                    threshold: systemState.threshold,
-                    pumpDuration: systemState.pumpDuration,
-                    checkInterval: systemState.checkInterval
+            // Chart time range buttons
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentChartRange = parseInt(this.dataset.hours);
+                    updateChart();
                 });
-                
-                showNotification('Настройки сохранены', 'Все параметры системы сохранены в память', 'success');
             });
             
-            resetSettingsBtn.addEventListener('click', function() {
-                if (confirm('Вы уверены, что хотите сбросить все настройки к заводским?')) {
-                    sendCommand('RESET_SETTINGS', {});
-                    thresholdSlider.value = 50;
-                    thresholdValue.textContent = '50%';
-                    durationSlider.value = 10;
-                    durationValue.textContent = '10 сек';
-                    intervalSlider.value = 10;
-                    intervalValue.textContent = '10 мин';
-                    
-                    showNotification('Настройки сброшены', 'Все параметры восстановлены к заводским', 'warning');
-                }
-            });
-            
-            // Toggle events
+            // Toggle switches
             pumpToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    sendCommand('PUMP_ON', {duration: systemState.pumpDuration});
-                    showNotification('Насос включен', 'Ручной полив активирован на ' + systemState.pumpDuration + ' секунд', 'success');
-                } else {
-                    sendCommand('PUMP_OFF', {});
-                    showNotification('Насос выключен', 'Полив остановлен', 'warning');
-                }
+                const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
+                sendCommand(command);
+                showNotification('Насос', this.checked ? 'Включен вручную' : 'Выключен', 'success');
             });
             
             lightToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    sendCommand('LIGHT_ON', {});
-                    showNotification('Свет включен', 'Фитолампа активирована', 'success');
-                } else {
-                    sendCommand('LIGHT_OFF', {});
-                    showNotification('Свет выключен', 'Фитолампа отключена', 'warning');
-                }
+                const command = this.checked ? 'LIGHT:ON' : 'LIGHT:OFF';
+                sendCommand(command);
+                showNotification('Свет', this.checked ? 'Включен вручную' : 'Выключен', 'success');
             });
             
             sleepToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    sendCommand('SLEEP_MODE_ON', {});
-                    showNotification('Режим сна', 'Система переведена в энергосберегающий режим', 'warning');
-                } else {
-                    sendCommand('SLEEP_MODE_OFF', {});
-                    showNotification('Режим сна отключен', 'Система возобновила нормальную работу', 'success');
-                }
+                const command = this.checked ? 'SLEEP:ON' : 'SLEEP:OFF';
+                sendCommand(command);
+                showNotification('Режим сна', this.checked ? 'Включен' : 'Выключен', 'warning');
             });
             
-            // Telegram buttons
-            testTelegramBtn.addEventListener('click', function() {
-                sendCommand('TEST_TELEGRAM', {});
-                showNotification('Тест уведомления', 'Тестовое сообщение отправлено в Telegram', 'success');
+            // Sliders
+            thresholdSlider.addEventListener('input', updateThresholdSlider);
+            durationSlider.addEventListener('input', updateDurationSlider);
+            intervalSlider.addEventListener('input', updateIntervalSlider);
+            
+            // Buttons
+            document.getElementById('autoModeBtn').addEventListener('click', function() {
+                sendCommand('ALL:AUTO');
+                showNotification('Авторежим', 'Система переведена в автоматический режим', 'success');
             });
             
-            clearTelegramBtn.addEventListener('click', function() {
-                if (confirm('Очистить историю Telegram уведомлений?')) {
-                    sendCommand('CLEAR_TELEGRAM', {});
-                    showNotification('История очищена', 'История Telegram уведомлений удалена', 'warning');
-                }
+            document.getElementById('applySettingsBtn').addEventListener('click', function() {
+                const threshold = thresholdSlider.value;
+                sendCommand(`THRESHOLD:${threshold}`);
+                showNotification('Настройки', `Порог влажности установлен на ${threshold}%`, 'success');
             });
             
-            // Clear errors button
-            clearErrorsBtn.addEventListener('click', function() {
-                if (confirm('Очистить историю ошибок?')) {
-                    systemState.errors = [];
-                    loadErrors();
-                    showNotification('История очищена', 'Все ошибки удалены из истории', 'warning');
-                }
+            document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+            document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
+            document.getElementById('setTimeBtn').addEventListener('click', setSystemTime);
+            document.getElementById('syncTimeBtn').addEventListener('click', syncTime);
+            document.getElementById('testTelegramBtn').addEventListener('click', testTelegram);
+            document.getElementById('clearTelegramBtn').addEventListener('click', clearTelegram);
+            document.getElementById('clearErrorsBtn').addEventListener('click', clearErrors);
+            document.getElementById('exportErrorsBtn').addEventListener('click', exportErrors);
+            document.getElementById('refreshErrorsBtn').addEventListener('click', refreshErrors);
+            document.getElementById('bugReportBtn').addEventListener('click', reportBug);
+        }
+        
+        // Update slider visuals
+        function updateThresholdSlider() {
+            const value = this.value;
+            const percent = ((value - 10) / 80) * 100;
+            thresholdSliderValue.textContent = `${value}%`;
+            thresholdFill.style.width = `${percent}%`;
+            thresholdThumb.style.left = `${percent}%`;
+        }
+        
+        function updateDurationSlider() {
+            const value = this.value;
+            const percent = ((value - 1) / 59) * 100;
+            durationSliderValue.textContent = `${value} сек`;
+            durationFill.style.width = `${percent}%`;
+            durationThumb.style.left = `${percent}%`;
+        }
+        
+        function updateIntervalSlider() {
+            const value = this.value;
+            const percent = ((value - 1) / 59) * 100;
+            intervalSliderValue.textContent = `${value} мин`;
+            intervalFill.style.width = `${percent}%`;
+            intervalThumb.style.left = `${percent}%`;
+        }
+        
+        // Add data to history
+        function addToHistory(data) {
+            historyData.push(data);
+            
+            // Keep only last 1000 points
+            if (historyData.length > 1000) {
+                historyData = historyData.slice(-1000);
+            }
+            
+            // Update chart
+            updateChart();
+            
+            // Update statistics
+            updateStatistics();
+        }
+        
+        // Update chart with current data
+        function updateChart() {
+            if (historyData.length === 0) return;
+            
+            // Filter data based on time range
+            const cutoffTime = Date.now() - (currentChartRange * 60 * 60 * 1000);
+            const filteredData = historyData.filter(d => d.timestamp >= cutoffTime);
+            
+            if (filteredData.length === 0) return;
+            
+            // Prepare labels and data
+            const labels = filteredData.map(d => {
+                const date = new Date(d.timestamp);
+                return currentChartRange <= 24 
+                    ? date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+                    : date.toLocaleDateString([], {month: 'short', day: 'numeric'});
             });
             
-            // Chart range selector
-            document.getElementById('chartRange').addEventListener('change', function() {
-                updateChartData(parseInt(this.value));
-            });
+            const data = filteredData.map(d => d.moisture);
+            
+            // Update chart
+            moistureChart.data.labels = labels;
+            moistureChart.data.datasets[0].data = data;
+            moistureChart.update();
+            
+            // Update statistics
+            updateChartStats(filteredData);
+        }
+        
+        // Update chart statistics
+        function updateChartStats(data) {
+            if (data.length === 0) return;
+            
+            const moistures = data.map(d => d.moisture);
+            const avg = moistures.reduce((a, b) => a + b, 0) / moistures.length;
+            const min = Math.min(...moistures);
+            const max = Math.max(...moistures);
+            const change = moistures.length > 1 ? moistures[moistures.length - 1] - moistures[0] : 0;
+            
+            document.getElementById('avgMoisture').textContent = `${avg.toFixed(1)}%`;
+            document.getElementById('minMoisture').textContent = `${min}%`;
+            document.getElementById('maxMoisture').textContent = `${max}%`;
+            document.getElementById('changeMoisture').textContent = `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            // Calculate statistics from history
+            const lastWeekData = historyData.filter(d => 
+                Date.now() - d.timestamp < 7 * 24 * 60 * 60 * 1000
+            );
+            
+            const pumpActivations = lastWeekData.filter(d => d.pump).length;
+            const totalPumpTime = pumpActivations * parseInt(durationSlider.value);
+            const lightHours = lastWeekData.filter(d => d.light).length * 5 / 3600; // approx
+            
+            document.getElementById('totalPumps').textContent = pumpActivations;
+            document.getElementById('avgPumpTime').textContent = `${durationSlider.value}с`;
+            document.getElementById('lightHours').textContent = `${lightHours.toFixed(1)}ч`;
+            document.getElementById('uptime').textContent = '99%';
         }
         
         // Update display with current state
         function updateDisplay() {
-            // Update connection status
-            if (systemState.connected) {
-                connectionStatus.classList.add('connected');
-                connectionText.textContent = 'Подключено';
-            } else {
-                connectionStatus.classList.remove('connected');
-                connectionText.textContent = 'Нет подключения';
+            // Update values
+            moistureValue.textContent = systemState.moisture !== null ? systemState.moisture : '--';
+            thresholdValue.textContent = systemState.threshold;
+            systemTime.textContent = systemState.time;
+            
+            // Update pump status
+            pumpStatus.textContent = systemState.pump ? 'Вкл' : 'Выкл';
+            pumpStatus.style.color = systemState.pump ? '#00c853' : '#f44336';
+            pumpIndicator.className = systemState.pump ? 'fas fa-circle good' : 'fas fa-circle danger';
+            pumpMode.textContent = systemState.pump_mode === 'MAN' ? 'Ручной' : 'Авто';
+            pumpToggle.checked = systemState.pump;
+            
+            // Update light status
+            lightStatus.textContent = systemState.light ? 'Вкл' : 'Выкл';
+            lightStatus.style.color = systemState.light ? '#00c853' : '#f44336';
+            lightIndicator.className = systemState.light ? 'fas fa-circle good' : 'fas fa-circle danger';
+            lightMode.textContent = systemState.light_mode === 'MAN' ? 'Ручной' : 'Авто';
+            lightToggle.checked = systemState.light;
+            
+            // Update moisture status
+            if (systemState.moisture !== null) {
+                if (systemState.moisture < systemState.threshold - 10) {
+                    moistureStatus.textContent = 'Критически низкая';
+                    moistureStatus.className = 'danger';
+                } else if (systemState.moisture < systemState.threshold) {
+                    moistureStatus.textContent = 'Низкая';
+                    moistureStatus.className = 'warning';
+                } else {
+                    moistureStatus.textContent = 'Норма';
+                    moistureStatus.className = 'good';
+                }
             }
             
-            // Update values
-            moistureValue.textContent = `${systemState.moisture}%`;
-            temperatureValue.textContent = `${systemState.temperature}°C`;
-            lightValue.textContent = `${systemState.lightLevel}%`;
-            pumpCount.textContent = systemState.pumpActive ? '1' : '0';
+            // Update system status
+            systemStatus.textContent = systemState.pump_mode === 'AUT' && systemState.light_mode === 'AUT' ? 'Авто' : 'Ручной';
+            systemStatus.style.background = systemState.pump_mode === 'AUT' && systemState.light_mode === 'AUT' 
+                ? 'linear-gradient(135deg, #00c853, #5efc82)' 
+                : 'linear-gradient(135deg, #ff4081, #ff79b0)';
             
-            // Update toggles
-            pumpToggle.checked = systemState.pumpActive;
-            lightToggle.checked = systemState.lightActive;
-            sleepToggle.checked = systemState.sleepMode;
+            // Update sliders
+            thresholdSlider.value = systemState.threshold;
+            updateThresholdSlider.call(thresholdSlider);
         }
         
-        // Simulate data updates (in real app, this would come from Firebase)
-        function simulateDataUpdate() {
-            setInterval(() => {
-                // Simulate moisture changes
-                const change = Math.floor(Math.random() * 6) - 2; // -2 to +3
-                systemState.moisture = Math.max(10, Math.min(90, systemState.moisture + change));
-                
-                // Simulate temperature changes
-                const tempChange = (Math.random() * 0.4) - 0.2; // -0.2 to +0.2
-                systemState.temperature = parseFloat((systemState.temperature + tempChange).toFixed(1));
-                
-                // Simulate light level changes (day/night cycle)
-                const hour = new Date().getHours();
-                if (hour >= 6 && hour <= 18) {
-                    systemState.lightLevel = Math.min(100, systemState.lightLevel + 1);
-                } else {
-                    systemState.lightLevel = Math.max(10, systemState.lightLevel - 1);
-                }
-                
-                // Randomly toggle pump (simulating auto mode)
-                if (!pumpToggle.checked && Math.random() > 0.95) {
-                    systemState.pumpActive = !systemState.pumpActive;
-                    if (systemState.pumpActive) {
-                        // Add error when pump activates
-                        addError('info', 'Автоматический полив активирован');
-                    }
-                }
-                
-                // Add random errors occasionally
-                if (Math.random() > 0.98) {
-                    const errorTypes = [
-                        {type: 'warning', message: 'Влажность приближается к минимальному порогу'},
-                        {type: 'info', message: 'Запущен ночной режим освещения'},
-                        {type: 'danger', message: 'Обрыв связи с датчиком температуры'}
-                    ];
-                    const error = errorTypes[Math.floor(Math.random() * errorTypes.length)];
-                    addError(error.type, error.message);
-                }
-                
-                updateDisplay();
-                updateChartData(24);
-            }, 3000);
+        // Check system conditions for alerts
+        function checkConditions() {
+            if (systemState.moisture !== null && systemState.moisture < systemState.threshold - 15) {
+                addError('danger', `Критически низкая влажность: ${systemState.moisture}%`);
+                showNotification('Внимание!', `Влажность критически низкая: ${systemState.moisture}%`, 'error');
+            } else if (systemState.moisture !== null && systemState.moisture < systemState.threshold) {
+                addError('warning', `Низкая влажность: ${systemState.moisture}%`);
+            }
         }
         
-        // Update chart data
-        function updateChartData(hours) {
-            const newData = Array.from({length: 24}, () => Math.floor(Math.random() * 30) + 50);
-            moistureChart.data.datasets[0].data = newData;
-            moistureChart.update();
+        // Add error to list
+        function addError(type, message) {
+            const error = {
+                type,
+                message,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'}),
+                date: new Date().toLocaleDateString()
+            };
+            
+            systemState.errors.unshift(error);
+            
+            // Keep only last 50 errors
+            if (systemState.errors.length > 50) {
+                systemState.errors.pop();
+            }
+            
+            updateErrorsList();
         }
         
-        // Load errors into the list
-        function loadErrors() {
+        // Update errors list display
+        function updateErrorsList() {
             errorsList.innerHTML = '';
             
             if (systemState.errors.length === 0) {
-                errorsList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">Нет ошибок в истории</div>';
+                errorsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                        <i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 20px; color: var(--success);"></i>
+                        <h3>Ошибок не обнаружено</h3>
+                        <p>Система работает стабильно</p>
+                    </div>
+                `;
                 return;
             }
             
@@ -1859,12 +2358,15 @@
                 if (error.type === 'danger') icon = 'fa-times-circle';
                 
                 errorItem.innerHTML = `
-                    <div class="error-icon">
-                        <i class="fas ${icon}"></i>
+                    <div class="error-header">
+                        <div class="error-icon">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <div class="error-message">${error.message}</div>
                     </div>
-                    <div class="error-content">
-                        <div>${error.message}</div>
-                        <div class="error-time">${error.time}</div>
+                    <div class="error-time">
+                        <i class="far fa-clock"></i>
+                        ${error.date} ${error.time}
                     </div>
                 `;
                 
@@ -1872,28 +2374,131 @@
             });
         }
         
-        // Add new error
-        function addError(type, message) {
+        // Send command to Firebase
+        function sendCommand(command) {
+            if (!systemState.connected) {
+                showNotification('Ошибка', 'Нет подключения к устройству', 'error');
+                return;
+            }
+            
+            database.ref('commands/ecogrow_main').set(command)
+                .then(() => {
+                    console.log(`Command sent: ${command}`);
+                })
+                .catch(error => {
+                    console.error('Error sending command:', error);
+                    showNotification('Ошибка', 'Не удалось отправить команду', 'error');
+                });
+        }
+        
+        // Save settings
+        function saveSettings() {
+            const blockStart = document.getElementById('blockStart').value;
+            const blockEnd = document.getElementById('blockEnd').value;
+            const lightStart = document.getElementById('lightStart').value;
+            const lightDuration = document.getElementById('lightDuration').value;
+            const interval = intervalSlider.value;
+            
+            // Here you would send these settings to Firebase
+            // For now, just show notification
+            showNotification('Настройки', 'Все настройки сохранены успешно', 'success');
+        }
+        
+        // Reset settings
+        function resetSettings() {
+            if (confirm('Вы уверены, что хотите сбросить все настройки к заводским?')) {
+                // Reset all controls
+                thresholdSlider.value = 50;
+                updateThresholdSlider.call(thresholdSlider);
+                durationSlider.value = 10;
+                updateDurationSlider.call(durationSlider);
+                intervalSlider.value = 10;
+                updateIntervalSlider.call(intervalSlider);
+                document.getElementById('blockStart').value = '23:00';
+                document.getElementById('blockEnd').value = '08:00';
+                document.getElementById('lightStart').value = '08:00';
+                document.getElementById('lightDuration').value = '12';
+                
+                sendCommand('RESET_SETTINGS');
+                showNotification('Настройки', 'Все настройки сброшены к заводским', 'warning');
+            }
+        }
+        
+        // Set system time
+        function setSystemTime() {
+            const time = document.getElementById('currentTime').value;
+            if (time) {
+                sendCommand(`SETTIME:${time}`);
+                showNotification('Время', `Системное время установлено на ${time}`, 'success');
+            }
+        }
+        
+        // Sync time with browser
+        function syncTime() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
-            
-            systemState.errors.unshift({
-                type,
-                message,
-                time: timeStr
-            });
-            
-            // Keep only last 10 errors
-            if (systemState.errors.length > 10) {
-                systemState.errors.pop();
+            const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            document.getElementById('currentTime').value = time;
+            sendCommand(`SETTIME:${time}`);
+            showNotification('Время', `Время синхронизировано: ${time}`, 'success');
+        }
+        
+        // Test Telegram notification
+        function testTelegram() {
+            sendCommand('TEST_TELEGRAM');
+            showNotification('Telegram', 'Тестовое уведомление отправлено', 'success');
+        }
+        
+        // Clear Telegram history
+        function clearTelegram() {
+            if (confirm('Очистить историю Telegram уведомлений?')) {
+                sendCommand('CLEAR_TELEGRAM');
+                showNotification('Telegram', 'История уведомлений очищена', 'warning');
+            }
+        }
+        
+        // Clear errors
+        function clearErrors() {
+            if (confirm('Очистить всю историю ошибок?')) {
+                systemState.errors = [];
+                updateErrorsList();
+                showNotification('Ошибки', 'История ошибок очищена', 'warning');
+            }
+        }
+        
+        // Export errors
+        function exportErrors() {
+            if (systemState.errors.length === 0) {
+                showNotification('Экспорт', 'Нет ошибок для экспорта', 'info');
+                return;
             }
             
-            loadErrors();
+            const csv = systemState.errors.map(e => 
+                `${e.type},${e.message},${e.date} ${e.time}`
+            ).join('\n');
             
-            // Show notification for important errors
-            if (type === 'danger' || type === 'warning') {
-                showNotification('Ошибка системы', message, type);
-            }
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ecogrow_errors_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            showNotification('Экспорт', 'Ошибки экспортированы в CSV', 'success');
+        }
+        
+        // Refresh errors
+        function refreshErrors() {
+            updateErrorsList();
+            showNotification('Обновление', 'Список ошибок обновлен', 'info');
+        }
+        
+        // Report bug
+        function reportBug() {
+            const email = 'zhenya.kupchenya@mail.ru';
+            const subject = 'Ошибка в системе EcoGrow v4.5';
+            const body = `Описание ошибки:\n\nВерсия системы: 4.5\nВремя возникновения: ${new Date().toLocaleString()}\n\n`;
+            
+            window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
         
         // Show notification
@@ -1902,11 +2507,11 @@
             notificationTitle.textContent = title;
             notificationMessage.textContent = message;
             
-            // Set icon based on type
+            // Set icon
             let icon = 'fa-info-circle';
             if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-times-circle';
             if (type === 'warning') icon = 'fa-exclamation-triangle';
-            if (type === 'danger') icon = 'fa-times-circle';
             
             notification.querySelector('.notification-icon i').className = `fas ${icon}`;
             
@@ -1917,47 +2522,55 @@
             }, 5000);
         }
         
-        // Send command to Firebase (simulated)
-        function sendCommand(command, data) {
-            console.log(`Command sent: ${command}`, data);
+        // Load initial data
+        function loadInitialData() {
+            // Load errors from localStorage if available
+            const savedErrors = localStorage.getItem('ecogrow_errors');
+            if (savedErrors) {
+                systemState.errors = JSON.parse(savedErrors);
+                updateErrorsList();
+            }
             
-            // In a real implementation, this would send data to Firebase
-            // database.ref('commands/ecogrow_main').set({
-            //     command,
-            //     ...data,
-            //     timestamp: Date.now()
-            // });
+            // Load history from localStorage if available
+            const savedHistory = localStorage.getItem('ecogrow_history');
+            if (savedHistory) {
+                historyData = JSON.parse(savedHistory);
+                updateChart();
+                updateStatistics();
+            }
             
-            // Simulate successful command
-            systemState.connected = true;
-            updateDisplay();
-            
-            // Simulate response after delay
-            setTimeout(() => {
-                if (command === 'PUMP_ON') {
-                    systemState.pumpActive = true;
-                } else if (command === 'PUMP_OFF') {
-                    systemState.pumpActive = false;
-                } else if (command === 'LIGHT_ON') {
-                    systemState.lightActive = true;
-                } else if (command === 'LIGHT_OFF') {
-                    systemState.lightActive = false;
-                } else if (command === 'SLEEP_MODE_ON') {
-                    systemState.sleepMode = true;
-                } else if (command === 'SLEEP_MODE_OFF') {
-                    systemState.sleepMode = false;
-                }
-                
-                updateDisplay();
-            }, 1000);
+            // Auto-save every minute
+            setInterval(() => {
+                localStorage.setItem('ecogrow_errors', JSON.stringify(systemState.errors));
+                localStorage.setItem('ecogrow_history', JSON.stringify(historyData.slice(-500))); // Save last 500 points
+            }, 60000);
         }
         
-        // Firebase connection simulation
-        setInterval(() => {
-            // Simulate connection status changes
-            systemState.connected = Math.random() > 0.1; // 90% connected
-            updateDisplay();
-        }, 5000);
+        // Simulate data for demo (remove in production)
+        function simulateDataForDemo() {
+            if (!systemState.connected) {
+                // Generate fake data for demo
+                setInterval(() => {
+                    systemState.moisture = Math.max(10, Math.min(90, 
+                        (systemState.moisture || 65) + (Math.random() * 6 - 3)
+                    ));
+                    systemState.time = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                    systemState.timestamp = Date.now();
+                    
+                    addToHistory({
+                        timestamp: systemState.timestamp,
+                        moisture: systemState.moisture,
+                        pump: systemState.pump,
+                        light: systemState.light
+                    });
+                    
+                    updateDisplay();
+                }, 5000);
+            }
+        }
+        
+        // Start demo simulation if no Firebase connection
+        setTimeout(simulateDataForDemo, 3000);
     </script>
 </body>
 </html>
