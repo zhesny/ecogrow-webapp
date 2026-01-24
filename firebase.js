@@ -1,3 +1,7 @@
+// Firebase Configuration and Initialization
+
+console.log('🔥 Инициализация Firebase...');
+
 // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
@@ -11,17 +15,42 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+try {
+    // Проверяем, не инициализирован ли Firebase уже
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase инициализирован успешно');
+    } else {
+        console.log('⚠️ Firebase уже инициализирован');
+    }
+    
+    // Get database instance
+    const database = firebase.database();
+    
+    // Make available globally for app.js
+    window.firebaseDatabase = database;
+    
+    console.log('📊 Firebase Database готов к использованию');
+    
+    // Test connection
+    const connectedRef = database.ref('.info/connected');
+    connectedRef.on('value', (snap) => {
+        const status = snap.val() === true ? '✅ Подключено' : '❌ Отключено';
+        console.log('Соединение Firebase:', status);
+    });
+    
+} catch (error) {
+    console.error('❌ Ошибка инициализации Firebase:', error);
+    window.firebaseDatabase = null;
+}
 
-// Firebase functions
+// Firebase Service Class (дополнительный функционал)
 class FirebaseService {
     constructor() {
-        this.devicesRef = database.ref('devices');
+        this.db = window.firebaseDatabase;
+        this.devicesRef = this.db.ref('devices');
         this.currentDeviceId = null;
         this.currentDeviceRef = null;
-        this.stateListener = null;
-        this.commandsListener = null;
     }
 
     // Scan for online devices
@@ -54,11 +83,6 @@ class FirebaseService {
         // Update device last seen
         this.updateDeviceStatus();
         
-        // Set up periodic status updates
-        this.statusInterval = setInterval(() => {
-            this.updateDeviceStatus();
-        }, 30000);
-        
         return this.currentDeviceRef;
     }
 
@@ -68,32 +92,6 @@ class FirebaseService {
             this.currentDeviceRef.update({
                 lastSeen: Date.now(),
                 online: true
-            });
-        }
-    }
-
-    // Listen for device state changes
-    listenToState(callback) {
-        if (this.stateListener) {
-            this.stateListener.off();
-        }
-        
-        if (this.currentDeviceRef) {
-            this.stateListener = this.currentDeviceRef.child('state').on('value', (snapshot) => {
-                callback(snapshot.val());
-            });
-        }
-    }
-
-    // Listen for device settings
-    listenToSettings(callback) {
-        if (this.settingsListener) {
-            this.settingsListener.off();
-        }
-        
-        if (this.currentDeviceRef) {
-            this.settingsListener = this.currentDeviceRef.child('settings').on('value', (snapshot) => {
-                callback(snapshot.val());
             });
         }
     }
@@ -115,87 +113,14 @@ class FirebaseService {
         }
     }
 
-    // Update device settings
-    updateSettings(settings) {
-        if (!this.currentDeviceRef) return false;
-        
-        return this.currentDeviceRef.child('settings').update(settings);
-    }
-
-    // Get device errors
-    getErrors() {
-        if (!this.currentDeviceRef) return Promise.resolve([]);
-        
-        return new Promise((resolve) => {
-            this.currentDeviceRef.child('errors').once('value', (snapshot) => {
-                const errors = [];
-                snapshot.forEach((childSnapshot) => {
-                    errors.push({
-                        id: childSnapshot.key,
-                        message: childSnapshot.val()
-                    });
-                });
-                resolve(errors);
-            });
-        });
-    }
-
-    // Clear errors
-    clearErrors() {
-        if (!this.currentDeviceRef) return false;
-        
-        return this.currentDeviceRef.child('errors').remove();
-    }
-
     // Disconnect from device
     disconnect() {
-        if (this.stateListener) {
-            this.stateListener.off();
-            this.stateListener = null;
-        }
-        
-        if (this.settingsListener) {
-            this.settingsListener.off();
-            this.settingsListener = null;
-        }
-        
-        if (this.statusInterval) {
-            clearInterval(this.statusInterval);
-            this.statusInterval = null;
-        }
-        
         this.currentDeviceId = null;
         this.currentDeviceRef = null;
     }
-
-    // Check if device is online
-    checkDeviceOnline(deviceId) {
-        return new Promise((resolve) => {
-            this.devicesRef.child(deviceId).child('online').once('value', (snapshot) => {
-                resolve(snapshot.val() === true);
-            });
-        });
-    }
-
-    // Get device history
-    getDeviceHistory(deviceId, hours = 24) {
-        return new Promise((resolve) => {
-            const ref = this.devicesRef.child(deviceId).child('moistureHistory');
-            const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
-            
-            ref.orderByValue().startAt(cutoffTime).once('value', (snapshot) => {
-                const history = [];
-                snapshot.forEach((childSnapshot) => {
-                    history.push({
-                        timestamp: childSnapshot.key,
-                        value: childSnapshot.val()
-                    });
-                });
-                resolve(history);
-            });
-        });
-    }
 }
 
-// Create global instance
-const firebaseService = new FirebaseService();
+// Create global instance if needed
+if (window.firebaseDatabase) {
+    window.firebaseService = new FirebaseService();
+}
