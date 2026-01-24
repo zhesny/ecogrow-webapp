@@ -17,7 +17,10 @@ const firebaseConfig = {
 // Initialize Firebase
 try {
     // Проверяем, не инициализирован ли Firebase уже
-    if (!firebase.apps.length) {
+    if (typeof firebase === 'undefined') {
+        console.error('❌ Firebase SDK не загружен');
+        window.firebaseDatabase = null;
+    } else if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
         console.log('✅ Firebase инициализирован успешно');
     } else {
@@ -25,19 +28,28 @@ try {
     }
     
     // Get database instance
-    const database = firebase.database();
-    
-    // Make available globally for app.js
-    window.firebaseDatabase = database;
-    
-    console.log('📊 Firebase Database готов к использованию');
-    
-    // Test connection
-    const connectedRef = database.ref('.info/connected');
-    connectedRef.on('value', (snap) => {
-        const status = snap.val() === true ? '✅ Подключено' : '❌ Отключено';
-        console.log('Соединение Firebase:', status);
-    });
+    if (firebase && firebase.database) {
+        const database = firebase.database();
+        
+        // Make available globally for app.js
+        window.firebaseDatabase = database;
+        
+        console.log('📊 Firebase Database готов к использованию');
+        
+        // Test connection
+        try {
+            const connectedRef = database.ref('.info/connected');
+            connectedRef.on('value', (snap) => {
+                const status = snap.val() === true ? '✅ Подключено' : '❌ Отключено';
+                console.log('Соединение Firebase:', status);
+            });
+        } catch (connError) {
+            console.warn('⚠️ Не удалось проверить соединение Firebase:', connError);
+        }
+    } else {
+        console.error('❌ Firebase Database недоступен');
+        window.firebaseDatabase = null;
+    }
     
 } catch (error) {
     console.error('❌ Ошибка инициализации Firebase:', error);
@@ -48,13 +60,20 @@ try {
 class FirebaseService {
     constructor() {
         this.db = window.firebaseDatabase;
-        this.devicesRef = this.db.ref('devices');
+        this.devicesRef = this.db ? this.db.ref('devices') : null;
         this.currentDeviceId = null;
         this.currentDeviceRef = null;
     }
 
+    // Проверка доступности
+    isAvailable() {
+        return this.db !== null;
+    }
+
     // Scan for online devices
     scanForDevices() {
+        if (!this.devicesRef) return Promise.resolve([]);
+        
         return new Promise((resolve) => {
             this.devicesRef.once('value', (snapshot) => {
                 const devices = [];
@@ -77,6 +96,8 @@ class FirebaseService {
 
     // Connect to specific device
     connectToDevice(deviceId) {
+        if (!this.devicesRef) return null;
+        
         this.currentDeviceId = deviceId;
         this.currentDeviceRef = this.devicesRef.child(deviceId);
         
@@ -120,7 +141,8 @@ class FirebaseService {
     }
 }
 
-// Create global instance if needed
+// Create global instance if Firebase available
 if (window.firebaseDatabase) {
     window.firebaseService = new FirebaseService();
+    console.log('✅ Firebase Service создан');
 }
