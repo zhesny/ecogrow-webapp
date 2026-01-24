@@ -600,6 +600,19 @@
             border-radius: 4px;
             font-family: monospace;
         }
+        
+        .water-history {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .water-event {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -619,7 +632,7 @@
                 </div>
                 
                 <div class="chart-controls">
-                    <button class="chart-btn active" onclick="setChartPeriod('hour')">1 час</button>
+                    <button class="chart-btn active" onclick="setChartPeriod('hour')">Последний час</button>
                     <button class="chart-btn" onclick="setChartPeriod('day')">24 часа</button>
                     <button class="chart-btn" onclick="setChartPeriod('week')">7 дней</button>
                     <button class="chart-btn" onclick="setChartPeriod('month')">30 дней</button>
@@ -728,7 +741,7 @@
                         <span id="light_mode" class="subtext">Режим: АВТО</span>
                     </div>
                     <label class="switch">
-                        <input id="light_switch" type="checkbox" onchange="toggleLight()">
+                        <input id="light_switch" type="checkbox" onchange="toggleLightManual()">
                         <span class="slider-switch"></span>
                     </label>
                 </div>
@@ -776,27 +789,6 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
-                        ⚠️ Ошибки системы
-                    </div>
-                    <div id="error_count" class="status-badge">0</div>
-                </div>
-                
-                <div id="errors_container" class="errors-list">
-                    <div class="error-item">
-                        <div class="error-msg">Ошибок нет</div>
-                    </div>
-                </div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-danger" onclick="clearErrors()">
-                        🗑️ Очистить
-                    </button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
                         📊 Статистика
                     </div>
                 </div>
@@ -813,6 +805,13 @@
                     <div class="stat-card">
                         <div id="uptime_hours" class="stat-value">0</div>
                         <div class="stat-label">Время работы</div>
+                    </div>
+                </div>
+                
+                <div class="water-history" id="water_history">
+                    <div class="water-event">
+                        <span>История поливов:</span>
+                        <span>пусто</span>
                     </div>
                 </div>
             </div>
@@ -911,9 +910,10 @@
         let chart = null;
         let currentTheme = localStorage.getItem('theme') || 'light';
         let lastDataTime = 0;
-        let moistureData = [];
+        let moistureData = []; // Массив объектов {timestamp, value}
         let chartPeriod = 'hour'; // 'hour', 'day', 'week', 'month'
         let systemStartTime = Date.now();
+        let waterHistory = [];
         
         // Инициализация темы
         document.documentElement.setAttribute('data-theme', currentTheme);
@@ -941,6 +941,11 @@
                 if (data) {
                     updateUI(data);
                     lastDataTime = Date.now();
+                    
+                    // Добавляем данные для графика
+                    if (data.moisture && data.moisture > 0) {
+                        addChartData(data.moisture);
+                    }
                 }
             });
             
@@ -960,14 +965,6 @@
                 }
             });
             
-            // Слушаем историю влажности
-            database.ref('history/moisture').on('value', (snapshot) => {
-                const history = snapshot.val();
-                if (history) {
-                    updateHistoryChart(history);
-                }
-            });
-            
             // Слушаем информацию об устройстве
             database.ref('device').on('value', (snapshot) => {
                 const device = snapshot.val();
@@ -977,26 +974,26 @@
             });
         }
         
-        // Инициализация графика
+        // Инициализация графика (упрощенная версия без временной оси)
         function initChart() {
             const ctx = document.getElementById('moist_chart').getContext('2d');
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [],
+                    labels: [], // Будем использовать индексы вместо времени
                     datasets: [{
                         label: 'Влажность %',
                         data: [],
                         borderColor: '#3498db',
                         backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 3,
+                        borderWidth: 2,
                         tension: 0.4,
                         fill: true,
                         pointRadius: 2,
                         pointHoverRadius: 5,
                         pointBackgroundColor: '#3498db',
                         pointBorderColor: 'white',
-                        pointBorderWidth: 2
+                        pointBorderWidth: 1
                     }]
                 },
                 options: {
@@ -1014,15 +1011,22 @@
                             displayColors: false,
                             callbacks: {
                                 title: function(tooltipItems) {
-                                    const date = new Date(tooltipItems[0].parsed.x);
-                                    return date.toLocaleTimeString('ru-RU');
+                                    if (moistureData[tooltipItems[0].dataIndex]) {
+                                        const date = new Date(moistureData[tooltipItems[0].dataIndex].timestamp);
+                                        return date.toLocaleTimeString('ru-RU') + ' ' + date.toLocaleDateString('ru-RU');
+                                    }
+                                    return '';
+                                },
+                                label: function(context) {
+                                    return `Влажность: ${context.parsed.y}%`;
                                 }
                             }
                         }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true,
+                            beginAtZero: false,
+                            min: 0,
                             max: 100,
                             grid: { color: 'rgba(0, 0, 0, 0.08)' },
                             ticks: {
@@ -1038,17 +1042,23 @@
                             }
                         },
                         x: {
-                            type: 'time',
-                            time: {
-                                unit: getTimeUnit(),
-                                displayFormats: getTimeFormats(),
-                                tooltipFormat: 'HH:mm'
-                            },
                             grid: { display: false },
                             ticks: {
                                 color: 'var(--text-secondary)',
                                 font: { size: 11 },
-                                maxRotation: 0
+                                maxRotation: 0,
+                                callback: function(value, index, values) {
+                                    // Показываем время для некоторых точек
+                                    if (moistureData[index]) {
+                                        const date = new Date(moistureData[index].timestamp);
+                                        if (chartPeriod === 'hour' || chartPeriod === 'day') {
+                                            return date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+                                        } else {
+                                            return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'});
+                                        }
+                                    }
+                                    return '';
+                                }
                             },
                             title: {
                                 display: true,
@@ -1064,26 +1074,6 @@
             });
         }
         
-        function getTimeUnit() {
-            switch(chartPeriod) {
-                case 'hour': return 'minute';
-                case 'day': return 'hour';
-                case 'week': return 'day';
-                case 'month': return 'day';
-                default: return 'minute';
-            }
-        }
-        
-        function getTimeFormats() {
-            switch(chartPeriod) {
-                case 'hour': return { minute: 'HH:mm' };
-                case 'day': return { hour: 'HH:00' };
-                case 'week': return { day: 'dd.MM' };
-                case 'month': return { day: 'dd.MM' };
-                default: return { minute: 'HH:mm' };
-            }
-        }
-        
         // Установка периода графика
         function setChartPeriod(period) {
             // Обновляем активную кнопку
@@ -1093,11 +1083,7 @@
             event.target.classList.add('active');
             
             chartPeriod = period;
-            if (chart) {
-                chart.options.scales.x.time.unit = getTimeUnit();
-                chart.options.scales.x.time.displayFormats = getTimeFormats();
-                chart.update();
-            }
+            updateChart();
         }
         
         // Очистка данных графика
@@ -1110,6 +1096,81 @@
                 chart.update();
             }
             showNotification('✅ Данные графика очищены', 'success');
+        }
+        
+        // Добавление данных в график
+        function addChartData(moisture) {
+            const now = Date.now();
+            
+            // Добавляем новую точку
+            moistureData.push({
+                timestamp: now,
+                value: moisture
+            });
+            
+            // Ограничиваем данные по времени в зависимости от периода
+            let timeLimit = 0;
+            switch(chartPeriod) {
+                case 'hour': timeLimit = now - 60 * 60 * 1000; break;
+                case 'day': timeLimit = now - 24 * 60 * 60 * 1000; break;
+                case 'week': timeLimit = now - 7 * 24 * 60 * 60 * 1000; break;
+                case 'month': timeLimit = now - 30 * 24 * 60 * 60 * 1000; break;
+            }
+            
+            // Фильтруем старые данные
+            moistureData = moistureData.filter(item => item.timestamp >= timeLimit);
+            
+            // Ограничиваем количество точек (максимум 200)
+            if (moistureData.length > 200) {
+                moistureData = moistureData.slice(-200);
+            }
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('moistureHistory', JSON.stringify(moistureData));
+            
+            // Обновляем график
+            updateChart();
+            
+            // Обновляем статистику
+            updateChartStats();
+        }
+        
+        // Обновление графика
+        function updateChart() {
+            if (!chart) return;
+            
+            // Создаем метки для оси X (индексы)
+            const labels = [];
+            const data = [];
+            
+            // Прореживаем данные для лучшей читаемости
+            const step = Math.max(1, Math.floor(moistureData.length / 20));
+            
+            moistureData.forEach((item, index) => {
+                if (index % step === 0 || index === moistureData.length - 1) {
+                    labels.push(index);
+                    data.push({
+                        x: index,
+                        y: item.value
+                    });
+                }
+            });
+            
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.update('none');
+        }
+        
+        function updateChartStats() {
+            if (moistureData.length > 0) {
+                const values = moistureData.map(item => item.value);
+                const sum = values.reduce((a, b) => a + b, 0);
+                const avg = Math.round(sum / values.length);
+                const min = Math.min(...values);
+                
+                document.getElementById('avg_moist').textContent = avg + '%';
+                document.getElementById('min_moist').textContent = min + '%';
+            }
         }
         
         // Обновление интерфейса
@@ -1140,65 +1201,6 @@
             // Время
             if (data.time) {
                 document.getElementById('current_time_display').textContent = 'Текущее: ' + data.time;
-            }
-            
-            // Добавляем данные для графика
-            if (moisture > 0) {
-                addChartData(moisture);
-            }
-            
-            // Ошибка датчика
-            if (data.sensorError) {
-                addError('Ошибка датчика влажности');
-                showNotification('⚠️ Ошибка датчика влажности!', 'danger');
-            }
-        }
-        
-        function addChartData(moisture) {
-            const now = Date.now();
-            moistureData.push({
-                x: now,
-                y: moisture
-            });
-            
-            // Ограничиваем данные по времени в зависимости от периода
-            let timeLimit = 0;
-            switch(chartPeriod) {
-                case 'hour': timeLimit = now - 60 * 60 * 1000; break;
-                case 'day': timeLimit = now - 24 * 60 * 60 * 1000; break;
-                case 'week': timeLimit = now - 7 * 24 * 60 * 60 * 1000; break;
-                case 'month': timeLimit = now - 30 * 24 * 60 * 60 * 1000; break;
-            }
-            
-            // Фильтруем старые данные
-            moistureData = moistureData.filter(item => item.x >= timeLimit);
-            
-            // Сохраняем в localStorage (ограничиваем 1000 точек)
-            if (moistureData.length > 1000) {
-                moistureData = moistureData.slice(-1000);
-            }
-            localStorage.setItem('moistureHistory', JSON.stringify(moistureData));
-            
-            // Обновляем статистику
-            updateChartStats();
-            
-            // Обновляем график
-            if (chart) {
-                chart.data.labels = moistureData.map(item => item.x);
-                chart.data.datasets[0].data = moistureData.map(item => item.y);
-                chart.update('none');
-            }
-        }
-        
-        function updateChartStats() {
-            if (moistureData.length > 0) {
-                const values = moistureData.map(item => item.y);
-                const sum = values.reduce((a, b) => a + b, 0);
-                const avg = Math.round(sum / values.length);
-                const min = Math.min(...values);
-                
-                document.getElementById('avg_moist').textContent = avg + '%';
-                document.getElementById('min_moist').textContent = min + '%';
             }
         }
         
@@ -1282,6 +1284,11 @@
                 const totalWateringsElement = document.getElementById('total_waterings');
                 if (totalWateringsElement) {
                     totalWateringsElement.textContent = stats.totalWaterings;
+                    
+                    // Добавляем в историю поливов
+                    if (stats.totalWaterings > waterHistory.length) {
+                        addWaterEvent();
+                    }
                 }
             }
             
@@ -1300,6 +1307,32 @@
             }
         }
         
+        function addWaterEvent() {
+            const now = new Date();
+            waterHistory.push({
+                time: now.toLocaleTimeString('ru-RU'),
+                date: now.toLocaleDateString('ru-RU')
+            });
+            
+            // Ограничиваем историю 10 последними событиями
+            if (waterHistory.length > 10) {
+                waterHistory = waterHistory.slice(-10);
+            }
+            
+            // Обновляем отображение истории
+            const waterHistoryElement = document.getElementById('water_history');
+            if (waterHistoryElement) {
+                let html = '';
+                waterHistory.forEach(event => {
+                    html += `<div class="water-event">
+                        <span>${event.date} ${event.time}</span>
+                        <span>✅ Полив</span>
+                    </div>`;
+                });
+                waterHistoryElement.innerHTML = html;
+            }
+        }
+        
         function updateDeviceInfo(device) {
             const timeModeElement = document.getElementById('time_mode');
             if (!timeModeElement) return;
@@ -1310,33 +1343,6 @@
             } else {
                 timeModeElement.textContent = 'Офлайн';
                 timeModeElement.className = 'status-badge status-off';
-            }
-        }
-        
-        function updateHistoryChart(history) {
-            if (!history) return;
-            
-            // Преобразуем данные из Firebase
-            const now = Date.now();
-            Object.keys(history).forEach(key => {
-                const moisture = history[key];
-                if (moisture > 0) {
-                    // Распределяем данные за последние 24 часа
-                    const timeOffset = Math.floor(Math.random() * 24 * 60 * 60 * 1000);
-                    const timestamp = now - timeOffset;
-                    
-                    if (!moistureData.some(item => Math.abs(item.x - timestamp) < 60000)) {
-                        moistureData.push({
-                            x: timestamp,
-                            y: moisture
-                        });
-                    }
-                }
-            });
-            
-            // Обновляем график если он инициализирован
-            if (chart && moistureData.length > 0) {
-                updateChartStats();
             }
         }
         
@@ -1367,23 +1373,28 @@
             showNotification('✅ Насос: авторежим', 'success');
         }
         
-        function toggleLight() {
+        // Функция для РУЧНОГО управления светом (выключение авторежима)
+        function toggleLightManual() {
             const on = document.getElementById('light_switch').checked;
-            sendCommand('light', on ? 'ON' : 'OFF');
             
-            // ОДНОВРЕМЕННО отправляем команду отключения автоматического управления
-            sendCommand('lightAuto', 'OFF');
+            if (on) {
+                // Включаем свет и ВЫКЛЮЧАЕМ авторежим
+                sendCommand('light', 'ON');
+                sendCommand('light', 'MANUAL_ON'); // Дополнительная команда для отключения авторежима
+            } else {
+                // Выключаем свет
+                sendCommand('light', 'OFF');
+            }
             
             const lightModeElement = document.getElementById('light_mode');
             if (lightModeElement) {
-                lightModeElement.textContent = 'Режим: ' + (on ? 'РУЧНОЙ' : 'ВЫКЛ');
+                lightModeElement.textContent = on ? 'Режим: РУЧНОЙ' : 'Режим: ВЫКЛ';
             }
-            showNotification(on ? '✅ Свет включен' : '✅ Свет выключен', 'success');
+            showNotification(on ? '✅ Свет включен (ручной режим)' : '✅ Свет выключен', 'success');
         }
         
         function setLightAuto() {
             sendCommand('light', 'AUTO');
-            sendCommand('lightAuto', 'ON');
             const lightModeElement = document.getElementById('light_mode');
             if (lightModeElement) {
                 lightModeElement.textContent = 'Режим: АВТО';
@@ -1480,42 +1491,6 @@
             }
         }
         
-        function clearErrors() {
-            database.ref('commands/clearErrors').set('true')
-                .then(() => {
-                    document.getElementById('errors_container').innerHTML = 
-                        '<div class="error-item"><div class="error-msg">Ошибок нет</div></div>';
-                    document.getElementById('error_count').textContent = '0';
-                    showNotification('✅ Ошибки очищены', 'success');
-                });
-        }
-        
-        function addError(message) {
-            const errorsContainer = document.getElementById('errors_container');
-            const errorCountElement = document.getElementById('error_count');
-            
-            if (errorsContainer && errorCountElement) {
-                const errorItem = document.createElement('div');
-                errorItem.className = 'error-item';
-                errorItem.innerHTML = `
-                    <div class="error-time">🕐 ${new Date().toLocaleTimeString('ru-RU')}</div>
-                    <div class="error-msg">${message}</div>
-                `;
-                
-                // Добавляем новую ошибку в начало
-                if (errorsContainer.firstChild && errorsContainer.firstChild.className === 'error-item') {
-                    errorsContainer.insertBefore(errorItem, errorsContainer.firstChild);
-                } else {
-                    errorsContainer.innerHTML = '';
-                    errorsContainer.appendChild(errorItem);
-                }
-                
-                // Обновляем счетчик
-                const currentCount = parseInt(errorCountElement.textContent) || 0;
-                errorCountElement.textContent = (currentCount + 1).toString();
-            }
-        }
-        
         function setCurrentTime() {
             const now = new Date();
             const hours = now.getHours();
@@ -1593,17 +1568,14 @@
             if (savedHistory) {
                 try {
                     moistureData = JSON.parse(savedHistory);
-                    // Конвертируем старый формат данных
-                    if (moistureData.length > 0 && typeof moistureData[0] !== 'object') {
-                        const convertedData = [];
-                        const now = Date.now();
-                        moistureData.forEach((value, index) => {
-                            convertedData.push({
-                                x: now - (moistureData.length - index) * 60000, // 1 минута между точками
-                                y: value
-                            });
-                        });
-                        moistureData = convertedData;
+                    // Фильтруем очень старые данные (старше 30 дней)
+                    const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+                    moistureData = moistureData.filter(item => item.timestamp >= monthAgo);
+                    
+                    if (moistureData.length > 0) {
+                        // Сортируем по времени
+                        moistureData.sort((a, b) => a.timestamp - b.timestamp);
+                        updateChartStats();
                     }
                 } catch (e) {
                     console.error('Ошибка загрузки истории:', e);
@@ -1614,23 +1586,23 @@
             initChart();
             initFirebase();
             
+            // Автоматически обновляем график каждую минуту
+            setInterval(() => {
+                if (chart) {
+                    chart.update('none');
+                }
+            }, 60000);
+            
             // Назначаем обработчики сохранения настроек
             const saveSettingsElements = [
                 'manual_pump_time', 'lamp_start', 'lamp_end', 
-                'sleep_start', 'sleep_end', 'moist_threshold'
+                'sleep_start', 'sleep_end'
             ];
             
             saveSettingsElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
-                    if (id === 'moist_threshold') {
-                        element.addEventListener('change', function() {
-                            sendCommand('threshold', this.value);
-                            saveSettings();
-                        });
-                    } else {
-                        element.addEventListener('change', saveSettings);
-                    }
+                    element.addEventListener('change', saveSettings);
                 }
             });
             
@@ -1641,6 +1613,15 @@
                     element.addEventListener('change', saveSettings);
                 }
             });
+            
+            // Обработчик для слайдера порога
+            const thresholdSlider = document.getElementById('moist_threshold');
+            if (thresholdSlider) {
+                thresholdSlider.addEventListener('change', function() {
+                    sendCommand('threshold', this.value);
+                    saveSettings();
+                });
+            }
             
             console.log('🌱 Интерфейс управления EcoGrow загружен');
         };
