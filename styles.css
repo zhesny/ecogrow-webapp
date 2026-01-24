@@ -1197,6 +1197,10 @@ body {
     border-left-color: var(--warning-color);
 }
 
+.toast.info {
+    border-left-color: var(--primary-color);
+}
+
 @keyframes toastIn {
     to {
         transform: translateY(0);
