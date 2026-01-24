@@ -12,40 +12,36 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --primary: #0d47a1;
-            --primary-light: #5472d3;
-            --primary-dark: #002171;
-            --secondary: #00c853;
-            --secondary-light: #5efc82;
-            --secondary-dark: #009624;
-            --accent: #ff4081;
-            --dark: #121212;
-            --dark-layer1: #1e1e1e;
-            --dark-layer2: #2d2d2d;
-            --dark-layer3: #3d3d3d;
-            --light: #f5f5f5;
-            --light-layer1: #ffffff;
-            --light-layer2: #f0f0f0;
-            --light-layer3: #e0e0e0;
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --success: #00c853;
-            --warning: #ff9800;
-            --danger: #f44336;
-            --info: #2196f3;
-            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.2);
-            --shadow-lg: 0 15px 40px rgba(0, 0, 0, 0.3);
-            --shadow-xl: 0 25px 60px rgba(0, 0, 0, 0.4);
+            --primary: #2196F3;
+            --primary-light: #64B5F6;
+            --primary-dark: #1976D2;
+            --secondary: #4CAF50;
+            --secondary-light: #81C784;
+            --secondary-dark: #388E3C;
+            --accent: #FF4081;
+            --light-bg: #f5f7fa;
+            --light-card: #ffffff;
+            --light-border: #e0e0e0;
+            --light-text: #333333;
+            --light-text-secondary: #666666;
+            --dark-bg: #121212;
+            --dark-card: #1e1e1e;
+            --dark-border: #333333;
+            --dark-text: #ffffff;
+            --dark-text-secondary: #aaaaaa;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --info: #2196F3;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+            --shadow-xl: 0 12px 36px rgba(0,0,0,0.1);
             --radius-sm: 8px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --radius-xl: 32px;
-            --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-light));
-            --gradient-secondary: linear-gradient(135deg, var(--secondary), var(--secondary-light));
-            --gradient-accent: linear-gradient(135deg, var(--accent), #ff79b0);
-            --gradient-dark: linear-gradient(135deg, var(--dark-layer1), var(--dark-layer3));
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
         }
 
         * {
@@ -56,62 +52,44 @@
 
         body {
             font-family: 'Roboto', sans-serif;
-            background: var(--gradient-dark);
-            color: var(--text-primary);
+            background: var(--light-bg);
+            color: var(--light-text);
             min-height: 100vh;
-            overflow-x: hidden;
             transition: var(--transition);
-            position: relative;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(13, 71, 161, 0.15) 0%, transparent 30%),
-                radial-gradient(circle at 90% 10%, rgba(0, 200, 83, 0.1) 0%, transparent 30%),
-                radial-gradient(circle at 50% 80%, rgba(255, 64, 129, 0.08) 0%, transparent 40%);
-            z-index: -1;
-            animation: gradientShift 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes gradientShift {
-            0% { transform: scale(1) rotate(0deg); }
-            100% { transform: scale(1.1) rotate(2deg); }
+        body.dark-theme {
+            background: var(--dark-bg);
+            color: var(--dark-text);
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
         /* Header */
         header {
-            background: rgba(30, 30, 30, 0.9);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--light-card);
+            box-shadow: var(--shadow-md);
             padding: 20px 0;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: var(--shadow-lg);
-            animation: slideDown 0.8s ease-out;
+            transition: var(--transition);
         }
 
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .dark-theme header {
+            background: var(--dark-card);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 20px;
         }
 
         .logo {
@@ -121,154 +99,192 @@
         }
 
         .logo-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--gradient-primary);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 24px;
+            color: white;
             box-shadow: var(--shadow-md);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
         }
 
         .logo-text h1 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 32px;
-            font-weight: 800;
-            background: var(--gradient-secondary);
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            letter-spacing: -0.5px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .logo-text p {
-            color: var(--text-secondary);
+            color: var(--light-text-secondary);
             font-size: 14px;
-            margin-top: 5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .dark-theme .logo-text p {
+            color: var(--dark-text-secondary);
         }
 
         .version-badge {
-            background: var(--gradient-accent);
+            background: linear-gradient(135deg, var(--accent), #FF79B0);
             color: white;
-            padding: 3px 10px;
-            border-radius: 20px;
+            padding: 2px 8px;
+            border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
-            box-shadow: var(--shadow-sm);
+            margin-left: 8px;
         }
 
         .header-controls {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-lg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Theme Toggle */
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .theme-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 34px;
             transition: var(--transition);
         }
 
-        .connection-status:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
+        .theme-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        input:checked + .theme-slider {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        input:checked + .theme-slider:before {
+            transform: translateX(30px);
+        }
+
+        .theme-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: white;
+            z-index: 1;
+        }
+
+        .sun-icon {
+            left: 8px;
+        }
+
+        .moon-icon {
+            right: 8px;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(33, 150, 243, 0.2);
+        }
+
+        .dark-theme .connection-status {
+            background: rgba(33, 150, 243, 0.2);
+            border-color: rgba(33, 150, 243, 0.3);
         }
 
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background-color: var(--danger);
             position: relative;
-        }
-
-        .status-indicator::after {
-            content: '';
-            position: absolute;
-            top: -4px;
-            left: -4px;
-            right: -4px;
-            bottom: -4px;
-            border-radius: 50%;
-            border: 2px solid var(--danger);
-            animation: ripple 1.5s infinite;
-        }
-
-        @keyframes ripple {
-            0% { transform: scale(0.8); opacity: 1; }
-            100% { transform: scale(2); opacity: 0; }
         }
 
         .status-indicator.connected {
             background-color: var(--success);
         }
 
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0.5;
+        }
+
         .status-indicator.connected::after {
-            border-color: var(--success);
+            animation: pulse 2s infinite;
         }
 
-        .status-text {
-            font-weight: 500;
-        }
-
-        .last-update {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 2px;
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.3; }
+            100% { transform: scale(1); opacity: 0.5; }
         }
 
         /* Main Layout */
         .dashboard {
-            padding: 40px 0;
+            padding: 30px 0;
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 30px;
+            gap: 20px;
         }
 
         /* Cards */
         .card {
-            background: rgba(45, 45, 45, 0.7);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius-xl);
-            padding: 30px;
-            box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--light-card);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-md);
             transition: var(--transition);
-            position: relative;
+            border: 1px solid var(--light-border);
             overflow: hidden;
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
+            position: relative;
         }
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        .dark-theme .card {
+            background: var(--dark-card);
+            border-color: var(--dark-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-        .card:nth-child(5) { animation-delay: 0.5s; }
-        .card:nth-child(6) { animation-delay: 0.6s; }
 
         .card::before {
             content: '';
@@ -276,91 +292,97 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 5px;
-            background: var(--gradient-primary);
-        }
-
-        .card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: var(--shadow-xl);
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .card-title {
             font-family: 'Montserrat', sans-serif;
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 18px;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .card-title i {
-            color: var(--secondary);
-            font-size: 24px;
+            color: var(--primary);
         }
 
         /* Live Data Card */
         .live-data-card {
-            grid-column: span 3;
+            grid-column: span 4;
         }
 
         .data-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .data-item {
+            background: rgba(33, 150, 243, 0.05);
+            border-radius: var(--radius-md);
+            padding: 15px;
             text-align: center;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-lg);
             transition: var(--transition);
         }
 
+        .dark-theme .data-item {
+            background: rgba(33, 150, 243, 0.1);
+        }
+
         .data-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-5px);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
 
         .data-value {
-            font-size: 48px;
-            font-weight: 800;
-            margin: 10px 0;
-            background: var(--gradient-secondary);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 10px rgba(0, 200, 83, 0.3);
+            font-size: 36px;
+            font-weight: 700;
+            margin: 5px 0;
+            color: var(--primary);
+        }
+
+        .dark-theme .data-value {
+            color: var(--primary-light);
         }
 
         .data-label {
-            color: var(--text-secondary);
-            font-size: 14px;
+            color: var(--light-text-secondary);
+            font-size: 13px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+        }
+
+        .dark-theme .data-label {
+            color: var(--dark-text-secondary);
         }
 
         .data-unit {
-            font-size: 20px;
-            color: var(--secondary);
-            margin-left: 5px;
+            font-size: 16px;
+            color: var(--light-text-secondary);
+        }
+
+        .dark-theme .data-unit {
+            color: var(--dark-text-secondary);
         }
 
         .data-status {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
-            font-size: 14px;
+            gap: 5px;
+            margin-top: 8px;
+            font-size: 12px;
         }
 
         .data-status .good { color: var(--success); }
@@ -369,56 +391,28 @@
 
         /* Chart Card */
         .chart-card {
-            grid-column: span 6;
-            min-height: 500px;
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .chart-controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        .time-btn {
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 14px;
-        }
-
-        .time-btn.active {
-            background: var(--gradient-primary);
-            border-color: transparent;
-        }
-
-        .time-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            grid-column: span 8;
         }
 
         .chart-container {
-            height: 400px;
+            height: 300px;
+            margin-top: 20px;
             position: relative;
         }
 
         /* Controls Card */
         .controls-card {
-            grid-column: span 3;
+            grid-column: span 4;
         }
 
         .control-section {
-            margin-bottom: 30px;
-            padding-bottom: 30px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        .dark-theme .control-section {
+            border-bottom-color: var(--dark-border);
         }
 
         .control-section:last-child {
@@ -428,13 +422,13 @@
         }
 
         .control-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--secondary);
+            margin-bottom: 15px;
+            color: var(--primary);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         /* Toggle Switch */
@@ -442,32 +436,36 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
+            padding: 12px 0;
         }
 
         .toggle-label {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             font-weight: 500;
         }
 
         .toggle-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            width: 36px;
+            height: 36px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            color: var(--secondary);
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .dark-theme .toggle-icon {
+            background: rgba(33, 150, 243, 0.2);
         }
 
         .toggle-switch {
             position: relative;
-            width: 70px;
-            height: 36px;
+            width: 60px;
+            height: 30px;
         }
 
         .toggle-switch input {
@@ -483,7 +481,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.1);
+            background-color: #ccc;
             border-radius: 34px;
             transition: var(--transition);
         }
@@ -491,22 +489,21 @@
         .toggle-slider:before {
             position: absolute;
             content: "";
-            height: 28px;
-            width: 28px;
+            height: 22px;
+            width: 22px;
             left: 4px;
             bottom: 4px;
-            background: white;
+            background-color: white;
             border-radius: 50%;
             transition: var(--transition);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         input:checked + .toggle-slider {
-            background: var(--gradient-secondary);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
         input:checked + .toggle-slider:before {
-            transform: translateX(34px);
+            transform: translateX(30px);
         }
 
         /* Slider */
@@ -522,8 +519,7 @@
 
         .slider-value {
             font-weight: 600;
-            color: var(--secondary);
-            font-size: 20px;
+            color: var(--primary);
         }
 
         .slider-container {
@@ -536,19 +532,23 @@
             top: 50%;
             left: 0;
             right: 0;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            height: 6px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 3px;
             transform: translateY(-50%);
+        }
+
+        .dark-theme .slider-track {
+            background: rgba(255,255,255,0.1);
         }
 
         .slider-fill {
             position: absolute;
             top: 50%;
             left: 0;
-            height: 8px;
-            background: var(--gradient-secondary);
-            border-radius: 4px;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
             transform: translateY(-50%);
             width: 50%;
         }
@@ -569,99 +569,93 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             background: white;
+            border: 2px solid var(--primary);
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-sm);
             pointer-events: none;
-            transition: var(--transition);
         }
 
         /* Buttons */
         .btn {
-            padding: 15px 30px;
-            border-radius: var(--radius-lg);
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
             border: none;
             font-family: 'Montserrat', sans-serif;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-primary {
-            background: var(--gradient-primary);
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
             color: white;
-            box-shadow: 0 8px 25px rgba(13, 71, 161, 0.3);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(13, 71, 161, 0.4);
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(33, 150, 243, 0.3);
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
+        .dark-theme .btn-secondary {
+            background: rgba(33, 150, 243, 0.2);
+            border-color: rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(33, 150, 243, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .dark-theme .btn-secondary:hover:not(:disabled) {
+            background: rgba(33, 150, 243, 0.3);
         }
 
         .btn-success {
-            background: var(--gradient-secondary);
+            background: linear-gradient(90deg, var(--secondary), var(--secondary-dark));
             color: white;
-            box-shadow: 0 8px 25px rgba(0, 200, 83, 0.3);
         }
 
-        .btn-success:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 200, 83, 0.4);
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #f44336, #ff7961);
+            background: linear-gradient(90deg, var(--danger), #D32F2F);
             color: white;
-            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
         }
 
-        .btn-danger:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(244, 67, 54, 0.4);
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
             margin-top: 20px;
         }
 
@@ -673,36 +667,41 @@
         .time-picker {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .time-input-group {
-            position: relative;
+            gap: 15px;
+            margin: 15px 0;
         }
 
         .time-input-group label {
             display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-size: 14px;
+            margin-bottom: 6px;
+            color: var(--light-text-secondary);
+            font-size: 13px;
+        }
+
+        .dark-theme .time-input-group label {
+            color: var(--dark-text-secondary);
         }
 
         .time-input {
             width: 100%;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-size: 16px;
+            padding: 10px;
+            border: 1px solid var(--light-border);
+            border-radius: var(--radius-sm);
+            background: var(--light-card);
+            color: var(--light-text);
+            font-size: 14px;
             transition: var(--transition);
+        }
+
+        .dark-theme .time-input {
+            background: var(--dark-card);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
         }
 
         .time-input:focus {
             outline: none;
-            border-color: var(--secondary);
-            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
         }
 
         /* Telegram Card */
@@ -712,51 +711,53 @@
 
         .telegram-content {
             text-align: center;
-            padding: 30px 0;
+            padding: 20px 0;
         }
 
         .telegram-icon {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 30px;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
             background: linear-gradient(135deg, #0088cc, #34aadc);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 36px;
             color: white;
-            box-shadow: 0 15px 35px rgba(0, 136, 204, 0.3);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            box-shadow: var(--shadow-lg);
         }
 
         .telegram-details {
             background: rgba(0, 136, 204, 0.1);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            margin: 25px 0;
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin: 20px 0;
             border-left: 4px solid #0088cc;
         }
 
+        .dark-theme .telegram-details {
+            background: rgba(0, 136, 204, 0.2);
+        }
+
         .telegram-details p {
-            margin: 10px 0;
+            margin: 8px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .telegram-code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 8px 12px;
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
             font-family: monospace;
-            font-size: 14px;
-            color: #34aadc;
+            font-size: 12px;
+            color: #0088cc;
+        }
+
+        .dark-theme .telegram-code {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         /* Errors Card */
@@ -765,41 +766,21 @@
         }
 
         .errors-list {
-            max-height: 400px;
+            max-height: 300px;
             overflow-y: auto;
-            margin-top: 20px;
+            margin: 15px 0;
         }
 
         .error-item {
             background: rgba(244, 67, 54, 0.1);
-            border-radius: var(--radius-md);
-            padding: 15px;
-            margin-bottom: 15px;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin-bottom: 10px;
             border-left: 4px solid var(--danger);
-            animation: slideInRight 0.5s ease-out;
-            position: relative;
-            overflow: hidden;
         }
 
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .error-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .dark-theme .error-item {
+            background: rgba(244, 67, 54, 0.2);
         }
 
         .error-item.warning {
@@ -807,20 +788,28 @@
             border-left-color: var(--warning);
         }
 
+        .dark-theme .error-item.warning {
+            background: rgba(255, 152, 0, 0.2);
+        }
+
         .error-item.info {
             background: rgba(33, 150, 243, 0.1);
             border-left-color: var(--info);
         }
 
+        .dark-theme .error-item.info {
+            background: rgba(33, 150, 243, 0.2);
+        }
+
         .error-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
+            gap: 10px;
+            margin-bottom: 5px;
         }
 
         .error-icon {
-            font-size: 20px;
+            font-size: 16px;
         }
 
         .error-item.danger .error-icon { color: var(--danger); }
@@ -829,15 +818,17 @@
 
         .error-message {
             font-weight: 500;
+            font-size: 14px;
         }
 
         .error-time {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 5px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            font-size: 11px;
+            color: var(--light-text-secondary);
+            margin-top: 4px;
+        }
+
+        .dark-theme .error-time {
+            color: var(--dark-text-secondary);
         }
 
         /* Statistics Card */
@@ -848,35 +839,47 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            gap: 15px;
             margin-top: 20px;
         }
 
         .stat-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-lg);
-            padding: 20px;
+            background: rgba(33, 150, 243, 0.05);
+            border-radius: var(--radius-md);
+            padding: 15px;
             text-align: center;
             transition: var(--transition);
         }
 
+        .dark-theme .stat-item {
+            background: rgba(33, 150, 243, 0.1);
+        }
+
         .stat-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-5px);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
 
         .stat-value {
-            font-size: 36px;
-            font-weight: 800;
-            margin: 10px 0;
-            color: var(--secondary);
+            font-size: 28px;
+            font-weight: 700;
+            margin: 5px 0;
+            color: var(--primary);
+        }
+
+        .dark-theme .stat-value {
+            color: var(--primary-light);
         }
 
         .stat-label {
-            color: var(--text-secondary);
-            font-size: 14px;
+            color: var(--light-text-secondary);
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+        }
+
+        .dark-theme .stat-label {
+            color: var(--dark-text-secondary);
         }
 
         /* Documentation Card */
@@ -884,176 +887,101 @@
             grid-column: span 6;
         }
 
-        .docs-content {
-            padding: 20px 0;
-        }
-
-        .docs-list {
-            list-style: none;
-            margin: 20px 0;
-        }
-
-        .docs-list li {
-            margin: 15px 0;
-            padding-left: 30px;
-            position: relative;
-        }
-
-        .docs-list li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--secondary);
-            font-weight: bold;
-        }
-
-        .docs-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .developer-card {
+            display: flex;
+            align-items: center;
             gap: 15px;
-            margin: 30px 0;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(33, 150, 243, 0.05);
+            border-radius: var(--radius-md);
         }
 
-        .update-log {
-            background: rgba(0, 200, 83, 0.1);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            margin-top: 20px;
-            border-left: 4px solid var(--secondary);
+        .dark-theme .developer-card {
+            background: rgba(33, 150, 243, 0.1);
         }
 
-        .update-log h4 {
-            color: var(--secondary);
-            margin-bottom: 10px;
+        .developer-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
         }
 
-        .update-log ul {
-            list-style: none;
-            padding-left: 0;
+        .developer-info h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
         }
 
-        .update-log li {
-            margin: 8px 0;
-            padding-left: 20px;
-            position: relative;
+        .developer-info p {
+            color: var(--light-text-secondary);
+            font-size: 13px;
+            margin-bottom: 2px;
         }
 
-        .update-log li::before {
-            content: '•';
-            position: absolute;
-            left: 0;
-            color: var(--secondary);
+        .dark-theme .developer-info p {
+            color: var(--dark-text-secondary);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .social-link {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(33, 150, 243, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .dark-theme .social-link {
+            background: rgba(33, 150, 243, 0.2);
+        }
+
+        .social-link:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
         }
 
         /* Footer */
         footer {
-            background: rgba(18, 18, 18, 0.9);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 60px 0 30px;
-            margin-top: 60px;
+            background: var(--light-card);
+            border-top: 1px solid var(--light-border);
+            padding: 40px 0 30px;
+            margin-top: 40px;
+        }
+
+        .dark-theme footer {
+            background: var(--dark-card);
+            border-top-color: var(--dark-border);
         }
 
         .footer-content {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
+            gap: 30px;
         }
 
         .footer-section h3 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 25px;
-            color: var(--secondary);
-            position: relative;
-            padding-bottom: 15px;
-        }
-
-        .footer-section h3::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: var(--gradient-secondary);
-        }
-
-        .developer-card {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .developer-avatar {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
-
-        .developer-info h4 {
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-
-        .developer-info p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .social-link {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-decoration: none;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .social-link::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: var(--transition);
-        }
-
-        .social-link:hover::before {
-            opacity: 1;
-        }
-
-        .social-link i {
-            position: relative;
-            z-index: 1;
-        }
-
-        .social-link:hover {
-            transform: translateY(-5px) rotate(10deg);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary);
         }
 
         .footer-links {
@@ -1061,61 +989,64 @@
         }
 
         .footer-links li {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .footer-links a {
-            color: var(--text-secondary);
+            color: var(--light-text-secondary);
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            font-size: 14px;
             transition: var(--transition);
-            padding: 8px 0;
+        }
+
+        .dark-theme .footer-links a {
+            color: var(--dark-text-secondary);
         }
 
         .footer-links a:hover {
-            color: var(--secondary);
-            transform: translateX(10px);
-        }
-
-        .footer-links a i {
-            width: 20px;
-            text-align: center;
+            color: var(--primary);
+            transform: translateX(5px);
         }
 
         .copyright {
             text-align: center;
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
-            font-size: 14px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-border);
+            color: var(--light-text-secondary);
+            font-size: 12px;
         }
 
-        .copyright a {
-            color: var(--secondary);
-            text-decoration: none;
+        .dark-theme .copyright {
+            border-top-color: var(--dark-border);
+            color: var(--dark-text-secondary);
         }
 
         /* Notification */
         .notification {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: rgba(45, 45, 45, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
-            padding: 20px 25px;
-            box-shadow: var(--shadow-xl);
-            border-left: 5px solid var(--secondary);
+            bottom: 20px;
+            right: 20px;
+            background: var(--light-card);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--primary);
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
             z-index: 10000;
             transform: translateX(150%);
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-width: 400px;
+            transition: transform 0.3s ease;
+            max-width: 350px;
+        }
+
+        .dark-theme .notification {
+            background: var(--dark-card);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
         .notification.show {
@@ -1123,8 +1054,8 @@
         }
 
         .notification-icon {
-            font-size: 28px;
-            color: var(--secondary);
+            font-size: 20px;
+            color: var(--primary);
         }
 
         .notification-content {
@@ -1133,13 +1064,17 @@
 
         .notification-title {
             font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 5px;
+            font-size: 14px;
+            margin-bottom: 4px;
         }
 
         .notification-message {
-            color: var(--text-secondary);
-            font-size: 14px;
+            color: var(--light-text-secondary);
+            font-size: 13px;
+        }
+
+        .dark-theme .notification-message {
+            color: var(--dark-text-secondary);
         }
 
         .notification.success { border-left-color: var(--success); }
@@ -1149,46 +1084,69 @@
         .notification.warning { border-left-color: var(--warning); }
         .notification.warning .notification-icon { color: var(--warning); }
 
-        /* Mobile Responsiveness */
-        @media (max-width: 1400px) {
-            .dashboard {
-                grid-template-columns: repeat(6, 1fr);
-            }
-            
-            .live-data-card, .controls-card {
-                grid-column: span 3;
-            }
-            
-            .chart-card, .stats-card, .docs-card {
-                grid-column: span 6;
-            }
-            
-            .settings-card, .telegram-card, .errors-card {
-                grid-column: span 2;
-            }
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
         }
 
-        @media (max-width: 1024px) {
-            .dashboard {
-                grid-template-columns: repeat(1, 1fr);
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(33, 150, 243, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 1200px) {
+            .live-data-card, .controls-card, .settings-card,
+            .telegram-card, .errors-card, .stats-card, .docs-card {
+                grid-column: span 12;
             }
             
-            .card {
-                grid-column: span 1 !important;
+            .chart-card {
+                grid-column: span 12;
             }
             
             .footer-content {
-                grid-template-columns: repeat(1, 1fr);
-                gap: 30px;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                gap: 20px;
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .data-grid, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-picker {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
             .container {
                 padding: 0 15px;
             }
@@ -1196,22 +1154,10 @@
             .card {
                 padding: 20px;
             }
-            
-            .btn-group, .docs-buttons {
-                grid-template-columns: 1fr;
-            }
-            
-            .data-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .time-picker {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
-<body>
+<body class="light-theme">
     <!-- Header -->
     <header>
         <div class="container">
@@ -1221,11 +1167,8 @@
                         <i class="fas fa-seedling"></i>
                     </div>
                     <div class="logo-text">
-                        <h1>EcoGrow Control</h1>
-                        <p>
-                            <span>Система автоматического полива растений</span>
-                            <span class="version-badge">v4.5</span>
-                        </p>
+                        <h1>EcoGrow Control <span class="version-badge">v4.5</span></h1>
+                        <p>Система автоматического полива растений</p>
                     </div>
                 </div>
                 
@@ -1233,9 +1176,16 @@
                     <div class="connection-status">
                         <div class="status-indicator" id="connectionStatus"></div>
                         <div>
-                            <div class="status-text" id="connectionText">Подключение к ESP8266...</div>
-                            <div class="last-update" id="lastUpdate">Обновлено: --:--:--</div>
+                            <div class="status-text" id="connectionText">Подключение...</div>
+                            <div class="status-time" id="lastUpdate" style="font-size: 12px; color: #666;">--:--:--</div>
                         </div>
+                    </div>
+                    
+                    <div class="theme-switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="theme-slider"></span>
+                        <i class="fas fa-sun theme-icon sun-icon"></i>
+                        <i class="fas fa-moon theme-icon moon-icon"></i>
                     </div>
                 </div>
             </div>
@@ -1246,13 +1196,13 @@
     <main class="container">
         <div class="dashboard">
             <!-- Live Data Card -->
-            <div class="card live-data-card">
+            <div class="card live-data-card animate__animated animate__fadeIn">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-tachometer-alt"></i>
                         <span>Текущие показатели</span>
                     </div>
-                    <div class="card-badge" id="systemStatus">Авто</div>
+                    <div class="system-mode" id="systemMode" style="background: rgba(33,150,243,0.1); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">АВТО</div>
                 </div>
                 <div class="card-body">
                     <div class="data-grid">
@@ -1260,8 +1210,8 @@
                             <div class="data-label">Влажность почвы</div>
                             <div class="data-value" id="moistureValue">--<span class="data-unit">%</span></div>
                             <div class="data-status">
-                                <i class="fas fa-circle good"></i>
-                                <span id="moistureStatus">Норма</span>
+                                <i class="fas fa-circle" id="moistureIndicator"></i>
+                                <span id="moistureStatus">Нет данных</span>
                             </div>
                         </div>
                         
@@ -1270,54 +1220,59 @@
                             <div class="data-value" id="thresholdValue">--<span class="data-unit">%</span></div>
                             <div class="data-status">
                                 <i class="fas fa-sliders-h"></i>
-                                <span>Установлен</span>
+                                <span id="thresholdStatus">Установлен</span>
                             </div>
                         </div>
                         
                         <div class="data-item">
                             <div class="data-label">Состояние насоса</div>
-                            <div class="data-value" id="pumpStatus">Выкл</div>
+                            <div class="data-value" id="pumpState">ВЫКЛ</div>
                             <div class="data-status">
-                                <i class="fas fa-circle danger" id="pumpIndicator"></i>
-                                <span id="pumpMode">Авто</span>
+                                <i class="fas fa-circle" id="pumpIndicator"></i>
+                                <span id="pumpMode">АВТО</span>
                             </div>
                         </div>
                         
                         <div class="data-item">
                             <div class="data-label">Состояние света</div>
-                            <div class="data-value" id="lightStatus">Выкл</div>
+                            <div class="data-value" id="lightState">ВЫКЛ</div>
                             <div class="data-status">
-                                <i class="fas fa-circle danger" id="lightIndicator"></i>
-                                <span id="lightMode">Авто</span>
+                                <i class="fas fa-circle" id="lightIndicator"></i>
+                                <span id="lightMode">АВТО</span>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="system-time">
-                        <div class="data-label">Время системы</div>
-                        <div class="data-value" id="systemTime">--:--</div>
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(33,150,243,0.05); border-radius: var(--radius-md);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 14px; color: var(--light-text-secondary);">Время системы:</span>
+                            <span style="font-size: 18px; font-weight: 600; color: var(--primary);" id="systemTime">--:--</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--light-text-secondary); margin-top: 5px;" id="systemDate">--.--.----</div>
                     </div>
                 </div>
             </div>
 
             <!-- Chart Card -->
-            <div class="card chart-card">
-                <div class="chart-header">
+            <div class="card chart-card animate__animated animate__fadeIn">
+                <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-chart-line"></i>
-                        <span>График влажности (реальное время)</span>
+                        <span>График влажности</span>
                     </div>
                     <div class="chart-controls">
-                        <button class="time-btn active" data-hours="1">1 час</button>
-                        <button class="time-btn" data-hours="6">6 часов</button>
-                        <button class="time-btn" data-hours="24">24 часа</button>
-                        <button class="time-btn" data-hours="168">7 дней</button>
+                        <select id="chartRange" style="padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--light-border); background: var(--light-card); color: var(--light-text); font-size: 14px;">
+                            <option value="1">1 час</option>
+                            <option value="6">6 часов</option>
+                            <option value="24" selected>24 часа</option>
+                            <option value="168">7 дней</option>
+                        </select>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="moistureChart"></canvas>
-                </div>
-                <div class="chart-stats">
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="moistureChart"></canvas>
+                    </div>
                     <div class="data-grid" style="margin-top: 20px;">
                         <div class="data-item">
                             <div class="data-label">Средняя</div>
@@ -1332,15 +1287,15 @@
                             <div class="data-value" id="maxMoisture">--%</div>
                         </div>
                         <div class="data-item">
-                            <div class="data-label">Изменение</div>
-                            <div class="data-value" id="changeMoisture">--%</div>
+                            <div class="data-label">Тренд</div>
+                            <div class="data-value" id="trendMoisture">--%</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Controls Card -->
-            <div class="card controls-card">
+            <div class="card controls-card animate__animated animate__fadeIn">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-gamepad"></i>
@@ -1350,15 +1305,19 @@
                 <div class="card-body">
                     <div class="control-section">
                         <div class="control-title">
-                            <i class="fas fa-tint"></i>
-                            <span>Управление насосом</span>
+                            <i class="fas fa-toggle-on"></i>
+                            <span>Управление устройствами</span>
                         </div>
+                        
                         <div class="toggle-item">
                             <div class="toggle-label">
                                 <div class="toggle-icon">
-                                    <i class="fas fa-water"></i>
+                                    <i class="fas fa-tint"></i>
                                 </div>
-                                <span>Насос полива</span>
+                                <div>
+                                    <div style="font-weight: 600;">Насос полива</div>
+                                    <div style="font-size: 12px; color: var(--light-text-secondary);" id="pumpStatusText">Автоматический режим</div>
+                                </div>
                             </div>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="pumpToggle">
@@ -1371,7 +1330,10 @@
                                 <div class="toggle-icon">
                                     <i class="fas fa-lightbulb"></i>
                                 </div>
-                                <span>Фитолампа</span>
+                                <div>
+                                    <div style="font-weight: 600;">Фитолампа</div>
+                                    <div style="font-size: 12px; color: var(--light-text-secondary);" id="lightStatusText">Автоматический режим</div>
+                                </div>
                             </div>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="lightToggle">
@@ -1388,7 +1350,7 @@
                         
                         <div class="slider-group">
                             <div class="slider-header">
-                                <span>Порог влажности</span>
+                                <span>Порог влажности для автополива</span>
                                 <span class="slider-value" id="thresholdSliderValue">50%</span>
                             </div>
                             <div class="slider-container">
@@ -1396,6 +1358,10 @@
                                 <div class="slider-fill" id="thresholdFill"></div>
                                 <input type="range" min="10" max="90" value="50" class="slider-input" id="thresholdSlider">
                                 <div class="slider-thumb" id="thresholdThumb"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--light-text-secondary); margin-top: 5px;">
+                                <span>Сухо (10%)</span>
+                                <span>Влажно (90%)</span>
                             </div>
                         </div>
                         
@@ -1409,6 +1375,10 @@
                                 <div class="slider-fill" id="durationFill"></div>
                                 <input type="range" min="1" max="60" value="10" class="slider-input" id="durationSlider">
                                 <div class="slider-thumb" id="durationThumb"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--light-text-secondary); margin-top: 5px;">
+                                <span>Коротко (1с)</span>
+                                <span>Долго (60с)</span>
                             </div>
                         </div>
                     </div>
@@ -1424,7 +1394,10 @@
                                 <div class="toggle-icon">
                                     <i class="fas fa-moon"></i>
                                 </div>
-                                <span>Режим сна</span>
+                                <div>
+                                    <div style="font-weight: 600;">Режим сна</div>
+                                    <div style="font-size: 12px; color: var(--light-text-secondary);">Принудительное отключение системы</div>
+                                </div>
                             </div>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="sleepToggle">
@@ -1447,7 +1420,7 @@
             </div>
 
             <!-- Settings Card -->
-            <div class="card settings-card">
+            <div class="card settings-card animate__animated animate__fadeIn">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-sliders-h"></i>
@@ -1461,31 +1434,9 @@
                             <span>Временные настройки</span>
                         </div>
                         
-                        <div class="time-picker">
-                            <div class="time-input-group">
-                                <label for="blockStart">Начало блокировки</label>
-                                <input type="time" id="blockStart" class="time-input" value="23:00">
-                            </div>
-                            <div class="time-input-group">
-                                <label for="blockEnd">Конец блокировки</label>
-                                <input type="time" id="blockEnd" class="time-input" value="08:00">
-                            </div>
-                        </div>
-                        
-                        <div class="time-picker">
-                            <div class="time-input-group">
-                                <label for="lightStart">Включение света</label>
-                                <input type="time" id="lightStart" class="time-input" value="08:00">
-                            </div>
-                            <div class="time-input-group">
-                                <label for="lightDuration">Длительность (ч)</label>
-                                <input type="number" id="lightDuration" class="time-input" value="12" min="1" max="24">
-                            </div>
-                        </div>
-                        
                         <div class="slider-group">
                             <div class="slider-header">
-                                <span>Задержка проверок</span>
+                                <span>Интервал проверки влажности</span>
                                 <span class="slider-value" id="intervalSliderValue">10 мин</span>
                             </div>
                             <div class="slider-container">
@@ -1493,6 +1444,28 @@
                                 <div class="slider-fill" id="intervalFill"></div>
                                 <input type="range" min="1" max="60" value="10" class="slider-input" id="intervalSlider">
                                 <div class="slider-thumb" id="intervalThumb"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="time-picker">
+                            <div class="time-input-group">
+                                <label for="blockStart">Начало блокировки полива</label>
+                                <input type="time" id="blockStart" class="time-input" value="23:00">
+                            </div>
+                            <div class="time-input-group">
+                                <label for="blockEnd">Конец блокировки полива</label>
+                                <input type="time" id="blockEnd" class="time-input" value="08:00">
+                            </div>
+                        </div>
+                        
+                        <div class="time-picker">
+                            <div class="time-input-group">
+                                <label for="lightStart">Время включения света</label>
+                                <input type="time" id="lightStart" class="time-input" value="08:00">
+                            </div>
+                            <div class="time-input-group">
+                                <label for="lightDuration">Длительность света (часы)</label>
+                                <input type="number" id="lightDuration" class="time-input" value="12" min="1" max="24">
                             </div>
                         </div>
                     </div>
@@ -1505,8 +1478,8 @@
                         
                         <div class="time-picker">
                             <div class="time-input-group">
-                                <label for="currentTime">Текущее время RTC</label>
-                                <input type="time" id="currentTime" class="time-input">
+                                <label for="currentTime">Установить время RTC</label>
+                                <input type="time" id="currentTime" class="time-input" value="">
                             </div>
                         </div>
                         
@@ -1522,7 +1495,7 @@
                         </div>
                     </div>
                     
-                    <div class="btn-group" style="margin-top: 20px;">
+                    <div class="btn-group">
                         <button class="btn btn-success" id="saveSettingsBtn">
                             <i class="fas fa-save"></i>
                             Сохранить настройки
@@ -1536,7 +1509,7 @@
             </div>
 
             <!-- Telegram Card -->
-            <div class="card telegram-card">
+            <div class="card telegram-card animate__animated animate__fadeIn">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fab fa-telegram"></i>
@@ -1549,7 +1522,7 @@
                             <i class="fab fa-telegram"></i>
                         </div>
                         
-                        <h3 style="margin-bottom: 20px;">@EcoGrow_assis_Bot</h3>
+                        <h3 style="margin-bottom: 15px; color: var(--primary);">@EcoGrow_assis_Bot</h3>
                         
                         <div class="telegram-details">
                             <p>
@@ -1566,7 +1539,7 @@
                             </p>
                         </div>
                         
-                        <p style="color: var(--text-secondary); margin: 20px 0;">
+                        <p style="color: var(--light-text-secondary); font-size: 14px; margin: 15px 0;">
                             Бот отправляет уведомления о критических ошибках системы, 
                             изменениях состояния и низком уровне влажности
                         </p>
@@ -1586,23 +1559,26 @@
             </div>
 
             <!-- Errors Card -->
-            <div class="card errors-card">
+            <div class="card errors-card animate__animated animate__fadeIn">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-exclamation-triangle"></i>
                         <span>История ошибок системы</span>
                     </div>
-                    <button class="btn btn-danger" id="clearErrorsBtn" style="padding: 8px 16px;">
-                        <i class="fas fa-broom"></i>
-                        Очистить всё
-                    </button>
+                    <div>
+                        <span style="font-size: 12px; color: var(--light-text-secondary); margin-right: 10px;" id="errorsCount">0 ошибок</span>
+                        <button class="btn btn-danger" id="clearErrorsBtn" style="padding: 6px 12px; font-size: 12px;">
+                            <i class="fas fa-broom"></i>
+                            Очистить
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="errors-list" id="errorsList">
                         <!-- Errors will be loaded here -->
                     </div>
                     
-                    <div class="btn-group" style="margin-top: 20px;">
+                    <div class="btn-group">
                         <button class="btn btn-secondary" id="exportErrorsBtn">
                             <i class="fas fa-download"></i>
                             Экспорт ошибок
@@ -1616,13 +1592,13 @@
             </div>
 
             <!-- Statistics Card -->
-            <div class="card stats-card">
+            <div class="card stats-card animate__animated animate__fadeIn">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-chart-bar"></i>
                         <span>Статистика работы</span>
                     </div>
-                    <div class="card-badge">За 7 дней</div>
+                    <div style="font-size: 12px; color: var(--light-text-secondary);">За последние 7 дней</div>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
@@ -1636,65 +1612,62 @@
                         </div>
                         <div class="stat-item">
                             <div class="stat-value" id="avgPumpTime">0с</div>
-                            <div class="stat-label">Среднее время полива</div>
+                            <div class="stat-label">Ср. время полива</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-value" id="lightHours">0ч</div>
                             <div class="stat-label">Часов света</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value" id="uptime">99%</div>
-                            <div class="stat-label">Надежность системы</div>
+                            <div class="stat-value" id="uptime">100%</div>
+                            <div class="stat-label">Надежность</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Documentation Card -->
-            <div class="card docs-card">
+            <div class="card docs-card animate__animated animate__fadeIn">
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-book"></i>
-                        <span>Документация и ссылки</span>
+                        <span>Документация и контакты</span>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="docs-content">
-                        <h3 style="margin-bottom: 20px; color: var(--secondary);">Разработчик системы</h3>
-                        
-                        <div class="developer-card">
-                            <div class="developer-avatar">
-                                <i class="fas fa-user-tie"></i>
-                            </div>
-                            <div class="developer-info">
-                                <h4>Купченя Евгений Андрееевич</h4>
-                                <p>Full-Stack разработчик IoT систем</p>
-                                <p>Telegram: <strong>@Zhesny</strong></p>
-                                <p>Email: <strong>zhenya.kupchenya@mail.ru</strong></p>
-                            </div>
+                    <div class="developer-card">
+                        <div class="developer-avatar">
+                            <i class="fas fa-user-tie"></i>
                         </div>
-                        
-                        <div class="docs-buttons">
-                            <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" target="_blank" class="btn btn-primary">
-                                <i class="fas fa-file-alt"></i>
-                                Полная документация
-                            </a>
-                            <a href="https://github.com/zhesny/EcoGrow" target="_blank" class="btn btn-secondary">
-                                <i class="fab fa-github"></i>
-                                Исходный код на GitHub
-                            </a>
+                        <div class="developer-info">
+                            <h4>Купченя Евгений Андрееевич</h4>
+                            <p>Разработчик системы EcoGrow</p>
+                            <p>Telegram: <strong>@Zhesny</strong></p>
+                            <p>Email: <strong>zhenya.kupchenya@mail.ru</strong></p>
                         </div>
-                        
-                        <div class="update-log">
-                            <h4>Что нового в версии 4.5:</h4>
-                            <ul>
-                                <li>Исправлены конфликты пинов энкодера (10,11)</li>
-                                <li>Добавлен watchdog-таймер для стабильности</li>
-                                <li>Улучшена обработка прерываний энкодера</li>
-                                <li>Оптимизировано меню управления</li>
-                                <li>Исправлены проблемы со спикером</li>
-                            </ul>
-                        </div>
+                    </div>
+                    
+                    <div class="btn-group" style="margin: 20px 0;">
+                        <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" 
+                           target="_blank" class="btn btn-primary">
+                            <i class="fas fa-file-alt"></i>
+                            Полная документация
+                        </a>
+                        <a href="https://github.com/zhesny/EcoGrow" target="_blank" class="btn btn-secondary">
+                            <i class="fab fa-github"></i>
+                            Исходный код
+                        </a>
+                    </div>
+                    
+                    <div style="background: rgba(33,150,243,0.05); padding: 15px; border-radius: var(--radius-md); margin-top: 15px;">
+                        <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 14px;">Что нового в версии 4.5:</h4>
+                        <ul style="color: var(--light-text-secondary); font-size: 13px; padding-left: 20px;">
+                            <li>Исправлены конфликты пинов энкодера (10,11)</li>
+                            <li>Добавлен watchdog-таймер для стабильности</li>
+                            <li>Улучшена обработка прерываний энкодера</li>
+                            <li>Оптимизировано меню управления</li>
+                            <li>Исправлены проблемы со спикером</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -1706,57 +1679,43 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Контакты разработчика</h3>
-                    <div class="developer-info">
-                        <h4>Купченя Евгений Андрееевич</h4>
-                        <p>Специализация: IoT системы, автоматизация, микроконтроллеры</p>
-                        <p>Опыт работы с Arduino/ESP: 5+ лет</p>
-                    </div>
-                    <div class="social-links">
-                        <a href="https://t.me/Zhesny" target="_blank" class="social-link">
-                            <i class="fab fa-telegram"></i>
-                        </a>
-                        <a href="mailto:zhenya.kupchenya@mail.ru" class="social-link">
-                            <i class="fas fa-envelope"></i>
-                        </a>
-                        <a href="https://github.com/zhesny" target="_blank" class="social-link">
-                            <i class="fab fa-github"></i>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Быстрые ссылки</h3>
+                    <h3>Контакты</h3>
                     <ul class="footer-links">
-                        <li>
-                            <a href="https://github.com/zhesny/EcoGrow" target="_blank">
-                                <i class="fab fa-github"></i>
-                                Репозиторий проекта
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" target="_blank">
-                                <i class="fas fa-book"></i>
-                                Техническая документация
-                            </a>
-                        </li>
                         <li>
                             <a href="https://t.me/Zhesny" target="_blank">
                                 <i class="fab fa-telegram"></i>
-                                Связь с разработчиком
+                                Telegram: @Zhesny
                             </a>
                         </li>
                         <li>
-                            <a href="#" id="bugReportBtn">
-                                <i class="fas fa-bug"></i>
-                                Сообщить об ошибке
+                            <a href="mailto:zhenya.kupchenya@mail.ru">
+                                <i class="fas fa-envelope"></i>
+                                Email: zhenya.kupchenya@mail.ru
                             </a>
                         </li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h3>Технологии проекта</h3>
+                    <h3>Ссылки</h3>
+                    <ul class="footer-links">
+                        <li>
+                            <a href="https://github.com/zhesny/EcoGrow" target="_blank">
+                                <i class="fab fa-github"></i>
+                                GitHub репозиторий
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" target="_blank">
+                                <i class="fas fa-book"></i>
+                                Документация
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Технологии</h3>
                     <ul class="footer-links">
                         <li>
                             <a href="#">
@@ -1767,13 +1726,7 @@
                         <li>
                             <a href="#">
                                 <i class="fas fa-database"></i>
-                                Firebase Realtime Database
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#">
-                                <i class="fab fa-js"></i>
-                                HTML5, CSS3, JavaScript
+                                Firebase Realtime
                             </a>
                         </li>
                         <li>
@@ -1788,8 +1741,7 @@
             
             <div class="copyright">
                 <p>© 2023 EcoGrow Control System v4.5. Все права защищены.</p>
-                <p>Система разработана для автоматизации полива растений с удаленным управлением через веб-интерфейс.</p>
-                <p>При возникновении вопросов: <a href="mailto:zhenya.kupchenya@mail.ru">zhenya.kupchenya@mail.ru</a> | <a href="https://t.me/Zhesny">@Zhesny</a></p>
+                <p style="margin-top: 5px;">Разработано для автоматизации полива растений с удаленным управлением</p>
             </div>
         </div>
     </footer>
@@ -1806,7 +1758,7 @@
     </div>
 
     <script>
-        // Firebase Configuration (Замените на свои данные)
+        // Firebase Configuration (Замените на свои реальные данные!)
         const firebaseConfig = {
             apiKey: "AIzaSyDEXAMPLEKEY",
             authDomain: "ecogrow-remote-default-rtdb.firebaseapp.com",
@@ -1822,17 +1774,25 @@
         const database = firebase.database();
         
         // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
         const connectionStatus = document.getElementById('connectionStatus');
         const connectionText = document.getElementById('connectionText');
         const lastUpdate = document.getElementById('lastUpdate');
-        const systemStatus = document.getElementById('systemStatus');
         const moistureValue = document.getElementById('moistureValue');
         const thresholdValue = document.getElementById('thresholdValue');
-        const pumpStatus = document.getElementById('pumpStatus');
-        const lightStatus = document.getElementById('lightStatus');
-        const pumpMode = document.getElementById('pumpMode');
-        const lightMode = document.getElementById('lightMode');
+        const pumpState = document.getElementById('pumpState');
+        const lightState = document.getElementById('lightState');
         const systemTime = document.getElementById('systemTime');
+        const systemDate = document.getElementById('systemDate');
+        const systemMode = document.getElementById('systemMode');
+        const moistureIndicator = document.getElementById('moistureIndicator');
+        const moistureStatus = document.getElementById('moistureStatus');
+        const pumpIndicator = document.getElementById('pumpIndicator');
+        const pumpMode = document.getElementById('pumpMode');
+        const lightIndicator = document.getElementById('lightIndicator');
+        const lightMode = document.getElementById('lightMode');
+        const pumpStatusText = document.getElementById('pumpStatusText');
+        const lightStatusText = document.getElementById('lightStatusText');
         const pumpToggle = document.getElementById('pumpToggle');
         const lightToggle = document.getElementById('lightToggle');
         const sleepToggle = document.getElementById('sleepToggle');
@@ -1848,24 +1808,25 @@
         const intervalSliderValue = document.getElementById('intervalSliderValue');
         const intervalFill = document.getElementById('intervalFill');
         const intervalThumb = document.getElementById('intervalThumb');
-        const pumpIndicator = document.getElementById('pumpIndicator');
-        const lightIndicator = document.getElementById('lightIndicator');
-        const moistureStatus = document.getElementById('moistureStatus');
         const notification = document.getElementById('notification');
         const notificationTitle = document.getElementById('notificationTitle');
         const notificationMessage = document.getElementById('notificationMessage');
         const errorsList = document.getElementById('errorsList');
+        const errorsCount = document.getElementById('errorsCount');
         
         // Chart variables
         let moistureChart, statsChart;
-        let moistureData = [];
         let historyData = [];
-        let currentChartRange = 24; // hours
+        let statsData = {
+            pumps: [],
+            lights: [],
+            errors: []
+        };
         
         // System state (получается из Firebase)
         let systemState = {
             connected: false,
-            lastData: null,
+            lastUpdate: null,
             moisture: null,
             pump: false,
             light: false,
@@ -1873,23 +1834,56 @@
             pump_mode: "AUT",
             light_mode: "AUT",
             time: "--:--",
-            timestamp: null,
+            rawMoisture: null,
             errors: []
         };
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
             initCharts();
             initEventListeners();
             initFirebase();
             loadInitialData();
-            updateDisplay();
             
             // Set current time in time picker
             const now = new Date();
             document.getElementById('currentTime').value = 
                 `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         });
+        
+        // Initialize theme
+        function initTheme() {
+            const savedTheme = localStorage.getItem('ecogrow-theme') || 'light';
+            
+            if (savedTheme === 'dark') {
+                document.body.classList.remove('light-theme');
+                document.body.classList.add('dark-theme');
+                themeToggle.checked = true;
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.body.classList.add('light-theme');
+                themeToggle.checked = false;
+            }
+            
+            themeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.remove('light-theme');
+                    document.body.classList.add('dark-theme');
+                    localStorage.setItem('ecogrow-theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    document.body.classList.add('light-theme');
+                    localStorage.setItem('ecogrow-theme', 'light');
+                }
+                
+                // Update charts for new theme
+                setTimeout(() => {
+                    if (moistureChart) moistureChart.update();
+                    if (statsChart) statsChart.update();
+                }, 100);
+            });
+        }
         
         // Initialize Firebase connection
         function initFirebase() {
@@ -1900,25 +1894,32 @@
                 
                 if (data) {
                     systemState.connected = true;
-                    systemState.lastData = data;
-                    systemState.timestamp = Date.now();
+                    systemState.lastUpdate = Date.now();
                     
-                    // Update system state
-                    systemState.moisture = data.moisture || 0;
-                    systemState.pump = data.pump || false;
-                    systemState.light = data.light || false;
-                    systemState.threshold = data.threshold || 50;
-                    systemState.pump_mode = data.pump_mode || "AUT";
-                    systemState.light_mode = data.light_mode || "AUT";
-                    systemState.time = data.time || "--:--";
-                    
-                    // Add to history for chart
-                    addToHistory({
-                        timestamp: systemState.timestamp,
-                        moisture: systemState.moisture,
-                        pump: systemState.pump,
-                        light: systemState.light
-                    });
+                    // Parse data from ESP8266 format
+                    // Формат данных: DATA:M:65,P:0,L:1,T:1430,S:450,TH:50,MT:AUT,ML:AUT
+                    if (data.moisture !== undefined) {
+                        systemState.moisture = data.moisture;
+                        systemState.pump = data.pump || false;
+                        systemState.light = data.light || false;
+                        systemState.threshold = data.threshold || 50;
+                        systemState.pump_mode = data.pump_mode || "AUT";
+                        systemState.light_mode = data.light_mode || "AUT";
+                        systemState.time = data.time || "--:--";
+                        systemState.rawMoisture = data.raw || null;
+                        
+                        // Add to history
+                        addToHistory({
+                            timestamp: Date.now(),
+                            moisture: systemState.moisture,
+                            pump: systemState.pump,
+                            light: systemState.light,
+                            threshold: systemState.threshold
+                        });
+                        
+                        // Update statistics
+                        updateStatistics();
+                    }
                     
                     // Update display
                     updateDisplay();
@@ -1928,8 +1929,8 @@
                     connectionText.textContent = 'Подключено к ESP8266';
                     lastUpdate.textContent = `Обновлено: ${new Date().toLocaleTimeString()}`;
                     
-                    // Check for critical conditions
-                    checkConditions();
+                    // Check for errors
+                    checkForErrors();
                     
                 } else {
                     systemState.connected = false;
@@ -1944,19 +1945,6 @@
                 connectionText.textContent = 'Ошибка подключения';
                 showNotification('Ошибка', 'Не удалось подключиться к Firebase', 'error');
             });
-            
-            // Listen for commands responses
-            const commandsRef = database.ref('commands/ecogrow_main');
-            commandsRef.on('value', (snapshot) => {
-                const command = snapshot.val();
-                if (command && command !== "null") {
-                    // Command received, show notification
-                    showNotification('Команда выполнена', `Команда "${command}" отправлена на устройство`, 'success');
-                    
-                    // Clear command after processing
-                    commandsRef.set("null");
-                }
-            });
         }
         
         // Initialize charts
@@ -1970,53 +1958,48 @@
                     datasets: [{
                         label: 'Влажность почвы (%)',
                         data: [],
-                        borderColor: '#00c853',
-                        backgroundColor: 'rgba(0, 200, 83, 0.1)',
-                        borderWidth: 3,
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        borderWidth: 2,
                         fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: '#00c853',
+                        pointBackgroundColor: '#2196F3',
                         pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 8
+                        pointBorderWidth: 1,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
                     plugins: {
                         legend: {
                             labels: {
-                                color: '#ffffff',
+                                color: getComputedStyle(document.body).getPropertyValue('--light-text'),
                                 font: {
-                                    size: 14,
-                                    family: 'Montserrat'
+                                    size: 12
                                 }
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(30, 30, 30, 0.9)',
-                            titleColor: '#00c853',
-                            bodyColor: '#ffffff',
-                            borderColor: '#00c853',
+                            backgroundColor: getComputedStyle(document.body).getPropertyValue('--light-card'),
+                            titleColor: getComputedStyle(document.body).getPropertyValue('--light-text'),
+                            bodyColor: getComputedStyle(document.body).getPropertyValue('--light-text-secondary'),
+                            borderColor: '#2196F3',
                             borderWidth: 1,
-                            cornerRadius: 8
+                            cornerRadius: 6
                         }
                     },
                     scales: {
                         x: {
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: getComputedStyle(document.body).getPropertyValue('--light-border')
                             },
                             ticks: {
-                                color: '#b0b0b0',
+                                color: getComputedStyle(document.body).getPropertyValue('--light-text-secondary'),
                                 font: {
-                                    size: 12
+                                    size: 11
                                 }
                             }
                         },
@@ -2024,12 +2007,12 @@
                             min: 0,
                             max: 100,
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: getComputedStyle(document.body).getPropertyValue('--light-border')
                             },
                             ticks: {
-                                color: '#b0b0b0',
+                                color: getComputedStyle(document.body).getPropertyValue('--light-text-secondary'),
                                 font: {
-                                    size: 12
+                                    size: 11
                                 }
                             }
                         }
@@ -2046,16 +2029,16 @@
                     datasets: [
                         {
                             label: 'Поливы',
-                            data: [3, 5, 4, 6, 3, 2, 4],
-                            backgroundColor: 'rgba(13, 71, 161, 0.7)',
-                            borderColor: '#0d47a1',
+                            data: [0, 0, 0, 0, 0, 0, 0],
+                            backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                            borderColor: '#2196F3',
                             borderWidth: 1
                         },
                         {
                             label: 'Активность света (ч)',
-                            data: [12, 11, 13, 12, 10, 8, 12],
-                            backgroundColor: 'rgba(0, 200, 83, 0.7)',
-                            borderColor: '#00c853',
+                            data: [0, 0, 0, 0, 0, 0, 0],
+                            backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                            borderColor: '#4CAF50',
                             borderWidth: 1
                         }
                     ]
@@ -2066,10 +2049,9 @@
                     plugins: {
                         legend: {
                             labels: {
-                                color: '#ffffff',
+                                color: getComputedStyle(document.body).getPropertyValue('--light-text'),
                                 font: {
-                                    size: 14,
-                                    family: 'Montserrat'
+                                    size: 11
                                 }
                             }
                         }
@@ -2077,18 +2059,18 @@
                     scales: {
                         x: {
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: getComputedStyle(document.body).getPropertyValue('--light-border')
                             },
                             ticks: {
-                                color: '#b0b0b0'
+                                color: getComputedStyle(document.body).getPropertyValue('--light-text-secondary')
                             }
                         },
                         y: {
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: getComputedStyle(document.body).getPropertyValue('--light-border')
                             },
                             ticks: {
-                                color: '#b0b0b0'
+                                color: getComputedStyle(document.body).getPropertyValue('--light-text-secondary')
                             }
                         }
                     }
@@ -2098,27 +2080,30 @@
         
         // Initialize event listeners
         function initEventListeners() {
-            // Chart time range buttons
-            document.querySelectorAll('.time-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentChartRange = parseInt(this.dataset.hours);
-                    updateChart();
-                });
+            // Chart range selector
+            document.getElementById('chartRange').addEventListener('change', function() {
+                updateChart(parseInt(this.value));
             });
             
-            // Toggle switches
+            // Toggle switches with debounce
+            let pumpToggleTimeout;
             pumpToggle.addEventListener('change', function() {
-                const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
-                sendCommand(command);
-                showNotification('Насос', this.checked ? 'Включен вручную' : 'Выключен', 'success');
+                clearTimeout(pumpToggleTimeout);
+                pumpToggleTimeout = setTimeout(() => {
+                    const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
+                    sendCommand(command);
+                    showNotification('Насос', this.checked ? 'Включен вручную' : 'Выключен', 'success');
+                }, 300);
             });
             
+            let lightToggleTimeout;
             lightToggle.addEventListener('change', function() {
-                const command = this.checked ? 'LIGHT:ON' : 'LIGHT:OFF';
-                sendCommand(command);
-                showNotification('Свет', this.checked ? 'Включен вручную' : 'Выключен', 'success');
+                clearTimeout(lightToggleTimeout);
+                lightToggleTimeout = setTimeout(() => {
+                    const command = this.checked ? 'LIGHT:ON' : 'LIGHT:OFF';
+                    sendCommand(command);
+                    showNotification('Свет', this.checked ? 'Включен вручную' : 'Выключен', 'success');
+                }, 300);
             });
             
             sleepToggle.addEventListener('change', function() {
@@ -2140,8 +2125,10 @@
             
             document.getElementById('applySettingsBtn').addEventListener('click', function() {
                 const threshold = thresholdSlider.value;
+                const duration = durationSlider.value;
                 sendCommand(`THRESHOLD:${threshold}`);
-                showNotification('Настройки', `Порог влажности установлен на ${threshold}%`, 'success');
+                sendCommand(`PUMPDURATION:${duration}`);
+                showNotification('Настройки', `Порог: ${threshold}%, Длительность: ${duration}с`, 'success');
             });
             
             document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
@@ -2153,7 +2140,11 @@
             document.getElementById('clearErrorsBtn').addEventListener('click', clearErrors);
             document.getElementById('exportErrorsBtn').addEventListener('click', exportErrors);
             document.getElementById('refreshErrorsBtn').addEventListener('click', refreshErrors);
-            document.getElementById('bugReportBtn').addEventListener('click', reportBug);
+            
+            // Initialize sliders
+            updateThresholdSlider.call(thresholdSlider);
+            updateDurationSlider.call(durationSlider);
+            updateIntervalSlider.call(intervalSlider);
         }
         
         // Update slider visuals
@@ -2190,19 +2181,29 @@
                 historyData = historyData.slice(-1000);
             }
             
-            // Update chart
-            updateChart();
-            
             // Update statistics
+            if (data.pump) {
+                statsData.pumps.push({
+                    timestamp: data.timestamp,
+                    duration: parseInt(durationSlider.value) || 10
+                });
+            }
+            
+            if (data.light) {
+                statsData.lights.push(data.timestamp);
+            }
+            
+            // Update charts
+            updateChart(parseInt(document.getElementById('chartRange').value));
             updateStatistics();
         }
         
         // Update chart with current data
-        function updateChart() {
+        function updateChart(hours) {
             if (historyData.length === 0) return;
             
             // Filter data based on time range
-            const cutoffTime = Date.now() - (currentChartRange * 60 * 60 * 1000);
+            const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
             const filteredData = historyData.filter(d => d.timestamp >= cutoffTime);
             
             if (filteredData.length === 0) return;
@@ -2210,7 +2211,7 @@
             // Prepare labels and data
             const labels = filteredData.map(d => {
                 const date = new Date(d.timestamp);
-                return currentChartRange <= 24 
+                return hours <= 24 
                     ? date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
                     : date.toLocaleDateString([], {month: 'short', day: 'numeric'});
             });
@@ -2222,7 +2223,7 @@
             moistureChart.data.datasets[0].data = data;
             moistureChart.update();
             
-            // Update statistics
+            // Update chart statistics
             updateChartStats(filteredData);
         }
         
@@ -2234,29 +2235,72 @@
             const avg = moistures.reduce((a, b) => a + b, 0) / moistures.length;
             const min = Math.min(...moistures);
             const max = Math.max(...moistures);
-            const change = moistures.length > 1 ? moistures[moistures.length - 1] - moistures[0] : 0;
+            const trend = moistures.length > 1 ? moistures[moistures.length - 1] - moistures[0] : 0;
             
             document.getElementById('avgMoisture').textContent = `${avg.toFixed(1)}%`;
             document.getElementById('minMoisture').textContent = `${min}%`;
             document.getElementById('maxMoisture').textContent = `${max}%`;
-            document.getElementById('changeMoisture').textContent = `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
+            document.getElementById('trendMoisture').textContent = `${trend > 0 ? '+' : ''}${trend.toFixed(1)}%`;
         }
         
         // Update statistics
         function updateStatistics() {
-            // Calculate statistics from history
-            const lastWeekData = historyData.filter(d => 
-                Date.now() - d.timestamp < 7 * 24 * 60 * 60 * 1000
-            );
+            // Calculate statistics from last 7 days
+            const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            const weekData = historyData.filter(d => d.timestamp >= weekAgo);
+            const weekPumps = statsData.pumps.filter(p => p.timestamp >= weekAgo);
+            const weekLights = statsData.lights.filter(l => l >= weekAgo);
             
-            const pumpActivations = lastWeekData.filter(d => d.pump).length;
-            const totalPumpTime = pumpActivations * parseInt(durationSlider.value);
-            const lightHours = lastWeekData.filter(d => d.light).length * 5 / 3600; // approx
+            // Update pump statistics
+            document.getElementById('totalPumps').textContent = weekPumps.length;
             
-            document.getElementById('totalPumps').textContent = pumpActivations;
-            document.getElementById('avgPumpTime').textContent = `${durationSlider.value}с`;
-            document.getElementById('lightHours').textContent = `${lightHours.toFixed(1)}ч`;
-            document.getElementById('uptime').textContent = '99%';
+            const avgPumpTime = weekPumps.length > 0 
+                ? Math.round(weekPumps.reduce((sum, p) => sum + p.duration, 0) / weekPumps.length)
+                : 0;
+            document.getElementById('avgPumpTime').textContent = `${avgPumpTime}с`;
+            
+            // Calculate light hours (estimate 5 minutes per light activation)
+            const lightMinutes = weekLights.length * 5;
+            const lightHours = Math.round(lightMinutes / 60 * 10) / 10;
+            document.getElementById('lightHours').textContent = `${lightHours}ч`;
+            
+            // Calculate uptime (percentage of time system was responsive)
+            const totalSamples = weekData.length;
+            const expectedSamples = 7 * 24 * 12; // 5-minute intervals
+            const uptime = totalSamples > 0 ? Math.round((totalSamples / expectedSamples) * 100) : 100;
+            document.getElementById('uptime').textContent = `${Math.min(uptime, 100)}%`;
+            
+            // Update stats chart
+            updateStatsChart();
+        }
+        
+        // Update statistics chart
+        function updateStatsChart() {
+            // Generate daily statistics for last 7 days
+            const dailyStats = { pumps: [0,0,0,0,0,0,0], lights: [0,0,0,0,0,0,0] };
+            const now = Date.now();
+            
+            statsData.pumps.forEach(pump => {
+                const day = Math.floor((now - pump.timestamp) / (24 * 60 * 60 * 1000));
+                if (day >= 0 && day < 7) {
+                    dailyStats.pumps[6 - day]++;
+                }
+            });
+            
+            statsData.lights.forEach(light => {
+                const day = Math.floor((now - light) / (24 * 60 * 60 * 1000));
+                if (day >= 0 && day < 7) {
+                    dailyStats.lights[6 - day] += 5; // 5 minutes per activation
+                }
+            });
+            
+            // Convert light minutes to hours
+            dailyStats.lights = dailyStats.lights.map(minutes => Math.round(minutes / 60 * 10) / 10);
+            
+            // Update chart
+            statsChart.data.datasets[0].data = dailyStats.pumps;
+            statsChart.data.datasets[1].data = dailyStats.lights;
+            statsChart.update();
         }
         
         // Update display with current state
@@ -2266,60 +2310,104 @@
             thresholdValue.textContent = systemState.threshold;
             systemTime.textContent = systemState.time;
             
+            // Parse date from time string (format: HHMM)
+            if (systemState.time && systemState.time.length === 5) {
+                const [hours, minutes] = systemState.time.split(':');
+                const date = new Date();
+                date.setHours(parseInt(hours), parseInt(minutes), 0);
+                systemDate.textContent = date.toLocaleDateString('ru-RU');
+            }
+            
             // Update pump status
-            pumpStatus.textContent = systemState.pump ? 'Вкл' : 'Выкл';
-            pumpStatus.style.color = systemState.pump ? '#00c853' : '#f44336';
+            pumpState.textContent = systemState.pump ? 'ВКЛ' : 'ВЫКЛ';
+            pumpState.style.color = systemState.pump ? '#4CAF50' : '#F44336';
             pumpIndicator.className = systemState.pump ? 'fas fa-circle good' : 'fas fa-circle danger';
-            pumpMode.textContent = systemState.pump_mode === 'MAN' ? 'Ручной' : 'Авто';
+            pumpMode.textContent = systemState.pump_mode === 'MAN' ? 'РУЧНОЙ' : 'АВТО';
             pumpToggle.checked = systemState.pump;
+            pumpStatusText.textContent = systemState.pump_mode === 'MAN' ? 'Ручной режим' : 'Автоматический режим';
             
             // Update light status
-            lightStatus.textContent = systemState.light ? 'Вкл' : 'Выкл';
-            lightStatus.style.color = systemState.light ? '#00c853' : '#f44336';
+            lightState.textContent = systemState.light ? 'ВКЛ' : 'ВЫКЛ';
+            lightState.style.color = systemState.light ? '#4CAF50' : '#F44336';
             lightIndicator.className = systemState.light ? 'fas fa-circle good' : 'fas fa-circle danger';
-            lightMode.textContent = systemState.light_mode === 'MAN' ? 'Ручной' : 'Авто';
+            lightMode.textContent = systemState.light_mode === 'MAN' ? 'РУЧНОЙ' : 'АВТО';
             lightToggle.checked = systemState.light;
+            lightStatusText.textContent = systemState.light_mode === 'MAN' ? 'Ручной режим' : 'Автоматический режим';
             
             // Update moisture status
             if (systemState.moisture !== null) {
-                if (systemState.moisture < systemState.threshold - 10) {
-                    moistureStatus.textContent = 'Критически низкая';
+                if (systemState.moisture < (systemState.threshold - 15)) {
+                    moistureStatus.textContent = 'КРИТИЧЕСКИ НИЗКАЯ';
                     moistureStatus.className = 'danger';
+                    moistureIndicator.className = 'fas fa-circle danger';
                 } else if (systemState.moisture < systemState.threshold) {
-                    moistureStatus.textContent = 'Низкая';
+                    moistureStatus.textContent = 'НИЗКАЯ';
                     moistureStatus.className = 'warning';
+                    moistureIndicator.className = 'fas fa-circle warning';
                 } else {
-                    moistureStatus.textContent = 'Норма';
+                    moistureStatus.textContent = 'НОРМА';
                     moistureStatus.className = 'good';
+                    moistureIndicator.className = 'fas fa-circle good';
                 }
             }
             
-            // Update system status
-            systemStatus.textContent = systemState.pump_mode === 'AUT' && systemState.light_mode === 'AUT' ? 'Авто' : 'Ручной';
-            systemStatus.style.background = systemState.pump_mode === 'AUT' && systemState.light_mode === 'AUT' 
-                ? 'linear-gradient(135deg, #00c853, #5efc82)' 
-                : 'linear-gradient(135deg, #ff4081, #ff79b0)';
+            // Update system mode
+            if (systemState.pump_mode === 'AUT' && systemState.light_mode === 'AUT') {
+                systemMode.textContent = 'АВТО';
+                systemMode.style.background = 'rgba(76, 175, 80, 0.1)';
+                systemMode.style.color = '#4CAF50';
+            } else {
+                systemMode.textContent = 'РУЧНОЙ';
+                systemMode.style.background = 'rgba(33, 150, 243, 0.1)';
+                systemMode.style.color = '#2196F3';
+            }
             
-            // Update sliders
-            thresholdSlider.value = systemState.threshold;
-            updateThresholdSlider.call(thresholdSlider);
+            // Update sliders to match current threshold
+            if (systemState.threshold !== parseInt(thresholdSlider.value)) {
+                thresholdSlider.value = systemState.threshold;
+                updateThresholdSlider.call(thresholdSlider);
+            }
         }
         
-        // Check system conditions for alerts
-        function checkConditions() {
-            if (systemState.moisture !== null && systemState.moisture < systemState.threshold - 15) {
-                addError('danger', `Критически низкая влажность: ${systemState.moisture}%`);
-                showNotification('Внимание!', `Влажность критически низкая: ${systemState.moisture}%`, 'error');
-            } else if (systemState.moisture !== null && systemState.moisture < systemState.threshold) {
-                addError('warning', `Низкая влажность: ${systemState.moisture}%`);
+        // Check for errors
+        function checkForErrors() {
+            if (systemState.moisture !== null) {
+                // Check for sensor errors
+                if (systemState.rawMoisture !== null) {
+                    if (systemState.rawMoisture <= 10 || systemState.rawMoisture >= 1013) {
+                        addError('danger', 'Ошибка датчика влажности');
+                        showNotification('Ошибка!', 'Неисправность датчика влажности', 'error');
+                    }
+                }
+                
+                // Check for low moisture
+                if (systemState.moisture < (systemState.threshold - 15)) {
+                    addError('warning', `Критически низкая влажность: ${systemState.moisture}%`);
+                } else if (systemState.moisture < systemState.threshold) {
+                    addError('info', `Низкая влажность: ${systemState.moisture}%`);
+                }
+                
+                // Check for connection issues
+                if (systemState.lastUpdate && (Date.now() - systemState.lastUpdate) > 30000) {
+                    addError('warning', 'Нет данных от устройства более 30 секунд');
+                }
             }
         }
         
         // Add error to list
         function addError(type, message) {
+            // Check if similar error already exists in last 5 minutes
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            const similarError = systemState.errors.find(e => 
+                e.message === message && e.timestamp > fiveMinutesAgo
+            );
+            
+            if (similarError) return;
+            
             const error = {
                 type,
                 message,
+                timestamp: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'}),
                 date: new Date().toLocaleDateString()
             };
@@ -2332,18 +2420,22 @@
             }
             
             updateErrorsList();
+            
+            // Save to localStorage
+            localStorage.setItem('ecogrow_errors', JSON.stringify(systemState.errors));
         }
         
         // Update errors list display
         function updateErrorsList() {
             errorsList.innerHTML = '';
+            errorsCount.textContent = `${systemState.errors.length} ошибок`;
             
             if (systemState.errors.length === 0) {
                 errorsList.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
-                        <i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 20px; color: var(--success);"></i>
-                        <h3>Ошибок не обнаружено</h3>
-                        <p>Система работает стабильно</p>
+                    <div style="text-align: center; padding: 30px 20px; color: var(--light-text-secondary);">
+                        <i class="fas fa-check-circle" style="font-size: 36px; margin-bottom: 15px; color: #4CAF50;"></i>
+                        <h3 style="font-size: 16px; margin-bottom: 8px;">Ошибок не обнаружено</h3>
+                        <p style="font-size: 13px;">Система работает стабильно</p>
                     </div>
                 `;
                 return;
@@ -2381,12 +2473,25 @@
                 return;
             }
             
+            // Disable button temporarily
+            const button = event?.target;
+            if (button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }
+            
             database.ref('commands/ecogrow_main').set(command)
                 .then(() => {
-                    console.log(`Command sent: ${command}`);
+                    console.log(`Команда отправлена: ${command}`);
                 })
                 .catch(error => {
-                    console.error('Error sending command:', error);
+                    console.error('Ошибка отправки команды:', error);
                     showNotification('Ошибка', 'Не удалось отправить команду', 'error');
                 });
         }
@@ -2399,9 +2504,9 @@
             const lightDuration = document.getElementById('lightDuration').value;
             const interval = intervalSlider.value;
             
-            // Here you would send these settings to Firebase
-            // For now, just show notification
-            showNotification('Настройки', 'Все настройки сохранены успешно', 'success');
+            // Send settings to ESP
+            sendCommand(`SETTINGS:${blockStart}:${blockEnd}:${lightStart}:${lightDuration}:${interval}`);
+            showNotification('Настройки', 'Настройки сохранены успешно', 'success');
         }
         
         // Reset settings
@@ -2420,7 +2525,7 @@
                 document.getElementById('lightDuration').value = '12';
                 
                 sendCommand('RESET_SETTINGS');
-                showNotification('Настройки', 'Все настройки сброшены к заводским', 'warning');
+                showNotification('Настройки', 'Настройки сброшены к заводским', 'warning');
             }
         }
         
@@ -2428,7 +2533,8 @@
         function setSystemTime() {
             const time = document.getElementById('currentTime').value;
             if (time) {
-                sendCommand(`SETTIME:${time}`);
+                const [hours, minutes] = time.split(':');
+                sendCommand(`SETTIME:${hours}:${minutes}`);
                 showNotification('Время', `Системное время установлено на ${time}`, 'success');
             }
         }
@@ -2438,7 +2544,7 @@
             const now = new Date();
             const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             document.getElementById('currentTime').value = time;
-            sendCommand(`SETTIME:${time}`);
+            sendCommand(`SETTIME:${time.replace(':', ':')}`);
             showNotification('Время', `Время синхронизировано: ${time}`, 'success');
         }
         
@@ -2461,6 +2567,7 @@
             if (confirm('Очистить всю историю ошибок?')) {
                 systemState.errors = [];
                 updateErrorsList();
+                localStorage.removeItem('ecogrow_errors');
                 showNotification('Ошибки', 'История ошибок очищена', 'warning');
             }
         }
@@ -2492,15 +2599,6 @@
             showNotification('Обновление', 'Список ошибок обновлен', 'info');
         }
         
-        // Report bug
-        function reportBug() {
-            const email = 'zhenya.kupchenya@mail.ru';
-            const subject = 'Ошибка в системе EcoGrow v4.5';
-            const body = `Описание ошибки:\n\nВерсия системы: 4.5\nВремя возникновения: ${new Date().toLocaleString()}\n\n`;
-            
-            window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        }
-        
         // Show notification
         function showNotification(title, message, type = 'info') {
             notification.className = `notification ${type}`;
@@ -2524,53 +2622,35 @@
         
         // Load initial data
         function loadInitialData() {
-            // Load errors from localStorage if available
+            // Load errors from localStorage
             const savedErrors = localStorage.getItem('ecogrow_errors');
             if (savedErrors) {
                 systemState.errors = JSON.parse(savedErrors);
                 updateErrorsList();
             }
             
-            // Load history from localStorage if available
+            // Load history from localStorage
             const savedHistory = localStorage.getItem('ecogrow_history');
             if (savedHistory) {
                 historyData = JSON.parse(savedHistory);
-                updateChart();
+                updateChart(24);
                 updateStatistics();
             }
             
-            // Auto-save every minute
+            // Auto-save every 5 minutes
             setInterval(() => {
                 localStorage.setItem('ecogrow_errors', JSON.stringify(systemState.errors));
-                localStorage.setItem('ecogrow_history', JSON.stringify(historyData.slice(-500))); // Save last 500 points
-            }, 60000);
+                localStorage.setItem('ecogrow_history', JSON.stringify(historyData.slice(-500)));
+            }, 300000);
+            
+            // Update display every second
+            setInterval(() => {
+                if (systemState.lastUpdate && (Date.now() - systemState.lastUpdate) > 60000) {
+                    connectionStatus.classList.remove('connected');
+                    connectionText.textContent = 'Нет связи с ESP8266';
+                }
+            }, 1000);
         }
-        
-        // Simulate data for demo (remove in production)
-        function simulateDataForDemo() {
-            if (!systemState.connected) {
-                // Generate fake data for demo
-                setInterval(() => {
-                    systemState.moisture = Math.max(10, Math.min(90, 
-                        (systemState.moisture || 65) + (Math.random() * 6 - 3)
-                    ));
-                    systemState.time = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                    systemState.timestamp = Date.now();
-                    
-                    addToHistory({
-                        timestamp: systemState.timestamp,
-                        moisture: systemState.moisture,
-                        pump: systemState.pump,
-                        light: systemState.light
-                    });
-                    
-                    updateDisplay();
-                }, 5000);
-            }
-        }
-        
-        // Start demo simulation if no Firebase connection
-        setTimeout(simulateDataForDemo, 3000);
     </script>
 </body>
 </html>
