@@ -2,7 +2,7 @@
 
 console.log('🔥 Инициализация Firebase...');
 
-// Firebase configuration - версия 8.10.1
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
     authDomain: "ecogrow-remote.firebaseapp.com",
@@ -14,9 +14,8 @@ const firebaseConfig = {
     measurementId: "G-PG5116NH38"
 };
 
-// Initialize Firebase - версия 8
+// Initialize Firebase
 try {
-    // Проверяем, загружен ли Firebase SDK
     if (typeof firebase === 'undefined') {
         console.error('❌ Firebase SDK не загружен');
         // Создаем заглушку для демо-режима
@@ -24,17 +23,33 @@ try {
             ref: function(path) {
                 console.log('DEMO: Ref to ' + path);
                 return {
-                    on: function() { return null; },
-                    set: function() { return Promise.resolve(); },
-                    update: function() { return Promise.resolve(); },
-                    deleteNode: function() { return Promise.resolve(); },
-                    getJSON: function() { return Promise.resolve(); },
-                    once: function() { return Promise.resolve({ val: () => null }); }
+                    on: function(eventType, callback, errorCallback) {
+                        console.log('DEMO: on ' + eventType + ' for ' + path);
+                        return () => {};
+                    },
+                    set: function(value) {
+                        console.log('DEMO: set', value, 'to', path);
+                        return Promise.resolve();
+                    },
+                    update: function(value) {
+                        console.log('DEMO: update', value, 'to', path);
+                        return Promise.resolve();
+                    },
+                    remove: function() {
+                        console.log('DEMO: remove', path);
+                        return Promise.resolve();
+                    },
+                    once: function(eventType) {
+                        console.log('DEMO: once ' + eventType + ' for ' + path);
+                        return Promise.resolve({ 
+                            val: () => null,
+                            exists: () => false 
+                        });
+                    }
                 };
             }
         };
     } else {
-        // Инициализируем Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
             console.log('✅ Firebase инициализирован успешно');
@@ -42,24 +57,16 @@ try {
             console.log('⚠️ Firebase уже инициализирован');
         }
         
-        // Получаем экземпляр базы данных
         const database = firebase.database();
-        
-        // Делаем доступным глобально для app.js
         window.firebaseDatabase = database;
         
         console.log('📊 Firebase Database готов к использованию');
         
         // Тест подключения
-        try {
-            const connectedRef = database.ref('.info/connected');
-            connectedRef.on('value', (snap) => {
-                const status = snap.val() === true ? '✅ Подключено' : '❌ Отключено';
-                console.log('Соединение Firebase:', status);
-            });
-        } catch (connError) {
-            console.warn('⚠️ Не удалось проверить соединение Firebase:', connError);
-        }
+        const connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', (snap) => {
+            console.log('📡 Firebase подключение:', snap.val() ? '✅ Подключено' : '❌ Отключено');
+        });
     }
     
 } catch (error) {
@@ -69,18 +76,17 @@ try {
         ref: function(path) {
             console.log('DEMO (fallback): Ref to ' + path);
             return {
-                on: function() { return null; },
+                on: function() { return () => {}; },
                 set: function() { return Promise.resolve(); },
                 update: function() { return Promise.resolve(); },
-                deleteNode: function() { return Promise.resolve(); },
-                getJSON: function() { return Promise.resolve(); },
+                remove: function() { return Promise.resolve(); },
                 once: function() { return Promise.resolve({ val: () => null }); }
             };
         }
     };
 }
 
-// Firebase Service Class (дополнительный функционал)
+// Firebase Service Class
 class FirebaseService {
     constructor() {
         this.db = window.firebaseDatabase;
@@ -89,12 +95,10 @@ class FirebaseService {
         this.currentDeviceRef = null;
     }
 
-    // Проверка доступности
     isAvailable() {
         return this.db !== null;
     }
 
-    // Scan for online devices
     scanForDevices() {
         if (!this.devicesRef) return Promise.resolve([]);
         
@@ -118,20 +122,16 @@ class FirebaseService {
         });
     }
 
-    // Connect to specific device
     connectToDevice(deviceId) {
         if (!this.devicesRef) return null;
         
         this.currentDeviceId = deviceId;
         this.currentDeviceRef = this.devicesRef.child(deviceId);
-        
-        // Update device last seen
         this.updateDeviceStatus();
         
         return this.currentDeviceRef;
     }
 
-    // Update device status
     updateDeviceStatus() {
         if (this.currentDeviceRef) {
             this.currentDeviceRef.update({
@@ -141,24 +141,20 @@ class FirebaseService {
         }
     }
 
-    // Send command to device
     sendCommand(command, value = null) {
         if (!this.currentDeviceRef) return false;
         
         const commandsRef = this.currentDeviceRef.child('commands');
         
         if (typeof command === 'object') {
-            // If command is an object, set multiple values
             return commandsRef.update(command);
         } else {
-            // If command is a string, set single value
             const data = {};
             data[command] = value;
             return commandsRef.update(data);
         }
     }
 
-    // Disconnect from device
     disconnect() {
         this.currentDeviceId = null;
         this.currentDeviceRef = null;
