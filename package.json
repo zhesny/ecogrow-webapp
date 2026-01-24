@@ -1,0 +1,16 @@
+{
+  "name": "ecogrow-assistant",
+  "version": "4.5.0",
+  "description": "Web interface for EcoGrow plant watering system",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "deploy": "gh-pages -d ."
+  },
+  "keywords": ["iot", "plant", "watering", "automation", "arduino"],
+  "author": "Купченя Евгений Андреевич",
+  "license": "MIT",
+  "devDependencies": {
+    "gh-pages": "^5.0.0"
+  }
+}
