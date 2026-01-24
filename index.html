@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoGrow Control Panel</title>
+    <title>Панель управления EcoGrow</title>
     
     <!-- Правильные версии Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -13,7 +13,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* ВЕСЬ СТИЛЬ ОСТАЁТСЯ ТОЧНО ТАКИМ ЖЕ КАК В ИСХОДНОМ КОДЕ */
         :root {
             --bg-primary: #f8f9fa;
             --bg-card: #ffffff;
@@ -535,7 +534,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌱 EcoGrow Control Panel</h1>
+            <h1>🌱 Панель управления EcoGrow</h1>
             <button class="theme-toggle" onclick="toggleTheme()">🌙 Сменить тему</button>
         </div>
 
@@ -593,6 +592,11 @@
                     <div class="control-item">
                         <label>Задержка полива (минут)</label>
                         <input id="watering_delay" type="number" min="1" max="1440" step="5" value="30">
+                    </div>
+                    
+                    <div class="control-item">
+                        <label>Ручной полив (секунд)</label>
+                        <input id="manual_pump_time" type="number" min="1" max="300" step="1" value="10">
                     </div>
                 </div>
                 
@@ -1015,52 +1019,92 @@
         }
         
         function updateSettingsUI(settings) {
+            // Проверяем наличие элементов перед установкой значений
+            
             // Порог влажности
             if (settings.moistureThreshold !== undefined) {
-                document.getElementById('moist_threshold').value = settings.moistureThreshold;
-                document.getElementById('thresh_val').textContent = settings.moistureThreshold + '%';
+                const thresholdElement = document.getElementById('moist_threshold');
+                if (thresholdElement) {
+                    thresholdElement.value = settings.moistureThreshold;
+                }
+                const thresholdValueElement = document.getElementById('thresh_val');
+                if (thresholdValueElement) {
+                    thresholdValueElement.textContent = settings.moistureThreshold + '%';
+                }
             }
             
             // Длительность полива
             if (settings.wateringDuration !== undefined) {
-                document.getElementById('watering_duration').value = settings.wateringDuration;
+                const wateringDurationElement = document.getElementById('watering_duration');
+                if (wateringDurationElement) {
+                    wateringDurationElement.value = settings.wateringDuration;
+                }
             }
             
             // Задержка полива
             if (settings.wateringDelay !== undefined) {
-                document.getElementById('watering_delay').value = settings.wateringDelay;
+                const wateringDelayElement = document.getElementById('watering_delay');
+                if (wateringDelayElement) {
+                    wateringDelayElement.value = settings.wateringDelay;
+                }
+            }
+            
+            // Ручное время полива
+            if (settings.manualPumpTime !== undefined) {
+                const manualPumpTimeElement = document.getElementById('manual_pump_time');
+                if (manualPumpTimeElement) {
+                    manualPumpTimeElement.value = settings.manualPumpTime;
+                }
+            }
+            
+            // Ручное время света
+            if (settings.manualLightTime !== undefined) {
+                const manualLightTimeElement = document.getElementById('manual_light_time');
+                if (manualLightTimeElement) {
+                    manualLightTimeElement.value = settings.manualLightTime;
+                }
             }
             
             // Расписание света
             if (settings.lampStart) {
-                document.getElementById('lamp_start').value = formatTimeInput(settings.lampStart);
+                const lampStartElement = document.getElementById('lamp_start');
+                if (lampStartElement) {
+                    lampStartElement.value = formatTimeInput(settings.lampStart);
+                }
             }
             if (settings.lampEnd) {
-                document.getElementById('lamp_end').value = formatTimeInput(settings.lampEnd);
+                const lampEndElement = document.getElementById('lamp_end');
+                if (lampEndElement) {
+                    lampEndElement.value = formatTimeInput(settings.lampEnd);
+                }
             }
             
             // Режим сна
             if (settings.sleepEnabled !== undefined) {
-                document.getElementById('sleep_enabled').checked = settings.sleepEnabled;
+                const sleepEnabledElement = document.getElementById('sleep_enabled');
+                if (sleepEnabledElement) {
+                    sleepEnabledElement.checked = settings.sleepEnabled;
+                }
             }
             if (settings.sleepStart) {
-                document.getElementById('sleep_start').value = formatTimeInput(settings.sleepStart);
+                const sleepStartElement = document.getElementById('sleep_start');
+                if (sleepStartElement) {
+                    sleepStartElement.value = formatTimeInput(settings.sleepStart);
+                }
             }
             if (settings.sleepEnd) {
-                document.getElementById('sleep_end').value = formatTimeInput(settings.sleepEnd);
-            }
-            
-            // Время ручного включения
-            if (settings.manualPumpTime !== undefined) {
-                document.getElementById('manual_pump_time').value = settings.manualPumpTime;
-            }
-            if (settings.manualLightTime !== undefined) {
-                document.getElementById('manual_light_time').value = settings.manualLightTime;
+                const sleepEndElement = document.getElementById('sleep_end');
+                if (sleepEndElement) {
+                    sleepEndElement.value = formatTimeInput(settings.sleepEnd);
+                }
             }
             
             // Включение лампы
             if (settings.lampEnabled !== undefined) {
-                document.getElementById('lamp_enabled').checked = settings.lampEnabled;
+                const lampEnabledElement = document.getElementById('lamp_enabled');
+                if (lampEnabledElement) {
+                    lampEnabledElement.checked = settings.lampEnabled;
+                }
             }
         }
         
@@ -1078,27 +1122,39 @@
         
         function updateStatsUI(stats) {
             if (stats.totalWaterings !== undefined) {
-                document.getElementById('total_waterings').textContent = stats.totalWaterings;
+                const totalWateringsElement = document.getElementById('total_waterings');
+                if (totalWateringsElement) {
+                    totalWateringsElement.textContent = stats.totalWaterings;
+                }
             }
             
             if (stats.totalLightHours !== undefined) {
-                document.getElementById('total_light_hours').textContent = stats.totalLightHours;
+                const totalLightHoursElement = document.getElementById('total_light_hours');
+                if (totalLightHoursElement) {
+                    totalLightHoursElement.textContent = stats.totalLightHours;
+                }
             }
             
             // Расчёт энергии (примерно 50Вт * часы)
             if (stats.totalLightHours) {
                 const energy = stats.totalLightHours * 50;
-                document.getElementById('energy_consumption').textContent = energy;
+                const energyConsumptionElement = document.getElementById('energy_consumption');
+                if (energyConsumptionElement) {
+                    energyConsumptionElement.textContent = energy;
+                }
             }
         }
         
         function updateDeviceInfo(device) {
+            const timeModeElement = document.getElementById('time_mode');
+            if (!timeModeElement) return;
+            
             if (device.status === 'online') {
-                document.getElementById('time_mode').textContent = 'Online';
-                document.getElementById('time_mode').className = 'status-badge status-on';
+                timeModeElement.textContent = 'Online';
+                timeModeElement.className = 'status-badge status-on';
             } else {
-                document.getElementById('time_mode').textContent = 'Offline';
-                document.getElementById('time_mode').className = 'status-badge status-off';
+                timeModeElement.textContent = 'Offline';
+                timeModeElement.className = 'status-badge status-off';
             }
         }
         
@@ -1152,59 +1208,131 @@
         
         function setPumpAuto() {
             sendCommand('pump', 'AUTO');
-            document.getElementById('pump_mode').textContent = 'Режим: АВТО';
+            const pumpModeElement = document.getElementById('pump_mode');
+            if (pumpModeElement) {
+                pumpModeElement.textContent = 'Режим: АВТО';
+            }
             showNotification('✅ Насос: авторежим', 'success');
         }
         
         function toggleLight() {
             const on = document.getElementById('light_switch').checked;
             sendCommand('light', on ? 'ON' : 'OFF');
-            document.getElementById('light_mode').textContent = 'Режим: ' + (on ? 'РУЧНОЙ' : 'АВТО');
+            const lightModeElement = document.getElementById('light_mode');
+            if (lightModeElement) {
+                lightModeElement.textContent = 'Режим: ' + (on ? 'РУЧНОЙ' : 'АВТО');
+            }
             showNotification(on ? '✅ Свет включен' : '✅ Свет выключен', 'success');
         }
         
         function setLightAuto() {
             sendCommand('light', 'AUTO');
-            document.getElementById('light_mode').textContent = 'Режим: АВТО';
+            const lightModeElement = document.getElementById('light_mode');
+            if (lightModeElement) {
+                lightModeElement.textContent = 'Режим: АВТО';
+            }
             showNotification('✅ Свет: авторежим', 'success');
         }
         
         function manualWatering() {
-            const duration = document.getElementById('manual_pump_time').value || 10;
-            sendCommand('pump', 'ON');
-            showNotification('💧 Запущен ручной полив на ' + duration + ' сек', 'info');
+            const manualPumpTimeElement = document.getElementById('manual_pump_time');
+            if (!manualPumpTimeElement) {
+                console.error('Элемент manual_pump_time не найден');
+                showNotification('❌ Ошибка: элемент не найден', 'danger');
+                return;
+            }
             
+            const duration = manualPumpTimeElement.value || 10;
+            
+            // Включаем насос
+            sendCommand('pump', 'ON');
+            showNotification('💧 Запущен ручной полив на ' + duration + ' секунд', 'info');
+            
+            // Выключаем через указанное время
             setTimeout(() => {
                 sendCommand('pump', 'OFF');
             }, duration * 1000);
         }
         
         function updateThreshold(value) {
-            document.getElementById('thresh_val').textContent = value + '%';
+            const thresholdValueElement = document.getElementById('thresh_val');
+            if (thresholdValueElement) {
+                thresholdValueElement.textContent = value + '%';
+            }
         }
         
-        // Сохранение настроек - ОБНОВЛЁННЫЙ МЕТОД
+        // Сохранение настроек
         function saveSettings() {
             try {
                 const settings = {};
                 
                 // Собираем все настройки
-                settings.moistureThreshold = parseInt(document.getElementById('moist_threshold').value);
-                settings.wateringDuration = parseInt(document.getElementById('watering_duration').value);
-                settings.wateringDelay = parseInt(document.getElementById('watering_delay').value);
-                settings.manualPumpTime = parseInt(document.getElementById('manual_pump_time').value) || 10;
-                settings.manualLightTime = parseInt(document.getElementById('manual_light_time').value) || 1;
-                settings.lampEnabled = document.getElementById('lamp_enabled').checked;
-                settings.sleepEnabled = document.getElementById('sleep_enabled').checked;
+                const moistureThresholdElement = document.getElementById('moist_threshold');
+                if (moistureThresholdElement) {
+                    settings.moistureThreshold = parseInt(moistureThresholdElement.value);
+                }
+                
+                const wateringDurationElement = document.getElementById('watering_duration');
+                if (wateringDurationElement) {
+                    settings.wateringDuration = parseInt(wateringDurationElement.value);
+                }
+                
+                const wateringDelayElement = document.getElementById('watering_delay');
+                if (wateringDelayElement) {
+                    settings.wateringDelay = parseInt(wateringDelayElement.value);
+                }
+                
+                // Ручной полив
+                const manualPumpTimeElement = document.getElementById('manual_pump_time');
+                if (manualPumpTimeElement) {
+                    settings.manualPumpTime = parseInt(manualPumpTimeElement.value) || 10;
+                } else {
+                    settings.manualPumpTime = 10;
+                }
+                
+                // Ручной свет
+                const manualLightTimeElement = document.getElementById('manual_light_time');
+                if (manualLightTimeElement) {
+                    settings.manualLightTime = parseInt(manualLightTimeElement.value) || 1;
+                } else {
+                    settings.manualLightTime = 1;
+                }
+                
+                const lampEnabledElement = document.getElementById('lamp_enabled');
+                if (lampEnabledElement) {
+                    settings.lampEnabled = lampEnabledElement.checked;
+                }
+                
+                const sleepEnabledElement = document.getElementById('sleep_enabled');
+                if (sleepEnabledElement) {
+                    settings.sleepEnabled = sleepEnabledElement.checked;
+                }
                 
                 // Время в формате HH:MM
-                settings.lampStart = document.getElementById('lamp_start').value;
-                settings.lampEnd = document.getElementById('lamp_end').value;
-                settings.sleepStart = document.getElementById('sleep_start').value;
-                settings.sleepEnd = document.getElementById('sleep_end').value;
+                const lampStartElement = document.getElementById('lamp_start');
+                if (lampStartElement) {
+                    settings.lampStart = lampStartElement.value;
+                }
+                
+                const lampEndElement = document.getElementById('lamp_end');
+                if (lampEndElement) {
+                    settings.lampEnd = lampEndElement.value;
+                }
+                
+                const sleepStartElement = document.getElementById('sleep_start');
+                if (sleepStartElement) {
+                    settings.sleepStart = sleepStartElement.value;
+                }
+                
+                const sleepEndElement = document.getElementById('sleep_end');
+                if (sleepEndElement) {
+                    settings.sleepEnd = sleepEndElement.value;
+                }
                 
                 // Отправляем порог как команду
-                sendCommand('threshold', settings.moistureThreshold.toString());
+                if (settings.moistureThreshold) {
+                    sendCommand('threshold', settings.moistureThreshold.toString());
+                }
                 
                 // Отправляем остальные настройки в Firebase
                 database.ref('settings').update(settings)
@@ -1249,8 +1377,16 @@
         }
         
         function setCustomTime() {
-            const hours = parseInt(document.getElementById('time_hours').value);
-            const minutes = parseInt(document.getElementById('time_minutes').value);
+            const hoursElement = document.getElementById('time_hours');
+            const minutesElement = document.getElementById('time_minutes');
+            
+            if (!hoursElement || !minutesElement) {
+                showNotification('❌ Элементы времени не найдены', 'danger');
+                return;
+            }
+            
+            const hours = parseInt(hoursElement.value);
+            const minutes = parseInt(minutesElement.value);
             
             if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
                 showNotification('❌ Некорректное время', 'danger');
@@ -1345,7 +1481,7 @@
                 });
             }
             
-            console.log('🌱 EcoGrow Firebase интерфейс загружен');
+            console.log('🌱 Интерфейс управления EcoGrow загружен');
         };
     </script>
 </body>
