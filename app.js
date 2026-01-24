@@ -60,14 +60,14 @@ class EcoGrowApp {
 
     async initFirebase() {
         return new Promise((resolve, reject) => {
-            const maxAttempts = 30;
+            const maxAttempts = 50; // Увеличиваем количество попыток
             let attempts = 0;
             
             const checkFirebase = () => {
                 attempts++;
                 
-                if (window.firebaseDatabase) {
-                    console.log('✅ Firebase обнаружен');
+                if (window.firebaseDatabase && typeof window.firebaseDatabase.ref === 'function') {
+                    console.log('✅ Firebase обнаружен и готов к работе');
                     this.db = window.firebaseDatabase;
                     this.isFirebaseReady = true;
                     
@@ -85,11 +85,14 @@ class EcoGrowApp {
                     reject(new Error('Firebase не загрузился'));
                     
                 } else {
-                    setTimeout(checkFirebase, 100);
+                    // Увеличиваем время между попытками
+                    const delay = attempts < 10 ? 100 : 500;
+                    setTimeout(checkFirebase, delay);
                 }
             };
             
-            checkFirebase();
+            // Даем немного времени на загрузку
+            setTimeout(checkFirebase, 500);
         });
     }
 
@@ -797,8 +800,4 @@ class EcoGrowApp {
     }
 }
 
-// Инициализация приложения
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOM загружен, запускаем приложение...');
-    window.ecoGrowApp = new EcoGrowApp();
-});
+// Инициализация приложения происходит в index.html
