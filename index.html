@@ -5,16 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoGrow Assistant - Система умного полива</title>
     
-    <!-- Разрешаем unsafe-eval для Firebase -->
+    <!-- Упрощенная CSP для разработки -->
     <meta http-equiv="Content-Security-Policy" 
           content="
-          default-src 'self';
-          script-src 'self' 'unsafe-eval' https://*.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://cdn.jsdelivr.net;
-          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+          default-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
           font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-          connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com;
-          img-src 'self' data: https:;
-          frame-src 'self' https://*.firebaseio.com;
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
           ">
     
     <!-- Иконки и шрифты -->
@@ -24,9 +20,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Firebase SDK (версия 9 с compat) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <!-- Стили -->
     <link rel="stylesheet" href="styles.css">
@@ -492,46 +488,23 @@
         </div>
     </div>
 
-    <!-- Firebase Configuration and Initialization -->
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
-            authDomain: "ecogrow-remote.firebaseapp.com",
-            databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
-            projectId: "ecogrow-remote",
-            storageBucket: "ecogrow-remote.firebasestorage.app",
-            messagingSenderId: "121689275158",
-            appId: "1:121689275158:web:f3b1829755c8b8a1fb2e37",
-            measurementId: "G-PG5116NH38"
-        };
-
-        // Initialize Firebase
-        try {
-            console.log('🔥 Инициализация Firebase...');
-            firebase.initializeApp(firebaseConfig);
-            
-            // Get database instance
-            const database = firebase.database();
-            
-            // Make available globally
-            window.firebaseDatabase = database;
-            
-            console.log('✅ Firebase инициализирован успешно');
-            
-            // Test connection
-            const connectedRef = database.ref('.info/connected');
-            connectedRef.on('value', (snap) => {
-                const status = snap.val() === true ? '✅ Подключено' : '❌ Отключено';
-                console.log('Соединение Firebase:', status);
-            });
-            
-        } catch (error) {
-            console.error('❌ Ошибка инициализации Firebase:', error);
-        }
-    </script>
+    <!-- Firebase Initialization -->
+    <script src="firebase.js"></script>
     
     <!-- Main Application Script -->
     <script src="app.js"></script>
+    
+    <!-- Инициализация приложения -->
+    <script>
+        // Ждем полной загрузки страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 DOM загружен, запускаем приложение...');
+            
+            // Даем время на загрузку Firebase (1 секунда)
+            setTimeout(() => {
+                window.ecoGrowApp = new EcoGrowApp();
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
