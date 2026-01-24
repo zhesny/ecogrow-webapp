@@ -188,6 +188,33 @@
             position: relative;
         }
         
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .chart-btn {
+            padding: 6px 12px;
+            background: var(--border-color);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        
+        .chart-btn.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        .chart-btn:hover {
+            transform: translateY(-2px);
+        }
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -529,6 +556,50 @@
             max-width: 300px;
             font-weight: 500;
         }
+        
+        .telegram-bot-card {
+            background: linear-gradient(135deg, #0088cc, #00acee);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .telegram-bot-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .telegram-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .telegram-commands {
+            margin-top: 15px;
+            display: grid;
+            gap: 10px;
+        }
+        
+        .telegram-command {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .telegram-command code {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -545,6 +616,14 @@
                         📈 График влажности
                     </div>
                     <div id="moist_status" class="status-badge">--%</div>
+                </div>
+                
+                <div class="chart-controls">
+                    <button class="chart-btn active" onclick="setChartPeriod('hour')">1 час</button>
+                    <button class="chart-btn" onclick="setChartPeriod('day')">24 часа</button>
+                    <button class="chart-btn" onclick="setChartPeriod('week')">7 дней</button>
+                    <button class="chart-btn" onclick="setChartPeriod('month')">30 дней</button>
+                    <button class="chart-btn" onclick="clearChartData()">🗑️ Очистить</button>
                 </div>
                 
                 <div class="chart-container">
@@ -585,16 +664,6 @@
                     </div>
                     
                     <div class="control-item">
-                        <label>Длительность полива (секунд)</label>
-                        <input id="watering_duration" type="number" min="1" max="300" step="1" value="10">
-                    </div>
-                    
-                    <div class="control-item">
-                        <label>Задержка полива (минут)</label>
-                        <input id="watering_delay" type="number" min="1" max="1440" step="5" value="30">
-                    </div>
-                    
-                    <div class="control-item">
                         <label>Ручной полив (секунд)</label>
                         <input id="manual_pump_time" type="number" min="1" max="300" step="1" value="10">
                     </div>
@@ -602,7 +671,7 @@
                 
                 <div class="switch-row">
                     <div class="switch-label">
-                        <span style="font-weight: 500;">Ручное управление</span>
+                        <span style="font-weight: 500;">Ручное управление насосом</span>
                         <span id="pump_mode" class="subtext">Режим: АВТО</span>
                     </div>
                     <label class="switch">
@@ -618,11 +687,6 @@
                     <button class="btn btn-secondary" onclick="setPumpAuto()">
                         ⚙️ Авторежим
                     </button>
-                </div>
-                
-                <div class="timer-display">
-                    <div id="timer_value" class="timer-value">--</div>
-                    <div class="timer-label">До следующего полива (минут)</div>
                 </div>
             </div>
 
@@ -645,16 +709,11 @@
                             <input id="lamp_end" type="time" value="20:00">
                         </div>
                     </div>
-                    
-                    <div class="control-item">
-                        <label>Ручное время (часов)</label>
-                        <input id="manual_light_time" type="number" min="1" max="24" step="1" value="1">
-                    </div>
                 </div>
                 
                 <div class="switch-row">
                     <div class="switch-label">
-                        <span style="font-weight: 500;">Расписание</span>
+                        <span style="font-weight: 500;">Расписание лампы</span>
                         <span class="subtext">Автовключение по времени</span>
                     </div>
                     <label class="switch">
@@ -665,7 +724,7 @@
                 
                 <div class="switch-row">
                     <div class="switch-label">
-                        <span style="font-weight: 500;">Ручное управление</span>
+                        <span style="font-weight: 500;">Ручное управление лампой</span>
                         <span id="light_mode" class="subtext">Режим: АВТО</span>
                     </div>
                     <label class="switch">
@@ -732,9 +791,6 @@
                     <button class="btn btn-danger" onclick="clearErrors()">
                         🗑️ Очистить
                     </button>
-                    <button class="btn btn-primary" onclick="refreshErrors()">
-                        ↻ Обновить
-                    </button>
                 </div>
             </div>
 
@@ -755,8 +811,8 @@
                         <div class="stat-label">Часов света</div>
                     </div>
                     <div class="stat-card">
-                        <div id="energy_consumption" class="stat-value">0</div>
-                        <div class="stat-label">Вт·ч</div>
+                        <div id="uptime_hours" class="stat-value">0</div>
+                        <div class="stat-label">Время работы</div>
                     </div>
                 </div>
             </div>
@@ -764,9 +820,41 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
-                        ⏰ Установка времени
+                        🤖 Telegram Мониторинг
                     </div>
-                    <div id="time_mode" class="status-badge">Авто</div>
+                    <div id="telegram_status" class="status-badge status-on">Активен</div>
+                </div>
+                
+                <div class="telegram-instructions">
+                    <p><strong>Telegram-бот только для мониторинга!</strong></p>
+                    <p>Бот уведомляет о событиях и показывает статус системы.</p>
+                    <p><strong>Команды бота:</strong></p>
+                    <div class="telegram-commands">
+                        <div class="telegram-command">
+                            <span>💧</span>
+                            <code>/moisture</code>
+                            <span>- Текущая влажность</span>
+                        </div>
+                        <div class="telegram-command">
+                            <span>📊</span>
+                            <code>/status</code>
+                            <span>- Общий статус</span>
+                        </div>
+                        <div class="telegram-command">
+                            <span>🌐</span>
+                            <code>/web</code>
+                            <span>- Ссылка на панель</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        ⏰ Время системы
+                    </div>
+                    <div id="time_mode" class="status-badge">Онлайн</div>
                 </div>
                 
                 <div class="time-display" id="current_time_display">
@@ -784,17 +872,6 @@
                     </div>
                 </div>
                 
-                <div class="switch-row">
-                    <div class="switch-label">
-                        <span style="font-weight: 500;">Ручная корректировка</span>
-                        <span class="subtext">Добавить к системному времени</span>
-                    </div>
-                    <label class="switch">
-                        <input id="time_manual" type="checkbox">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
                 <div class="btn-group">
                     <button class="btn btn-success" onclick="setCurrentTime()">
                         🕐 Установить сейчас
@@ -805,11 +882,10 @@
                 </div>
             </div>
 
-            <div class="telegram-card">
-                <h3>🤖 Удалённое управление через Firebase</h3>
-                <p style="margin-bottom: 15px; font-size: 1rem;">Система подключена к облачной базе данных Firebase для удалённого доступа</p>
-                <p style="margin-bottom: 10px; opacity: 0.9;">Управление доступно с любого устройства через этот интерфейс</p>
-                <p style="opacity: 0.9;">Локальное управление через LCD дисплей продолжает работать</p>
+            <div class="card telegram-bot-card">
+                <h3>🌐 Удалённое управление через Firebase</h3>
+                <p style="margin-bottom: 10px; opacity: 0.9;">Система подключена к облачной базе данных Firebase для удалённого доступа и мониторинга</p>
+                <p style="opacity: 0.9;">Управление доступно с любого устройства через этот интерфейс</p>
             </div>
         </div>
     </div>
@@ -835,7 +911,9 @@
         let chart = null;
         let currentTheme = localStorage.getItem('theme') || 'light';
         let lastDataTime = 0;
-        let moistureHistory = [];
+        let moistureData = [];
+        let chartPeriod = 'hour'; // 'hour', 'day', 'week', 'month'
+        let systemStartTime = Date.now();
         
         // Инициализация темы
         document.documentElement.setAttribute('data-theme', currentTheme);
@@ -853,7 +931,6 @@
         
         // Инициализация Firebase соединения
         function initFirebase() {
-            // Настраиваем слушателей данных
             setupFirebaseListeners();
         }
         
@@ -898,14 +975,6 @@
                     updateDeviceInfo(device);
                 }
             });
-            
-            // Проверка последнего обновления
-            setInterval(() => {
-                const now = Date.now();
-                if (now - lastDataTime > 60000 && lastDataTime > 0) {
-                    console.warn('Данные не обновлялись более 60 секунд');
-                }
-            }, 10000);
         }
         
         // Инициализация графика
@@ -914,19 +983,20 @@
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: Array.from({length: 10}, (_, i) => i + 1),
+                    labels: [],
                     datasets: [{
                         label: 'Влажность %',
-                        data: Array(10).fill(0),
+                        data: [],
                         borderColor: '#3498db',
                         backgroundColor: 'rgba(52, 152, 219, 0.1)',
                         borderWidth: 3,
                         tension: 0.4,
                         fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 3,
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
                         pointBackgroundColor: '#3498db',
-                        pointBorderColor: 'white'
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
@@ -941,7 +1011,13 @@
                             titleFont: { size: 13 },
                             bodyFont: { size: 13 },
                             padding: 10,
-                            displayColors: false
+                            displayColors: false,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const date = new Date(tooltipItems[0].parsed.x);
+                                    return date.toLocaleTimeString('ru-RU');
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -953,20 +1029,87 @@
                                 color: 'var(--text-secondary)',
                                 font: { size: 11 },
                                 padding: 5
+                            },
+                            title: {
+                                display: true,
+                                text: 'Влажность (%)',
+                                color: 'var(--text-secondary)',
+                                font: { size: 12 }
                             }
                         },
                         x: {
+                            type: 'time',
+                            time: {
+                                unit: getTimeUnit(),
+                                displayFormats: getTimeFormats(),
+                                tooltipFormat: 'HH:mm'
+                            },
                             grid: { display: false },
                             ticks: {
                                 color: 'var(--text-secondary)',
-                                font: { size: 11 }
+                                font: { size: 11 },
+                                maxRotation: 0
+                            },
+                            title: {
+                                display: true,
+                                text: 'Время',
+                                color: 'var(--text-secondary)',
+                                font: { size: 12 }
                             }
                         }
                     },
                     interaction: { intersect: false },
-                    animation: { duration: 800 }
+                    animation: { duration: 300 }
                 }
             });
+        }
+        
+        function getTimeUnit() {
+            switch(chartPeriod) {
+                case 'hour': return 'minute';
+                case 'day': return 'hour';
+                case 'week': return 'day';
+                case 'month': return 'day';
+                default: return 'minute';
+            }
+        }
+        
+        function getTimeFormats() {
+            switch(chartPeriod) {
+                case 'hour': return { minute: 'HH:mm' };
+                case 'day': return { hour: 'HH:00' };
+                case 'week': return { day: 'dd.MM' };
+                case 'month': return { day: 'dd.MM' };
+                default: return { minute: 'HH:mm' };
+            }
+        }
+        
+        // Установка периода графика
+        function setChartPeriod(period) {
+            // Обновляем активную кнопку
+            document.querySelectorAll('.chart-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            chartPeriod = period;
+            if (chart) {
+                chart.options.scales.x.time.unit = getTimeUnit();
+                chart.options.scales.x.time.displayFormats = getTimeFormats();
+                chart.update();
+            }
+        }
+        
+        // Очистка данных графика
+        function clearChartData() {
+            moistureData = [];
+            localStorage.removeItem('moistureHistory');
+            if (chart) {
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.update();
+            }
+            showNotification('✅ Данные графика очищены', 'success');
         }
         
         // Обновление интерфейса
@@ -978,13 +1121,19 @@
             
             // Насос
             const pumpOn = data.pump || false;
-            document.getElementById('pump_switch').checked = pumpOn;
+            const pumpSwitch = document.getElementById('pump_switch');
+            if (pumpSwitch) {
+                pumpSwitch.checked = pumpOn;
+            }
             document.getElementById('pump_status').textContent = pumpOn ? 'ВКЛ' : 'ВЫКЛ';
             document.getElementById('pump_status').className = 'status-badge ' + (pumpOn ? 'status-on' : 'status-off');
             
             // Свет
             const lightOn = data.light || false;
-            document.getElementById('light_switch').checked = lightOn;
+            const lightSwitch = document.getElementById('light_switch');
+            if (lightSwitch) {
+                lightSwitch.checked = lightOn;
+            }
             document.getElementById('light_status').textContent = lightOn ? 'ВКЛ' : 'ВЫКЛ';
             document.getElementById('light_status').className = 'status-badge ' + (lightOn ? 'status-on' : 'status-off');
             
@@ -993,34 +1142,67 @@
                 document.getElementById('current_time_display').textContent = 'Текущее: ' + data.time;
             }
             
-            // Обновляем историю для графика
+            // Добавляем данные для графика
             if (moisture > 0) {
-                moistureHistory.push(moisture);
-                if (moistureHistory.length > 10) {
-                    moistureHistory.shift();
-                }
-                updateChart();
-            }
-            
-            // Рассчитываем среднее и минимум
-            if (moistureHistory.length > 0) {
-                const sum = moistureHistory.reduce((a, b) => a + b, 0);
-                const avg = Math.round(sum / moistureHistory.length);
-                const min = Math.min(...moistureHistory);
-                
-                document.getElementById('avg_moist').textContent = avg + '%';
-                document.getElementById('min_moist').textContent = min + '%';
+                addChartData(moisture);
             }
             
             // Ошибка датчика
             if (data.sensorError) {
+                addError('Ошибка датчика влажности');
                 showNotification('⚠️ Ошибка датчика влажности!', 'danger');
             }
         }
         
-        function updateSettingsUI(settings) {
-            // Проверяем наличие элементов перед установкой значений
+        function addChartData(moisture) {
+            const now = Date.now();
+            moistureData.push({
+                x: now,
+                y: moisture
+            });
             
+            // Ограничиваем данные по времени в зависимости от периода
+            let timeLimit = 0;
+            switch(chartPeriod) {
+                case 'hour': timeLimit = now - 60 * 60 * 1000; break;
+                case 'day': timeLimit = now - 24 * 60 * 60 * 1000; break;
+                case 'week': timeLimit = now - 7 * 24 * 60 * 60 * 1000; break;
+                case 'month': timeLimit = now - 30 * 24 * 60 * 60 * 1000; break;
+            }
+            
+            // Фильтруем старые данные
+            moistureData = moistureData.filter(item => item.x >= timeLimit);
+            
+            // Сохраняем в localStorage (ограничиваем 1000 точек)
+            if (moistureData.length > 1000) {
+                moistureData = moistureData.slice(-1000);
+            }
+            localStorage.setItem('moistureHistory', JSON.stringify(moistureData));
+            
+            // Обновляем статистику
+            updateChartStats();
+            
+            // Обновляем график
+            if (chart) {
+                chart.data.labels = moistureData.map(item => item.x);
+                chart.data.datasets[0].data = moistureData.map(item => item.y);
+                chart.update('none');
+            }
+        }
+        
+        function updateChartStats() {
+            if (moistureData.length > 0) {
+                const values = moistureData.map(item => item.y);
+                const sum = values.reduce((a, b) => a + b, 0);
+                const avg = Math.round(sum / values.length);
+                const min = Math.min(...values);
+                
+                document.getElementById('avg_moist').textContent = avg + '%';
+                document.getElementById('min_moist').textContent = min + '%';
+            }
+        }
+        
+        function updateSettingsUI(settings) {
             // Порог влажности
             if (settings.moistureThreshold !== undefined) {
                 const thresholdElement = document.getElementById('moist_threshold');
@@ -1033,35 +1215,11 @@
                 }
             }
             
-            // Длительность полива
-            if (settings.wateringDuration !== undefined) {
-                const wateringDurationElement = document.getElementById('watering_duration');
-                if (wateringDurationElement) {
-                    wateringDurationElement.value = settings.wateringDuration;
-                }
-            }
-            
-            // Задержка полива
-            if (settings.wateringDelay !== undefined) {
-                const wateringDelayElement = document.getElementById('watering_delay');
-                if (wateringDelayElement) {
-                    wateringDelayElement.value = settings.wateringDelay;
-                }
-            }
-            
             // Ручное время полива
             if (settings.manualPumpTime !== undefined) {
                 const manualPumpTimeElement = document.getElementById('manual_pump_time');
                 if (manualPumpTimeElement) {
                     manualPumpTimeElement.value = settings.manualPumpTime;
-                }
-            }
-            
-            // Ручное время света
-            if (settings.manualLightTime !== undefined) {
-                const manualLightTimeElement = document.getElementById('manual_light_time');
-                if (manualLightTimeElement) {
-                    manualLightTimeElement.value = settings.manualLightTime;
                 }
             }
             
@@ -1109,7 +1267,6 @@
         }
         
         function formatTimeInput(timeStr) {
-            // Преобразует "8:0" в "08:00"
             if (!timeStr) return "08:00";
             const parts = timeStr.split(':');
             if (parts.length === 2) {
@@ -1135,13 +1292,11 @@
                 }
             }
             
-            // Расчёт энергии (примерно 50Вт * часы)
-            if (stats.totalLightHours) {
-                const energy = stats.totalLightHours * 50;
-                const energyConsumptionElement = document.getElementById('energy_consumption');
-                if (energyConsumptionElement) {
-                    energyConsumptionElement.textContent = energy;
-                }
+            // Время работы системы
+            const uptimeHours = Math.floor((Date.now() - systemStartTime) / (1000 * 60 * 60));
+            const uptimeElement = document.getElementById('uptime_hours');
+            if (uptimeElement) {
+                uptimeElement.textContent = uptimeHours + ' ч';
             }
         }
         
@@ -1150,45 +1305,42 @@
             if (!timeModeElement) return;
             
             if (device.status === 'online') {
-                timeModeElement.textContent = 'Online';
+                timeModeElement.textContent = 'Онлайн';
                 timeModeElement.className = 'status-badge status-on';
             } else {
-                timeModeElement.textContent = 'Offline';
+                timeModeElement.textContent = 'Офлайн';
                 timeModeElement.className = 'status-badge status-off';
             }
         }
         
         function updateHistoryChart(history) {
-            if (!chart) initChart();
+            if (!history) return;
             
-            // Получаем все значения из истории
-            const values = [];
-            if (history) {
-                Object.keys(history).sort().forEach(key => {
-                    if (history[key] > 0) {
-                        values.push(history[key]);
+            // Преобразуем данные из Firebase
+            const now = Date.now();
+            Object.keys(history).forEach(key => {
+                const moisture = history[key];
+                if (moisture > 0) {
+                    // Распределяем данные за последние 24 часа
+                    const timeOffset = Math.floor(Math.random() * 24 * 60 * 60 * 1000);
+                    const timestamp = now - timeOffset;
+                    
+                    if (!moistureData.some(item => Math.abs(item.x - timestamp) < 60000)) {
+                        moistureData.push({
+                            x: timestamp,
+                            y: moisture
+                        });
                     }
-                });
-            }
+                }
+            });
             
-            if (values.length > 0) {
-                // Берем последние 10 значений
-                const lastValues = values.slice(-10);
-                chart.data.datasets[0].data = lastValues;
-                chart.update('none');
+            // Обновляем график если он инициализирован
+            if (chart && moistureData.length > 0) {
+                updateChartStats();
             }
         }
         
-        function updateChart() {
-            if (!chart) initChart();
-            
-            if (moistureHistory.length > 0) {
-                chart.data.datasets[0].data = moistureHistory.slice(-10);
-                chart.update('none');
-            }
-        }
-        
-        // Управление - отправка команд через Firebase
+        // Управление системой
         function sendCommand(command, value) {
             database.ref('commands/' + command).set(value)
                 .then(() => {
@@ -1218,15 +1370,20 @@
         function toggleLight() {
             const on = document.getElementById('light_switch').checked;
             sendCommand('light', on ? 'ON' : 'OFF');
+            
+            // ОДНОВРЕМЕННО отправляем команду отключения автоматического управления
+            sendCommand('lightAuto', 'OFF');
+            
             const lightModeElement = document.getElementById('light_mode');
             if (lightModeElement) {
-                lightModeElement.textContent = 'Режим: ' + (on ? 'РУЧНОЙ' : 'АВТО');
+                lightModeElement.textContent = 'Режим: ' + (on ? 'РУЧНОЙ' : 'ВЫКЛ');
             }
             showNotification(on ? '✅ Свет включен' : '✅ Свет выключен', 'success');
         }
         
         function setLightAuto() {
             sendCommand('light', 'AUTO');
+            sendCommand('lightAuto', 'ON');
             const lightModeElement = document.getElementById('light_mode');
             if (lightModeElement) {
                 lightModeElement.textContent = 'Режим: АВТО';
@@ -1237,18 +1394,15 @@
         function manualWatering() {
             const manualPumpTimeElement = document.getElementById('manual_pump_time');
             if (!manualPumpTimeElement) {
-                console.error('Элемент manual_pump_time не найден');
                 showNotification('❌ Ошибка: элемент не найден', 'danger');
                 return;
             }
             
             const duration = manualPumpTimeElement.value || 10;
             
-            // Включаем насос
             sendCommand('pump', 'ON');
             showNotification('💧 Запущен ручной полив на ' + duration + ' секунд', 'info');
             
-            // Выключаем через указанное время
             setTimeout(() => {
                 sendCommand('pump', 'OFF');
             }, duration * 1000);
@@ -1270,32 +1424,14 @@
                 const moistureThresholdElement = document.getElementById('moist_threshold');
                 if (moistureThresholdElement) {
                     settings.moistureThreshold = parseInt(moistureThresholdElement.value);
+                    // Отправляем порог как команду
+                    sendCommand('threshold', settings.moistureThreshold.toString());
                 }
                 
-                const wateringDurationElement = document.getElementById('watering_duration');
-                if (wateringDurationElement) {
-                    settings.wateringDuration = parseInt(wateringDurationElement.value);
-                }
-                
-                const wateringDelayElement = document.getElementById('watering_delay');
-                if (wateringDelayElement) {
-                    settings.wateringDelay = parseInt(wateringDelayElement.value);
-                }
-                
-                // Ручной полив
                 const manualPumpTimeElement = document.getElementById('manual_pump_time');
                 if (manualPumpTimeElement) {
                     settings.manualPumpTime = parseInt(manualPumpTimeElement.value) || 10;
-                } else {
-                    settings.manualPumpTime = 10;
-                }
-                
-                // Ручной свет
-                const manualLightTimeElement = document.getElementById('manual_light_time');
-                if (manualLightTimeElement) {
-                    settings.manualLightTime = parseInt(manualLightTimeElement.value) || 1;
-                } else {
-                    settings.manualLightTime = 1;
+                    sendCommand('pumpTime', settings.manualPumpTime.toString());
                 }
                 
                 const lampEnabledElement = document.getElementById('lamp_enabled');
@@ -1308,7 +1444,6 @@
                     settings.sleepEnabled = sleepEnabledElement.checked;
                 }
                 
-                // Время в формате HH:MM
                 const lampStartElement = document.getElementById('lamp_start');
                 if (lampStartElement) {
                     settings.lampStart = lampStartElement.value;
@@ -1329,12 +1464,7 @@
                     settings.sleepEnd = sleepEndElement.value;
                 }
                 
-                // Отправляем порог как команду
-                if (settings.moistureThreshold) {
-                    sendCommand('threshold', settings.moistureThreshold.toString());
-                }
-                
-                // Отправляем остальные настройки в Firebase
+                // Отправляем настройки в Firebase
                 database.ref('settings').update(settings)
                     .then(() => {
                         showNotification('✅ Настройки сохранены', 'success');
@@ -1353,18 +1483,37 @@
         function clearErrors() {
             database.ref('commands/clearErrors').set('true')
                 .then(() => {
+                    document.getElementById('errors_container').innerHTML = 
+                        '<div class="error-item"><div class="error-msg">Ошибок нет</div></div>';
+                    document.getElementById('error_count').textContent = '0';
                     showNotification('✅ Ошибки очищены', 'success');
                 });
         }
         
-        function refreshErrors() {
-            showNotification('✅ Список ошибок обновлен', 'success');
-        }
-        
-        function toggleTimeMode() {
-            const manual = document.getElementById('time_manual').checked;
-            sendCommand('timeMode', manual ? 'MANUAL' : 'AUTO');
-            showNotification(manual ? '⏰ Ручная корректировка времени' : '🌐 Автоматическое время', 'info');
+        function addError(message) {
+            const errorsContainer = document.getElementById('errors_container');
+            const errorCountElement = document.getElementById('error_count');
+            
+            if (errorsContainer && errorCountElement) {
+                const errorItem = document.createElement('div');
+                errorItem.className = 'error-item';
+                errorItem.innerHTML = `
+                    <div class="error-time">🕐 ${new Date().toLocaleTimeString('ru-RU')}</div>
+                    <div class="error-msg">${message}</div>
+                `;
+                
+                // Добавляем новую ошибку в начало
+                if (errorsContainer.firstChild && errorsContainer.firstChild.className === 'error-item') {
+                    errorsContainer.insertBefore(errorItem, errorsContainer.firstChild);
+                } else {
+                    errorsContainer.innerHTML = '';
+                    errorsContainer.appendChild(errorItem);
+                }
+                
+                // Обновляем счетчик
+                const currentCount = parseInt(errorCountElement.textContent) || 0;
+                errorCountElement.textContent = (currentCount + 1).toString();
+            }
         }
         
         function setCurrentTime() {
@@ -1398,7 +1547,6 @@
         }
         
         function showNotification(message, type = 'info') {
-            // Создаем контейнер для уведомлений если его нет
             let container = document.getElementById('notificationContainer');
             if (!container) {
                 container = document.createElement('div');
@@ -1412,8 +1560,7 @@
             alert.id = alertId;
             alert.className = 'notification';
             
-            // Устанавливаем цвет границы в зависимости от типа
-            let borderColor = '#3498db'; // синий по умолчанию
+            let borderColor = '#3498db';
             if (type === 'success') borderColor = '#27ae60';
             else if (type === 'danger') borderColor = '#e74c3c';
             else if (type === 'warning') borderColor = '#f39c12';
@@ -1423,12 +1570,10 @@
             
             container.appendChild(alert);
             
-            // Анимация появления
             setTimeout(() => {
                 alert.style.transform = 'translateX(0)';
             }, 10);
             
-            // Автоматическое скрытие через 3 секунды
             setTimeout(() => {
                 alert.style.transform = 'translateX(120%)';
                 setTimeout(() => {
@@ -1442,44 +1587,60 @@
         // Инициализация при загрузке
         window.onload = function() {
             updateThemeIcon();
+            
+            // Загружаем историю влажности из localStorage
+            const savedHistory = localStorage.getItem('moistureHistory');
+            if (savedHistory) {
+                try {
+                    moistureData = JSON.parse(savedHistory);
+                    // Конвертируем старый формат данных
+                    if (moistureData.length > 0 && typeof moistureData[0] !== 'object') {
+                        const convertedData = [];
+                        const now = Date.now();
+                        moistureData.forEach((value, index) => {
+                            convertedData.push({
+                                x: now - (moistureData.length - index) * 60000, // 1 минута между точками
+                                y: value
+                            });
+                        });
+                        moistureData = convertedData;
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки истории:', e);
+                    moistureData = [];
+                }
+            }
+            
             initChart();
             initFirebase();
             
             // Назначаем обработчики сохранения настроек
             const saveSettingsElements = [
-                'watering_delay', 'watering_duration', 'manual_pump_time', 'manual_light_time',
-                'lamp_start', 'lamp_end', 'sleep_start', 'sleep_end'
+                'manual_pump_time', 'lamp_start', 'lamp_end', 
+                'sleep_start', 'sleep_end', 'moist_threshold'
             ];
             
             saveSettingsElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
-                    element.addEventListener('change', saveSettings);
+                    if (id === 'moist_threshold') {
+                        element.addEventListener('change', function() {
+                            sendCommand('threshold', this.value);
+                            saveSettings();
+                        });
+                    } else {
+                        element.addEventListener('change', saveSettings);
+                    }
                 }
             });
             
             // Обработчики для чекбоксов
-            ['lamp_enabled', 'sleep_enabled', 'time_manual'].forEach(id => {
+            ['lamp_enabled', 'sleep_enabled'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
-                    element.addEventListener('change', function() {
-                        if (this.id === 'time_manual') {
-                            toggleTimeMode();
-                        } else {
-                            saveSettings();
-                        }
-                    });
+                    element.addEventListener('change', saveSettings);
                 }
             });
-            
-            // Обработчик слайдера порога
-            const thresholdSlider = document.getElementById('moist_threshold');
-            if (thresholdSlider) {
-                thresholdSlider.addEventListener('change', function() {
-                    sendCommand('threshold', this.value);
-                    saveSettings();
-                });
-            }
             
             console.log('🌱 Интерфейс управления EcoGrow загружен');
         };
