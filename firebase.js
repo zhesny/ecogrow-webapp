@@ -2,7 +2,7 @@
 
 console.log('🔥 Инициализация Firebase...');
 
-// Firebase configuration
+// Firebase configuration - версия 8.10.1
 const firebaseConfig = {
     apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
     authDomain: "ecogrow-remote.firebaseapp.com",
@@ -14,29 +14,43 @@ const firebaseConfig = {
     measurementId: "G-PG5116NH38"
 };
 
-// Initialize Firebase
+// Initialize Firebase - версия 8
 try {
-    // Проверяем, не инициализирован ли Firebase уже
+    // Проверяем, загружен ли Firebase SDK
     if (typeof firebase === 'undefined') {
         console.error('❌ Firebase SDK не загружен');
-        window.firebaseDatabase = null;
-    } else if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-        console.log('✅ Firebase инициализирован успешно');
+        // Создаем заглушку для демо-режима
+        window.firebaseDatabase = {
+            ref: function(path) {
+                console.log('DEMO: Ref to ' + path);
+                return {
+                    on: function() { return null; },
+                    set: function() { return Promise.resolve(); },
+                    update: function() { return Promise.resolve(); },
+                    deleteNode: function() { return Promise.resolve(); },
+                    getJSON: function() { return Promise.resolve(); },
+                    once: function() { return Promise.resolve({ val: () => null }); }
+                };
+            }
+        };
     } else {
-        console.log('⚠️ Firebase уже инициализирован');
-    }
-    
-    // Get database instance
-    if (firebase && firebase.database) {
+        // Инициализируем Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log('✅ Firebase инициализирован успешно');
+        } else {
+            console.log('⚠️ Firebase уже инициализирован');
+        }
+        
+        // Получаем экземпляр базы данных
         const database = firebase.database();
         
-        // Make available globally for app.js
+        // Делаем доступным глобально для app.js
         window.firebaseDatabase = database;
         
         console.log('📊 Firebase Database готов к использованию');
         
-        // Test connection
+        // Тест подключения
         try {
             const connectedRef = database.ref('.info/connected');
             connectedRef.on('value', (snap) => {
@@ -46,14 +60,24 @@ try {
         } catch (connError) {
             console.warn('⚠️ Не удалось проверить соединение Firebase:', connError);
         }
-    } else {
-        console.error('❌ Firebase Database недоступен');
-        window.firebaseDatabase = null;
     }
     
 } catch (error) {
     console.error('❌ Ошибка инициализации Firebase:', error);
-    window.firebaseDatabase = null;
+    // Создаем заглушку для демо-режима
+    window.firebaseDatabase = {
+        ref: function(path) {
+            console.log('DEMO (fallback): Ref to ' + path);
+            return {
+                on: function() { return null; },
+                set: function() { return Promise.resolve(); },
+                update: function() { return Promise.resolve(); },
+                deleteNode: function() { return Promise.resolve(); },
+                getJSON: function() { return Promise.resolve(); },
+                once: function() { return Promise.resolve({ val: () => null }); }
+            };
+        }
+    };
 }
 
 // Firebase Service Class (дополнительный функционал)
