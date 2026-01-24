@@ -613,6 +613,17 @@
             padding: 8px;
             border-bottom: 1px solid var(--border-color);
         }
+        
+        .input-saving {
+            border-color: var(--accent-orange) !important;
+            background-color: rgba(243, 156, 18, 0.05) !important;
+        }
+        
+        .input-saved {
+            border-color: var(--accent-green) !important;
+            background-color: rgba(39, 174, 96, 0.05) !important;
+            transition: all 0.5s;
+        }
     </style>
 </head>
 <body>
@@ -677,7 +688,7 @@
                     </div>
                     
                     <div class="control-item">
-                        <label>Ручной полив (секунд)</label>
+                        <label>Ручной полив (секунд, мин. 1)</label>
                         <input id="manual_pump_time" type="number" min="1" max="300" step="1" value="10">
                     </div>
                 </div>
@@ -749,6 +760,9 @@
                 <div class="btn-group">
                     <button class="btn btn-secondary" onclick="setLightAuto()">
                         ⚙️ Авторежим света
+                    </button>
+                    <button class="btn btn-primary" onclick="forceLightOff()">
+                        🔒 Принудительно выкл.
                     </button>
                 </div>
             </div>
@@ -914,6 +928,8 @@
         let chartPeriod = 'hour'; // 'hour', 'day', 'week', 'month'
         let systemStartTime = Date.now();
         let waterHistory = [];
+        let userEditing = false; // Флаг, что пользователь редактирует поле
+        let saveTimeout = null; // Таймер для сохранения настроек
         
         // Инициализация темы
         document.documentElement.setAttribute('data-theme', currentTheme);
@@ -942,17 +958,17 @@
                     updateUI(data);
                     lastDataTime = Date.now();
                     
-                    // Добавляем данные для графика
-                    if (data.moisture && data.moisture > 0) {
+                    // Добавляем данные для графика (если пользователь не редактирует)
+                    if (data.moisture && data.moisture > 0 && !userEditing) {
                         addChartData(data.moisture);
                     }
                 }
             });
             
-            // Слушаем настройки
+            // Слушаем настройки с задержкой, чтобы не перезаписывать пользовательский ввод
             database.ref('settings').on('value', (snapshot) => {
                 const settings = snapshot.val();
-                if (settings) {
+                if (settings && !userEditing) {
                     updateSettingsUI(settings);
                 }
             });
@@ -1183,7 +1199,7 @@
             // Насос
             const pumpOn = data.pump || false;
             const pumpSwitch = document.getElementById('pump_switch');
-            if (pumpSwitch) {
+            if (pumpSwitch && !pumpSwitch.hasAttribute('data-user-editing')) {
                 pumpSwitch.checked = pumpOn;
             }
             document.getElementById('pump_status').textContent = pumpOn ? 'ВКЛ' : 'ВЫКЛ';
@@ -1192,7 +1208,7 @@
             // Свет
             const lightOn = data.light || false;
             const lightSwitch = document.getElementById('light_switch');
-            if (lightSwitch) {
+            if (lightSwitch && !lightSwitch.hasAttribute('data-user-editing')) {
                 lightSwitch.checked = lightOn;
             }
             document.getElementById('light_status').textContent = lightOn ? 'ВКЛ' : 'ВЫКЛ';
@@ -1205,36 +1221,51 @@
         }
         
         function updateSettingsUI(settings) {
+            // Если пользователь редактирует поле, не обновляем его
+            if (userEditing) return;
+            
             // Порог влажности
             if (settings.moistureThreshold !== undefined) {
                 const thresholdElement = document.getElementById('moist_threshold');
-                if (thresholdElement) {
+                const thresholdValueElement = document.getElementById('thresh_val');
+                
+                if (thresholdElement && !thresholdElement.hasAttribute('data-user-editing')) {
                     thresholdElement.value = settings.moistureThreshold;
                 }
-                const thresholdValueElement = document.getElementById('thresh_val');
                 if (thresholdValueElement) {
                     thresholdValueElement.textContent = settings.moistureThreshold + '%';
                 }
             }
             
-            // Ручное время полива
+            // Ручное время полива (минимальное значение 1)
             if (settings.manualPumpTime !== undefined) {
                 const manualPumpTimeElement = document.getElementById('manual_pump_time');
-                if (manualPumpTimeElement) {
-                    manualPumpTimeElement.value = settings.manualPumpTime;
+                if (manualPumpTimeElement && !manualPumpTimeElement.hasAttribute('data-user-editing')) {
+                    // Проверяем, что значение не 0 (некорректное)
+                    const value = settings.manualPumpTime < 1 ? 1 : settings.manualPumpTime;
+                    manualPumpTimeElement.value = value;
+                }
+            }
+            
+            // Ручное время света
+            if (settings.manualLightTime !== undefined) {
+                const manualLightTimeElement = document.getElementById('manual_light_time');
+                if (manualLightTimeElement && !manualLightTimeElement.hasAttribute('data-user-editing')) {
+                    const value = settings.manualLightTime < 1 ? 1 : settings.manualLightTime;
+                    manualLightTimeElement.value = value;
                 }
             }
             
             // Расписание света
             if (settings.lampStart) {
                 const lampStartElement = document.getElementById('lamp_start');
-                if (lampStartElement) {
+                if (lampStartElement && !lampStartElement.hasAttribute('data-user-editing')) {
                     lampStartElement.value = formatTimeInput(settings.lampStart);
                 }
             }
             if (settings.lampEnd) {
                 const lampEndElement = document.getElementById('lamp_end');
-                if (lampEndElement) {
+                if (lampEndElement && !lampEndElement.hasAttribute('data-user-editing')) {
                     lampEndElement.value = formatTimeInput(settings.lampEnd);
                 }
             }
@@ -1242,19 +1273,19 @@
             // Режим сна
             if (settings.sleepEnabled !== undefined) {
                 const sleepEnabledElement = document.getElementById('sleep_enabled');
-                if (sleepEnabledElement) {
+                if (sleepEnabledElement && !sleepEnabledElement.hasAttribute('data-user-editing')) {
                     sleepEnabledElement.checked = settings.sleepEnabled;
                 }
             }
             if (settings.sleepStart) {
                 const sleepStartElement = document.getElementById('sleep_start');
-                if (sleepStartElement) {
+                if (sleepStartElement && !sleepStartElement.hasAttribute('data-user-editing')) {
                     sleepStartElement.value = formatTimeInput(settings.sleepStart);
                 }
             }
             if (settings.sleepEnd) {
                 const sleepEndElement = document.getElementById('sleep_end');
-                if (sleepEndElement) {
+                if (sleepEndElement && !sleepEndElement.hasAttribute('data-user-editing')) {
                     sleepEndElement.value = formatTimeInput(settings.sleepEnd);
                 }
             }
@@ -1262,7 +1293,7 @@
             // Включение лампы
             if (settings.lampEnabled !== undefined) {
                 const lampEnabledElement = document.getElementById('lamp_enabled');
-                if (lampEnabledElement) {
+                if (lampEnabledElement && !lampEnabledElement.hasAttribute('data-user-editing')) {
                     lampEnabledElement.checked = settings.lampEnabled;
                 }
             }
@@ -1359,9 +1390,17 @@
         }
         
         function togglePump() {
-            const on = document.getElementById('pump_switch').checked;
+            const pumpSwitch = document.getElementById('pump_switch');
+            pumpSwitch.setAttribute('data-user-editing', 'true');
+            
+            const on = pumpSwitch.checked;
             sendCommand('pump', on ? 'ON' : 'OFF');
             showNotification(on ? '✅ Насос включен' : '✅ Насос выключен', 'success');
+            
+            // Снимаем флаг редактирования через 2 секунды
+            setTimeout(() => {
+                pumpSwitch.removeAttribute('data-user-editing');
+            }, 2000);
         }
         
         function setPumpAuto() {
@@ -1373,14 +1412,17 @@
             showNotification('✅ Насос: авторежим', 'success');
         }
         
-        // Функция для РУЧНОГО управления светом (выключение авторежима)
+        // Функция для РУЧНОГО управления светом
         function toggleLightManual() {
-            const on = document.getElementById('light_switch').checked;
+            const lightSwitch = document.getElementById('light_switch');
+            lightSwitch.setAttribute('data-user-editing', 'true');
+            
+            const on = lightSwitch.checked;
             
             if (on) {
                 // Включаем свет и ВЫКЛЮЧАЕМ авторежим
                 sendCommand('light', 'ON');
-                sendCommand('light', 'MANUAL_ON'); // Дополнительная команда для отключения авторежима
+                sendCommand('lightAuto', 'OFF');
             } else {
                 // Выключаем свет
                 sendCommand('light', 'OFF');
@@ -1391,10 +1433,34 @@
                 lightModeElement.textContent = on ? 'Режим: РУЧНОЙ' : 'Режим: ВЫКЛ';
             }
             showNotification(on ? '✅ Свет включен (ручной режим)' : '✅ Свет выключен', 'success');
+            
+            // Снимаем флаг редактирования через 2 секунды
+            setTimeout(() => {
+                lightSwitch.removeAttribute('data-user-editing');
+            }, 2000);
+        }
+        
+        function forceLightOff() {
+            // Принудительно выключаем свет и отключаем авторежим
+            const lightSwitch = document.getElementById('light_switch');
+            if (lightSwitch) {
+                lightSwitch.checked = false;
+            }
+            
+            sendCommand('light', 'OFF');
+            sendCommand('lightAuto', 'OFF');
+            sendCommand('lampEnabled', 'false');
+            
+            const lightModeElement = document.getElementById('light_mode');
+            if (lightModeElement) {
+                lightModeElement.textContent = 'Режим: ВЫКЛ';
+            }
+            showNotification('🔒 Свет принудительно выключен', 'success');
         }
         
         function setLightAuto() {
             sendCommand('light', 'AUTO');
+            sendCommand('lightAuto', 'ON');
             const lightModeElement = document.getElementById('light_mode');
             if (lightModeElement) {
                 lightModeElement.textContent = 'Режим: АВТО';
@@ -1409,7 +1475,14 @@
                 return;
             }
             
-            const duration = manualPumpTimeElement.value || 10;
+            let duration = parseInt(manualPumpTimeElement.value) || 10;
+            
+            // Проверяем минимальное значение
+            if (duration < 1) {
+                duration = 1;
+                manualPumpTimeElement.value = 1;
+                showNotification('⚠️ Время полива установлено на 1 секунду (минимум)', 'warning');
+            }
             
             sendCommand('pump', 'ON');
             showNotification('💧 Запущен ручной полив на ' + duration + ' секунд', 'info');
@@ -1420,75 +1493,127 @@
         }
         
         function updateThreshold(value) {
+            const thresholdElement = document.getElementById('moist_threshold');
+            thresholdElement.setAttribute('data-user-editing', 'true');
+            
             const thresholdValueElement = document.getElementById('thresh_val');
             if (thresholdValueElement) {
                 thresholdValueElement.textContent = value + '%';
             }
+            
+            // Отправляем команду немедленно
+            sendCommand('threshold', value);
+            
+            // Снимаем флаг редактирования через 2 секунды
+            setTimeout(() => {
+                thresholdElement.removeAttribute('data-user-editing');
+            }, 2000);
         }
         
-        // Сохранение настроек
+        // Сохранение настроек с отложенной отправкой
         function saveSettings() {
-            try {
-                const settings = {};
-                
-                // Собираем все настройки
-                const moistureThresholdElement = document.getElementById('moist_threshold');
-                if (moistureThresholdElement) {
-                    settings.moistureThreshold = parseInt(moistureThresholdElement.value);
-                    // Отправляем порог как команду
-                    sendCommand('threshold', settings.moistureThreshold.toString());
-                }
-                
-                const manualPumpTimeElement = document.getElementById('manual_pump_time');
-                if (manualPumpTimeElement) {
-                    settings.manualPumpTime = parseInt(manualPumpTimeElement.value) || 10;
-                    sendCommand('pumpTime', settings.manualPumpTime.toString());
-                }
-                
-                const lampEnabledElement = document.getElementById('lamp_enabled');
-                if (lampEnabledElement) {
-                    settings.lampEnabled = lampEnabledElement.checked;
-                }
-                
-                const sleepEnabledElement = document.getElementById('sleep_enabled');
-                if (sleepEnabledElement) {
-                    settings.sleepEnabled = sleepEnabledElement.checked;
-                }
-                
-                const lampStartElement = document.getElementById('lamp_start');
-                if (lampStartElement) {
-                    settings.lampStart = lampStartElement.value;
-                }
-                
-                const lampEndElement = document.getElementById('lamp_end');
-                if (lampEndElement) {
-                    settings.lampEnd = lampEndElement.value;
-                }
-                
-                const sleepStartElement = document.getElementById('sleep_start');
-                if (sleepStartElement) {
-                    settings.sleepStart = sleepStartElement.value;
-                }
-                
-                const sleepEndElement = document.getElementById('sleep_end');
-                if (sleepEndElement) {
-                    settings.sleepEnd = sleepEndElement.value;
-                }
-                
-                // Отправляем настройки в Firebase
-                database.ref('settings').update(settings)
-                    .then(() => {
-                        showNotification('✅ Настройки сохранены', 'success');
-                    })
-                    .catch((error) => {
-                        console.error('Ошибка сохранения настроек:', error);
-                        showNotification('❌ Ошибка сохранения настроек', 'danger');
-                    });
-                    
-            } catch (error) {
-                console.error('Ошибка обработки настроек:', error);
-                showNotification('❌ Ошибка обработки настроек', 'danger');
+            if (saveTimeout) {
+                clearTimeout(saveTimeout);
             }
+            
+            // Устанавливаем флаг, что пользователь редактирует
+            userEditing = true;
+            
+            // Визуальная индикация сохранения
+            const activeElement = document.activeElement;
+            if (activeElement) {
+                activeElement.classList.add('input-saving');
+            }
+            
+            saveTimeout = setTimeout(() => {
+                try {
+                    const settings = {};
+                    
+                    // Собираем все настройки
+                    const moistureThresholdElement = document.getElementById('moist_threshold');
+                    if (moistureThresholdElement) {
+                        settings.moistureThreshold = parseInt(moistureThresholdElement.value);
+                    }
+                    
+                    const manualPumpTimeElement = document.getElementById('manual_pump_time');
+                    if (manualPumpTimeElement) {
+                        let pumpTime = parseInt(manualPumpTimeElement.value) || 10;
+                        // Проверяем минимальное значение
+                        if (pumpTime < 1) {
+                            pumpTime = 1;
+                            manualPumpTimeElement.value = 1;
+                        }
+                        settings.manualPumpTime = pumpTime;
+                    }
+                    
+                    const lampEnabledElement = document.getElementById('lamp_enabled');
+                    if (lampEnabledElement) {
+                        settings.lampEnabled = lampEnabledElement.checked;
+                    }
+                    
+                    const sleepEnabledElement = document.getElementById('sleep_enabled');
+                    if (sleepEnabledElement) {
+                        settings.sleepEnabled = sleepEnabledElement.checked;
+                    }
+                    
+                    const lampStartElement = document.getElementById('lamp_start');
+                    if (lampStartElement) {
+                        settings.lampStart = lampStartElement.value;
+                    }
+                    
+                    const lampEndElement = document.getElementById('lamp_end');
+                    if (lampEndElement) {
+                        settings.lampEnd = lampEndElement.value;
+                    }
+                    
+                    const sleepStartElement = document.getElementById('sleep_start');
+                    if (sleepStartElement) {
+                        settings.sleepStart = sleepStartElement.value;
+                    }
+                    
+                    const sleepEndElement = document.getElementById('sleep_end');
+                    if (sleepEndElement) {
+                        settings.sleepEnd = sleepEndElement.value;
+                    }
+                    
+                    // Отправляем настройки в Firebase
+                    database.ref('settings').update(settings)
+                        .then(() => {
+                            showNotification('✅ Настройки сохранены', 'success');
+                            
+                            // Визуальная индикация успешного сохранения
+                            if (activeElement) {
+                                activeElement.classList.remove('input-saving');
+                                activeElement.classList.add('input-saved');
+                                setTimeout(() => {
+                                    activeElement.classList.remove('input-saved');
+                                }, 1000);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Ошибка сохранения настроек:', error);
+                            showNotification('❌ Ошибка сохранения настроек', 'danger');
+                            
+                            if (activeElement) {
+                                activeElement.classList.remove('input-saving');
+                            }
+                        });
+                        
+                } catch (error) {
+                    console.error('Ошибка обработки настроек:', error);
+                    showNotification('❌ Ошибка обработки настроек', 'danger');
+                    
+                    if (activeElement) {
+                        activeElement.classList.remove('input-saving');
+                    }
+                }
+                
+                // Снимаем флаг редактирования через 3 секунды
+                setTimeout(() => {
+                    userEditing = false;
+                }, 3000);
+                
+            }, 2000); // Задержка 2 секунды перед сохранением
         }
         
         function setCurrentTime() {
@@ -1593,33 +1718,49 @@
                 }
             }, 60000);
             
-            // Назначаем обработчики сохранения настроек
+            // Назначаем обработчики сохранения настроек с флагом редактирования
             const saveSettingsElements = [
                 'manual_pump_time', 'lamp_start', 'lamp_end', 
-                'sleep_start', 'sleep_end'
+                'sleep_start', 'sleep_end', 'lamp_enabled', 'sleep_enabled'
             ];
             
             saveSettingsElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
+                    element.addEventListener('focus', function() {
+                        this.setAttribute('data-user-editing', 'true');
+                        userEditing = true;
+                    });
+                    
+                    element.addEventListener('blur', function() {
+                        setTimeout(() => {
+                            this.removeAttribute('data-user-editing');
+                            userEditing = false;
+                        }, 100);
+                    });
+                    
                     element.addEventListener('change', saveSettings);
-                }
-            });
-            
-            // Обработчики для чекбоксов
-            ['lamp_enabled', 'sleep_enabled'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', saveSettings);
+                    element.addEventListener('input', saveSettings);
                 }
             });
             
             // Обработчик для слайдера порога
             const thresholdSlider = document.getElementById('moist_threshold');
             if (thresholdSlider) {
+                thresholdSlider.addEventListener('mousedown', function() {
+                    this.setAttribute('data-user-editing', 'true');
+                    userEditing = true;
+                });
+                
+                thresholdSlider.addEventListener('mouseup', function() {
+                    setTimeout(() => {
+                        this.removeAttribute('data-user-editing');
+                        userEditing = false;
+                    }, 100);
+                });
+                
                 thresholdSlider.addEventListener('change', function() {
                     sendCommand('threshold', this.value);
-                    saveSettings();
                 });
             }
             
