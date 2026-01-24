@@ -3,44 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoGrow Assistant - Система умного полива</title>
+    <title>EcoGrow Assistant</title>
     
-    <!-- Правильная CSP для Firebase -->
-    <meta http-equiv="Content-Security-Policy" 
-          content="
-          default-src 'self';
-          script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://cdn.jsdelivr.net;
-          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-          font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
-          connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com ws://*.firebaseio.com https://cdn.jsdelivr.net https://api.telegram.org;
-          img-src 'self' data: https:;
-          frame-src 'self' https://*.firebaseio.com;
-          ">
+    <!-- ВРЕМЕННО УБИРАЕМ CSP для разработки -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="..."> -->
     
-    <!-- Иконки и шрифты -->
+    <!-- Иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400&display=swap">
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase 8.10.1 (самая стабильная) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
-    <!-- Стили -->
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* БАЗОВЫЕ СТИЛИ прямо здесь */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: white; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        .header { background: #1e293b; padding: 15px 0; border-bottom: 2px solid #334155; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo i { color: #10b981; font-size: 2rem; }
+        .logo h1 { font-size: 1.5rem; }
+        
+        /* Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+        .stat-card { background: #1e293b; padding: 20px; border-radius: 10px; border-left: 4px solid #3b82f6; }
+        .stat-value { font-size: 2rem; font-weight: bold; margin: 10px 0; }
+        
+        /* Main Layout */
+        .main-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .chart-container { background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .chart-wrapper { height: 300px; }
+        
+        /* Controls */
+        .controls { background: #1e293b; padding: 20px; border-radius: 10px; }
+        .control-btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .control-btn.active { background: #10b981; }
+        
+        /* Status */
+        .status-list { margin: 20px 0; }
+        .status-item { display: flex; justify-content: space-between; padding: 10px; background: #334155; margin: 5px 0; border-radius: 5px; }
+        .status-online { color: #10b981; }
+        .status-offline { color: #ef4444; }
+        
+        /* Footer */
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; text-align: center; }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; padding: 15px; border-radius: 5px; border-left: 4px solid #3b82f6; }
+    </style>
 </head>
-<body class="dark-theme">
+<body>
     <!-- Preloader -->
-    <div class="preloader">
-        <div class="preloader-content">
-            <div class="leaf-spinner">
-                <div class="leaf leaf1"></div>
-                <div class="leaf leaf2"></div>
-                <div class="leaf leaf3"></div>
-            </div>
-            <p>Загрузка EcoGrow Assistant...</p>
+    <div id="preloader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0f172a; display:flex; justify-content:center; align-items:center; z-index:9999;">
+        <div style="text-align:center;">
+            <div style="font-size:3rem; color:#10b981; margin-bottom:20px;"><i class="fas fa-seedling fa-spin"></i></div>
+            <div>Загрузка EcoGrow...</div>
         </div>
     </div>
 
@@ -48,498 +72,610 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <div class="logo-section">
-                    <div class="logo">
-                        <i class="fas fa-seedling"></i>
-                        <h1>EcoGrow<span>Assistant</span></h1>
-                    </div>
-                    <div class="creator-info">
-                        <p><i class="fas fa-user-graduate"></i> Купченя Евгений Андреевич</p>
-                        <p><i class="fas fa-star"></i> Ученик 9 класса</p>
-                    </div>
+                <div class="logo">
+                    <i class="fas fa-seedling"></i>
+                    <h1>EcoGrow Assistant</h1>
                 </div>
-                
-                <div class="header-controls">
-                    <div class="connection-status">
-                        <div class="status-indicator" id="connectionStatus">
-                            <span class="status-dot"></span>
-                            <span>Подключение...</span>
-                        </div>
-                        <div class="last-update" id="lastUpdate">--:--:--</div>
-                    </div>
-                    
-                    <div class="theme-switch">
-                        <label class="switch">
-                            <input type="checkbox" id="themeToggle" checked>
-                            <span class="slider">
-                                <i class="fas fa-sun"></i>
-                                <i class="fas fa-moon"></i>
-                            </span>
-                        </label>
-                    </div>
-                    
-                    <button class="sleep-mode-btn" id="sleepModeBtn">
-                        <i class="fas fa-moon"></i>
-                        Режим сна
-                    </button>
+                <div id="connectionStatus" style="display:flex; align-items:center; gap:10px;">
+                    <div class="status-dot" style="width:10px; height:10px; background:gray; border-radius:50%;"></div>
+                    <span>Подключение...</span>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="main-content">
-        <div class="container">
-            <!-- Top Stats Row -->
-            <div class="top-stats-row">
-                <div class="stat-card primary">
-                    <div class="stat-icon">
-                        <i class="fas fa-tint"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Влажность</h3>
-                        <div class="stat-value" id="moistureValue">--%</div>
-                        <div class="stat-trend">
-                            <span id="moistureTrend">↗ Норма</span>
-                        </div>
-                    </div>
-                    <div class="stat-graph">
-                        <canvas id="miniMoistureChart" width="80" height="40"></canvas>
-                    </div>
-                </div>
-                
-                <div class="stat-card secondary">
-                    <div class="stat-icon">
-                        <i class="fas fa-temperature-high"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Температура</h3>
-                        <div class="stat-value" id="temperatureValue">--°C</div>
-                        <div class="stat-subtext">Оптимально: 22-26°C</div>
-                    </div>
-                </div>
-                
-                <div class="stat-card warning">
-                    <div class="stat-icon">
-                        <i class="fas fa-sun"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Свет</h3>
-                        <div class="stat-value" id="lightStatus">ВЫКЛ</div>
-                        <div class="stat-subtext" id="lightTimer">--:--</div>
+    <main class="container">
+        <!-- Top Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3><i class="fas fa-tint"></i> Влажность почвы</h3>
+                <div class="stat-value" id="moistureValue">--%</div>
+                <div id="moistureTrend">↗ Стабильно</div>
+            </div>
+            
+            <div class="stat-card" style="border-left-color:#10b981;">
+                <h3><i class="fas fa-temperature-high"></i> Температура</h3>
+                <div class="stat-value" id="temperatureValue">--°C</div>
+                <div>Датчик: <span id="tempSensorStatus">Нет</span></div>
+            </div>
+            
+            <div class="stat-card" style="border-left-color:#f59e0b;">
+                <h3><i class="fas fa-sun"></i> Свет</h3>
+                <div class="stat-value" id="lightStatus">ВЫКЛ</div>
+                <button class="control-btn" id="toggleLightBtn">Переключить</button>
+            </div>
+            
+            <div class="stat-card" style="border-left-color:#ef4444;">
+                <h3><i class="fas fa-water"></i> Насос</h3>
+                <div class="stat-value" id="pumpStatus">ВЫКЛ</div>
+                <button class="control-btn" id="togglePumpBtn">Переключить</button>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <!-- Left Column: Chart -->
+            <div>
+                <div class="chart-container">
+                    <h2><i class="fas fa-chart-line"></i> График влажности</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="moistureChart"></canvas>
                     </div>
                 </div>
                 
-                <div class="stat-card success">
-                    <div class="stat-icon">
-                        <i class="fas fa-water"></i>
+                <div class="controls">
+                    <h2><i class="fas fa-sliders-h"></i> Управление</h2>
+                    <div style="margin: 15px 0;">
+                        <label>Порог полива: <span id="thresholdValue">50%</span></label>
+                        <input type="range" id="moistureThreshold" min="10" max="90" value="50" style="width:100%;">
                     </div>
-                    <div class="stat-content">
-                        <h3>Насос</h3>
-                        <div class="stat-value" id="pumpStatus">ВЫКЛ</div>
-                        <div class="stat-subtext" id="nextWatering">--:--</div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="control-btn" id="manualPumpBtn"><i class="fas fa-play"></i> Полив 10с</button>
+                        <button class="control-btn" id="autoToggleBtn" style="background:#10b981;"><i class="fas fa-robot"></i> Авто: ВКЛ</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content Grid -->
-            <div class="content-grid">
-                <!-- Left Column -->
-                <div class="left-column">
-                    <!-- Moisture Chart -->
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h2><i class="fas fa-chart-line"></i> График влажности</h2>
-                            <div class="time-range">
-                                <button class="time-btn active" data-range="1h">1ч</button>
-                                <button class="time-btn" data-range="6h">6ч</button>
-                                <button class="time-btn" data-range="24h">24ч</button>
-                                <button class="time-btn" data-range="7d">7д</button>
-                            </div>
+            <!-- Right Column: Status -->
+            <div>
+                <div class="chart-container">
+                    <h2><i class="fas fa-heartbeat"></i> Статус системы</h2>
+                    <div class="status-list">
+                        <div class="status-item">
+                            <span><i class="fas fa-microchip"></i> Arduino UNO</span>
+                            <span id="arduinoStatus" class="status-offline">Офлайн</span>
                         </div>
-                        <div class="chart-wrapper">
-                            <canvas id="moistureChart"></canvas>
+                        <div class="status-item">
+                            <span><i class="fas fa-wifi"></i> WiFi модуль</span>
+                            <span id="wifiStatus">--</span>
                         </div>
-                        <div class="chart-stats">
-                            <div class="chart-stat">
-                                <span class="label">Средняя:</span>
-                                <span class="value" id="avgMoisture">--%</span>
-                            </div>
-                            <div class="chart-stat">
-                                <span class="label">Мин:</span>
-                                <span class="value" id="minMoisture">--%</span>
-                            </div>
-                            <div class="chart-stat">
-                                <span class="label">Макс:</span>
-                                <span class="value" id="maxMoisture">--%</span>
-                            </div>
-                            <div class="chart-stat">
-                                <span class="label">Тренд:</span>
-                                <span class="value trend-up" id="moistureTrendValue">↗ Рост</span>
-                            </div>
+                        <div class="status-item">
+                            <span><i class="fas fa-tachometer-alt"></i> Датчик влажности</span>
+                            <span id="sensorStatus" class="status-online">Онлайн</span>
+                        </div>
+                        <div class="status-item">
+                            <span><i class="fas fa-clock"></i> Последнее обновление</span>
+                            <span id="lastUpdate">--:--:--</span>
                         </div>
                     </div>
-
-                    <!-- Controls -->
-                    <div class="controls-container">
-                        <h2><i class="fas fa-sliders-h"></i> Управление системой</h2>
-                        <div class="controls-grid">
-                            <div class="control-group">
-                                <h3><i class="fas fa-cogs"></i> Автополив</h3>
-                                <div class="toggle-switch">
-                                    <label>
-                                        <input type="checkbox" id="autoWateringToggle" checked>
-                                        <span class="toggle-slider"></span>
-                                        <span class="toggle-label">Автополив включен</span>
-                                    </label>
-                                </div>
-                                
-                                <div class="slider-control">
-                                    <label for="moistureThreshold">Порог влажности:</label>
-                                    <div class="slider-wrapper">
-                                        <input type="range" id="moistureThreshold" min="10" max="90" value="50" class="slider">
-                                        <span class="slider-value" id="thresholdValue">50%</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="number-input">
-                                    <label for="pumpDuration">Длительность полива (сек):</label>
-                                    <input type="number" id="pumpDuration" min="1" max="600" value="10">
-                                </div>
-                                
-                                <div class="number-input">
-                                    <label for="checkInterval">Интервал проверки (мин):</label>
-                                    <input type="number" id="checkInterval" min="1" max="60" value="10">
-                                </div>
-                            </div>
-                            
-                            <div class="control-group">
-                                <h3><i class="fas fa-hand-paper"></i> Ручное управление</h3>
-                                <div class="manual-controls">
-                                    <button class="control-btn pump-btn" id="manualPumpBtn">
-                                        <i class="fas fa-water"></i>
-                                        <span>Включить насос</span>
-                                    </button>
-                                    <button class="control-btn light-btn" id="manualLightBtn">
-                                        <i class="fas fa-lightbulb"></i>
-                                        <span>Включить свет</span>
-                                    </button>
-                                    <div class="timer-control">
-                                        <label>Таймер (сек):</label>
-                                        <input type="number" id="manualTimer" min="5" max="300" value="10">
-                                    </div>
-                                </div>
-                                
-                                <div class="pump-block">
-                                    <h4><i class="fas fa-ban"></i> Блокировка полива</h4>
-                                    <div class="time-inputs">
-                                        <div class="time-input">
-                                            <label>С:</label>
-                                            <input type="time" id="blockStart" value="23:00">
-                                        </div>
-                                        <div class="time-input">
-                                            <label>До:</label>
-                                            <input type="time" id="blockEnd" value="08:00">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    
+                    <div style="margin-top:20px; padding:15px; background:#334155; border-radius:5px;">
+                        <h4><i class="fas fa-info-circle"></i> Системная информация</h4>
+                        <div style="margin-top:10px;">
+                            <div>IP адрес: <span id="systemIp">--</span></div>
+                            <div>Сигнал WiFi: <span id="wifiSignal">--</span></div>
+                            <div>Аптайм: <span id="uptime">--</span></div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Right Column -->
-                <div class="right-column">
-                    <!-- System Status -->
-                    <div class="status-container">
-                        <h2><i class="fas fa-heartbeat"></i> Статус системы</h2>
-                        <div class="status-list">
-                            <div class="status-item" id="arduinoStatusItem">
-                                <i class="fas fa-microchip"></i>
-                                <span>Arduino UNO</span>
-                                <span class="status-badge" id="arduinoStatus">Офлайн</span>
-                            </div>
-                            <div class="status-item" id="wifiStatusItem">
-                                <i class="fas fa-wifi"></i>
-                                <span>WiFi модуль</span>
-                                <span class="status-badge" id="wifiStatus">Загрузка...</span>
-                            </div>
-                            <div class="status-item" id="sensorStatusItem">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Датчик влажности</span>
-                                <span class="status-badge" id="sensorStatus">Загрузка...</span>
-                            </div>
-                            <div class="status-item" id="rtcStatusItem">
-                                <i class="fas fa-clock"></i>
-                                <span>Часы RTC</span>
-                                <span class="status-badge" id="rtcStatus">Загрузка...</span>
-                            </div>
-                        </div>
-                        
-                        <div class="time-sync">
-                            <h4><i class="fas fa-clock"></i> Системное время</h4>
-                            <div class="current-time" id="currentTime">--:--:--</div>
-                            <button class="sync-btn" id="syncTimeBtn">
-                                <i class="fas fa-sync-alt"></i> Синхронизировать
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Statistics -->
-                    <div class="stats-container">
-                        <h2><i class="fas fa-chart-bar"></i> Статистика</h2>
-                        <div class="stats-grid">
-                            <div class="stat-item">
-                                <div class="stat-icon">
-                                    <i class="fas fa-tint"></i>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-title">Поливов сегодня</div>
-                                    <div class="stat-number" id="wateringsToday">0</div>
-                                </div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-icon">
-                                    <i class="fas fa-sun"></i>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-title">Часов света</div>
-                                    <div class="stat-number" id="lightHours">0</div>
-                                </div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-title">Экономия воды</div>
-                                    <div class="stat-number" id="waterSaved">0л</div>
-                                </div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-icon">
-                                    <i class="fas fa-calendar-day"></i>
-                                </div>
-                                <div class="stat-details">
-                                    <div class="stat-title">Дней работы</div>
-                                    <div class="stat-number" id="daysRunning">1</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="progress-stats">
-                            <div class="progress-item">
-                                <div class="progress-header">
-                                    <span>Эффективность полива</span>
-                                    <span id="efficiencyValue">85%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: 85%"></div>
-                                </div>
-                            </div>
-                            <div class="progress-item">
-                                <div class="progress-header">
-                                    <span>Загрузка системы</span>
-                                    <span id="systemLoad">42%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: 42%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Telegram Notifications -->
-                    <div class="telegram-container">
-                        <div class="telegram-header">
-                            <h2><i class="fab fa-telegram"></i> Telegram уведомления</h2>
-                            <label class="switch small">
-                                <input type="checkbox" id="telegramToggle" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="telegram-info">
-                            <p><i class="fas fa-robot"></i> Бот: @EcoGrow_assis_Bot</p>
-                            <p><i class="fas fa-bell"></i> Уведомления включены</p>
-                        </div>
-                        
-                        <div class="notification-types">
-                            <label class="checkbox-label">
-                                <input type="checkbox" checked> Критическая влажность
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" checked> Начало полива
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" checked> Ошибки системы
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox"> Ежедневный отчет
-                            </label>
-                        </div>
-                        
-                        <button class="test-notification-btn" id="testNotificationBtn">
-                            <i class="fas fa-paper-plane"></i> Тестовое уведомление
-                        </button>
-                    </div>
-
-                    <!-- Error History -->
-                    <div class="errors-container">
-                        <div class="errors-header">
-                            <h2><i class="fas fa-exclamation-triangle"></i> История ошибок</h2>
-                            <button class="clear-btn" id="clearErrorsBtn">
-                                <i class="fas fa-trash"></i> Очистить
-                            </button>
-                        </div>
-                        
-                        <div class="errors-list" id="errorsList">
-                            <!-- Errors will be dynamically added here -->
-                        </div>
-                        
-                        <div class="no-errors" id="noErrors">
-                            <i class="fas fa-check-circle"></i>
-                            <p>Ошибок не обнаружено</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Auto Light Schedule -->
-            <div class="schedule-container">
-                <h2><i class="fas fa-calendar-alt"></i> Расписание освещения</h2>
-                <div class="schedule-controls">
-                    <div class="schedule-input">
-                        <label>Начало освещения:</label>
-                        <input type="time" id="lightStartTime" value="08:00">
-                    </div>
-                    <div class="schedule-input">
-                        <label>Длительность (часы):</label>
-                        <input type="number" id="lightDuration" min="1" max="24" value="12">
-                    </div>
-                    <button class="apply-btn" id="applyScheduleBtn">
-                        <i class="fas fa-check"></i> Применить
-                    </button>
                 </div>
                 
-                <div class="schedule-visual">
-                    <div class="timeline">
-                        <div class="light-period" id="lightPeriod"></div>
+                <div class="chart-container">
+                    <h2><i class="fas fa-history"></i> История ошибок</h2>
+                    <div id="errorList">
+                        <div style="padding:10px; background:#334155; margin:5px 0; border-radius:5px;">
+                            <div style="color:#f59e0b;"><i class="fas fa-exclamation-triangle"></i> Тестовое сообщение</div>
+                            <div style="font-size:0.9em; color:#94a3b8;">Сегодня 12:00</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-info">
-                    <h3>EcoGrow Assistant v4.5</h3>
-                    <p>Система автоматического полива растений с интеллектуальным управлением</p>
-                    <div class="contact-info">
-                        <p><i class="fas fa-envelope"></i> zhenya.kupchenya@mail.ru</p>
-                        <p><i class="fab fa-telegram"></i> @Zhesny</p>
-                        <p><i class="fas fa-graduation-cap"></i> Ученик 9 класса</p>
-                    </div>
-                </div>
-                
-                <div class="footer-links">
-                    <h4>Быстрые ссылки</h4>
-                    <a href="#"><i class="fas fa-book"></i> Документация</a>
-                    <a href="#"><i class="fas fa-code"></i> Исходный код</a>
-                    <a href="#"><i class="fas fa-question-circle"></i> Помощь</a>
-                    <a href="#"><i class="fas fa-bug"></i> Сообщить об ошибке</a>
-                </div>
-                
-                <div class="system-info">
-                    <h4>Системная информация</h4>
-                    <p>Версия прошивки: 4.5.1</p>
-                    <p>Последнее обновление: <span id="lastSystemUpdate">--</span></p>
-                    <p>Потребление RAM: <span id="ramUsage">--</span></p>
-                    <p>Аптайм: <span id="uptime">--</span></p>
-                </div>
-            </div>
-            
-            <div class="copyright">
-                <p>© 2024 EcoGrow Assistant. Разработано Купченя Евгением. Все права защищены.</p>
-            </div>
-        </div>
+    <footer class="footer container">
+        <p>EcoGrow Assistant v4.5 | Разработано Купченя Евгением</p>
+        <p style="color:#94a3b8; margin-top:5px;">Система автоматического полива растений</p>
     </footer>
 
-    <!-- Toast Notifications -->
-    <div id="toastContainer"></div>
-
-    <!-- Modals -->
-    <div class="modal" id="sleepModeModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-moon"></i> Режим сна</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Вы уверены, что хотите перевести систему в режим сна? Все автоматические функции будут отключены.</p>
-                <div class="modal-input">
-                    <label>Длительность сна (часы):</label>
-                    <input type="number" id="sleepDuration" min="1" max="24" value="8">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary close-modal">Отмена</button>
-                <button class="btn-danger" id="confirmSleepBtn">Включить режим сна</button>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Container -->
+    <div id="toastContainer" style="position:fixed; bottom:20px; right:20px; z-index:1000;"></div>
 
     <!-- Firebase Initialization -->
-    <script src="firebase.js"></script>
-    
-    <!-- Main Application Script -->
-    <script src="app.js"></script>
-    
-    <!-- Инициализация приложения (исправленная) -->
     <script>
-        // Флаг для предотвращения повторной инициализации
-        let appInitialized = false;
+        // Простая инициализация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
+            authDomain: "ecogrow-remote.firebaseapp.com",
+            databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
+            projectId: "ecogrow-remote",
+            storageBucket: "ecogrow-remote.firebasestorage.app",
+            messagingSenderId: "121689275158",
+            appId: "1:121689275158:web:f3b1829755c8b8a1fb2e37",
+            measurementId: "G-PG5116NH38"
+        };
         
-        // Функция инициализации приложения
-        function initializeApp() {
-            if (appInitialized) {
-                console.warn('⚠️ Приложение уже инициализировано');
-                return;
-            }
-            
-            console.log('📄 Запуск инициализации приложения...');
-            appInitialized = true;
-            
-            // Проверяем наличие Chart.js
-            if (typeof Chart === 'undefined') {
-                console.error('❌ Chart.js не загружен');
-                return;
-            }
-            
-            // Проверяем наличие Firebase
-            if (!window.firebase || !window.firebase.database) {
-                console.warn('⚠️ Firebase не загружен, переходим в демо-режим');
-                window.ecoGrowApp = new EcoGrowApp();
-                return;
-            }
-            
-            // Создаем и запускаем приложение
-            window.ecoGrowApp = new EcoGrowApp();
-        }
+        console.log('🔥 Инициализация Firebase...');
         
-        // Ждем полной загрузки страницы
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                console.log('✅ DOM полностью загружен');
-                setTimeout(initializeApp, 100);
+        try {
+            // Проверяем, загружен ли Firebase
+            if (typeof firebase === 'undefined') {
+                console.error('❌ Firebase SDK не загружен!');
+                throw new Error('Firebase SDK не загружен');
+            }
+            
+            // Инициализируем Firebase
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+            
+            // Сохраняем в глобальную область
+            window.firebaseDatabase = database;
+            
+            console.log('✅ Firebase инициализирован');
+            
+            // Тестируем соединение
+            database.ref('.info/connected').on('value', (snap) => {
+                console.log('📡 Firebase подключение:', snap.val() ? '✅ Подключено' : '❌ Отключено');
             });
-        } else {
-            console.log('✅ DOM уже загружен');
-            setTimeout(initializeApp, 100);
+            
+        } catch (error) {
+            console.error('❌ Ошибка Firebase:', error);
+            window.firebaseDatabase = null;
         }
+    </script>
+    
+    <!-- Main App -->
+    <script>
+        class EcoGrowApp {
+            constructor() {
+                this.db = window.firebaseDatabase;
+                this.data = {
+                    moisture: 0,
+                    pump: 0,
+                    light: 0,
+                    temperature: null,
+                    humidity: null
+                };
+                this.chart = null;
+                this.chartData = [];
+                
+                console.log('🚀 Запуск EcoGrow Assistant...');
+                
+                // Сразу запускаем
+                this.init();
+            }
+            
+            init() {
+                // Скрываем прелоадер
+                setTimeout(() => {
+                    document.getElementById('preloader').style.display = 'none';
+                }, 1000);
+                
+                // Инициализируем график
+                this.initChart();
+                
+                // Запускаем слушатели Firebase
+                if (this.db) {
+                    this.startFirebaseListeners();
+                    this.updateStatus('Подключение к Firebase...', 'warning');
+                } else {
+                    this.updateStatus('Firebase не загружен', 'error');
+                    this.startLocalMode();
+                }
+                
+                // Назначаем обработчики
+                this.setupEventListeners();
+                
+                // Запускаем обновление времени
+                this.startTimers();
+            }
+            
+            initChart() {
+                const ctx = document.getElementById('moistureChart').getContext('2d');
+                
+                // Уничтожаем старый график если есть
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+                
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => {
+                            const hour = (new Date().getHours() - (23 - i) + 24) % 24;
+                            return hour.toString().padStart(2, '0') + ':00';
+                        }),
+                        datasets: [{
+                            label: 'Влажность %',
+                            data: Array(24).fill(null),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#94a3b8' } },
+                            y: { 
+                                min: 0, max: 100,
+                                grid: { color: 'rgba(255,255,255,0.1)' }, 
+                                ticks: { color: '#94a3b8', callback: v => v + '%' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            startFirebaseListeners() {
+                if (!this.db) return;
+                
+                console.log('👂 Запуск слушателей Firebase...');
+                
+                // Основные данные
+                this.db.ref('data/current').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        console.log('📥 Данные получены:', data);
+                        this.updateData(data);
+                    } else {
+                        console.log('📭 Нет данных в Firebase');
+                    }
+                });
+                
+                // Системная информация
+                this.db.ref('system/info').on('value', (snapshot) => {
+                    const info = snapshot.val();
+                    if (info) {
+                        this.updateSystemInfo(info);
+                    }
+                });
+                
+                // Статус Arduino
+                this.db.ref('system/arduinoAlive').on('value', (snapshot) => {
+                    const status = snapshot.val();
+                    this.updateArduinoStatus(status);
+                });
+                
+                // Статистика
+                this.db.ref('stats').on('value', (snapshot) => {
+                    const stats = snapshot.val();
+                    if (stats) {
+                        this.updateStats(stats);
+                    }
+                });
+                
+                // Подключение Firebase
+                this.db.ref('.info/connected').on('value', (snap) => {
+                    const isConnected = snap.val() === true;
+                    this.updateFirebaseStatus(isConnected);
+                });
+            }
+            
+            updateData(data) {
+                // Обновляем данные
+                this.data.moisture = data.moisture || 0;
+                this.data.pump = data.pump || 0;
+                this.data.light = data.light || 0;
+                this.data.temperature = data.temperature || null;
+                this.data.humidity = data.humidity || null;
+                
+                // Обновляем UI
+                this.updateUI();
+                
+                // Обновляем график
+                this.updateChart();
+            }
+            
+            updateUI() {
+                // Влажность
+                document.getElementById('moistureValue').textContent = `${this.data.moisture}%`;
+                
+                // Температура (если есть датчик)
+                const tempElement = document.getElementById('temperatureValue');
+                const tempSensorElement = document.getElementById('tempSensorStatus');
+                if (this.data.temperature !== null && this.data.temperature !== 0) {
+                    tempElement.textContent = `${this.data.temperature}°C`;
+                    tempSensorElement.textContent = 'Есть';
+                    tempSensorElement.style.color = '#10b981';
+                } else {
+                    tempElement.textContent = '--°C';
+                    tempSensorElement.textContent = 'Нет';
+                    tempSensorElement.style.color = '#ef4444';
+                }
+                
+                // Свет
+                const lightElement = document.getElementById('lightStatus');
+                const lightBtn = document.getElementById('toggleLightBtn');
+                if (this.data.light) {
+                    lightElement.textContent = 'ВКЛ';
+                    lightElement.style.color = '#f59e0b';
+                    lightBtn.innerHTML = '<i class="fas fa-toggle-on"></i> Выключить';
+                    lightBtn.style.background = '#f59e0b';
+                } else {
+                    lightElement.textContent = 'ВЫКЛ';
+                    lightElement.style.color = '#94a3b8';
+                    lightBtn.innerHTML = '<i class="fas fa-toggle-off"></i> Включить';
+                    lightBtn.style.background = '#3b82f6';
+                }
+                
+                // Насос
+                const pumpElement = document.getElementById('pumpStatus');
+                const pumpBtn = document.getElementById('togglePumpBtn');
+                if (this.data.pump) {
+                    pumpElement.textContent = 'ВКЛ';
+                    pumpElement.style.color = '#ef4444';
+                    pumpBtn.innerHTML = '<i class="fas fa-toggle-on"></i> Выключить';
+                    pumpBtn.style.background = '#ef4444';
+                } else {
+                    pumpElement.textContent = 'ВЫКЛ';
+                    pumpElement.style.color = '#94a3b8';
+                    pumpBtn.innerHTML = '<i class="fas fa-toggle-off"></i> Включить';
+                    pumpBtn.style.background = '#3b82f6';
+                }
+                
+                // Тренд влажности
+                if (this.chartData.length > 1) {
+                    const current = this.data.moisture;
+                    const prev = this.chartData[this.chartData.length - 2] || current;
+                    const trendElement = document.getElementById('moistureTrend');
+                    
+                    if (current > prev) {
+                        trendElement.textContent = '↗ Растет';
+                        trendElement.style.color = '#10b981';
+                    } else if (current < prev) {
+                        trendElement.textContent = '↘ Падает';
+                        trendElement.style.color = '#ef4444';
+                    } else {
+                        trendElement.textContent = '→ Стабильно';
+                        trendElement.style.color = '#f59e0b';
+                    }
+                }
+            }
+            
+            updateChart() {
+                if (!this.chart) return;
+                
+                // Добавляем данные в историю
+                this.chartData.push(this.data.moisture);
+                if (this.chartData.length > 24) {
+                    this.chartData.shift();
+                }
+                
+                // Обновляем график
+                this.chart.data.datasets[0].data = [...this.chartData];
+                this.chart.update();
+            }
+            
+            updateSystemInfo(info) {
+                // WiFi статус
+                const wifiElement = document.getElementById('wifiStatus');
+                if (info.wifiRssi) {
+                    const signal = Math.abs(info.wifiRssi);
+                    wifiElement.textContent = signal < 70 ? 'Отличный' : signal < 80 ? 'Хороший' : 'Слабый';
+                    wifiElement.style.color = signal < 70 ? '#10b981' : signal < 80 ? '#f59e0b' : '#ef4444';
+                    
+                    // Сигнал WiFi
+                    document.getElementById('wifiSignal').textContent = `${info.wifiRssi} dBm`;
+                }
+                
+                // IP адрес
+                if (info.ip) {
+                    document.getElementById('systemIp').textContent = info.ip;
+                }
+                
+                // Время системы
+                if (info.time) {
+                    document.getElementById('lastUpdate').textContent = info.time;
+                }
+                
+                // Аптайм
+                if (info.uptime) {
+                    const days = Math.floor(info.uptime / 86400);
+                    const hours = Math.floor((info.uptime % 86400) / 3600);
+                    const minutes = Math.floor((info.uptime % 3600) / 60);
+                    document.getElementById('uptime').textContent = `${days}д ${hours}ч ${minutes}м`;
+                }
+            }
+            
+            updateArduinoStatus(status) {
+                const element = document.getElementById('arduinoStatus');
+                if (status === 1) {
+                    element.textContent = 'Онлайн';
+                    element.className = 'status-online';
+                    document.getElementById('sensorStatus').textContent = 'Работает';
+                } else {
+                    element.textContent = 'Офлайн';
+                    element.className = 'status-offline';
+                    document.getElementById('sensorStatus').textContent = 'Нет данных';
+                }
+            }
+            
+            updateFirebaseStatus(isConnected) {
+                const dot = document.querySelector('.status-dot');
+                const text = document.querySelector('#connectionStatus span:last-child');
+                
+                if (isConnected) {
+                    dot.style.background = '#10b981';
+                    text.textContent = 'Подключено к Firebase';
+                    this.showToast('✅ Подключено к серверу', 'success');
+                } else {
+                    dot.style.background = '#ef4444';
+                    text.textContent = 'Отключено от Firebase';
+                }
+            }
+            
+            updateStatus(message, type = 'info') {
+                console.log(`📢 ${message}`);
+                this.showToast(message, type);
+            }
+            
+            updateStats(stats) {
+                // Можно добавить отображение статистики
+                console.log('Статистика:', stats);
+            }
+            
+            setupEventListeners() {
+                // Управление светом
+                document.getElementById('toggleLightBtn').addEventListener('click', () => {
+                    this.sendCommand('light', this.data.light ? 'OFF' : 'ON');
+                });
+                
+                // Управление насосом
+                document.getElementById('togglePumpBtn').addEventListener('click', () => {
+                    this.sendCommand('pump', this.data.pump ? 'OFF' : 'ON');
+                });
+                
+                // Быстрый полив
+                document.getElementById('manualPumpBtn').addEventListener('click', () => {
+                    this.sendCommand('pump', 'ON');
+                    setTimeout(() => this.sendCommand('pump', 'OFF'), 10000);
+                    this.showToast('⏱️ Полив на 10 секунд', 'info');
+                });
+                
+                // Порог влажности
+                document.getElementById('moistureThreshold').addEventListener('input', (e) => {
+                    document.getElementById('thresholdValue').textContent = e.target.value + '%';
+                });
+                
+                document.getElementById('moistureThreshold').addEventListener('change', (e) => {
+                    this.sendCommand('threshold', e.target.value);
+                });
+                
+                // Автоматический режим
+                let autoMode = true;
+                document.getElementById('autoToggleBtn').addEventListener('click', () => {
+                    autoMode = !autoMode;
+                    const btn = document.getElementById('autoToggleBtn');
+                    if (autoMode) {
+                        btn.innerHTML = '<i class="fas fa-robot"></i> Авто: ВКЛ';
+                        btn.style.background = '#10b981';
+                        this.sendCommand('auto', 'ON');
+                    } else {
+                        btn.innerHTML = '<i class="fas fa-hand-paper"></i> Авто: ВЫКЛ';
+                        btn.style.background = '#ef4444';
+                        this.sendCommand('auto', 'OFF');
+                    }
+                });
+            }
+            
+            async sendCommand(type, value) {
+                if (!this.db) {
+                    this.showToast('❌ Нет подключения к Firebase', 'error');
+                    return;
+                }
+                
+                try {
+                    await this.db.ref(`commands/${type}`).set(value);
+                    console.log(`✅ Команда отправлена: ${type}=${value}`);
+                    this.showToast(`Команда отправлена: ${type}=${value}`, 'success');
+                } catch (error) {
+                    console.error('❌ Ошибка отправки команды:', error);
+                    this.showToast('Ошибка отправки команды', 'error');
+                }
+            }
+            
+            startTimers() {
+                // Обновление времени
+                setInterval(() => {
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString('ru-RU');
+                    const lastUpdate = document.getElementById('lastUpdate');
+                    if (lastUpdate.textContent === '--:--:--') {
+                        lastUpdate.textContent = timeString;
+                    }
+                }, 1000);
+                
+                // Проверка соединения
+                setInterval(() => {
+                    if (!this.db) {
+                        this.updateStatus('Потеряно соединение с Firebase', 'error');
+                    }
+                }, 30000);
+            }
+            
+            startLocalMode() {
+                console.log('🔄 Режим локального тестирования');
+                this.showToast('⚠️ Работа в локальном режиме', 'warning');
+                
+                // Генерация тестовых данных
+                setInterval(() => {
+                    this.data.moisture = Math.max(20, Math.min(80, this.data.moisture + (Math.random() - 0.5) * 5));
+                    this.data.light = Math.random() > 0.7 ? 1 : 0;
+                    this.data.pump = Math.random() > 0.9 ? 1 : 0;
+                    
+                    this.updateUI();
+                    this.updateChart();
+                }, 3000);
+            }
+            
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.style.cssText = `
+                    background: #1e293b;
+                    color: white;
+                    padding: 12px 20px;
+                    margin: 5px;
+                    border-radius: 5px;
+                    border-left: 4px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+                    animation: slideIn 0.3s ease;
+                `;
+                
+                let icon = 'fas fa-info-circle';
+                if (type === 'success') icon = 'fas fa-check-circle';
+                if (type === 'error') icon = 'fas fa-exclamation-circle';
+                if (type === 'warning') icon = 'fas fa-exclamation-triangle';
+                
+                toast.innerHTML = `<i class="${icon}" style="margin-right:10px;"></i> ${message}`;
+                
+                container.appendChild(toast);
+                
+                // Удаляем через 5 секунд
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 5000);
+                
+                // Добавляем стили для анимации
+                if (!document.querySelector('#toastStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'toastStyles';
+                    style.textContent = `
+                        @keyframes slideIn {
+                            from { transform: translateX(100px); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+        }
+        
+        // Запускаем приложение когда все загрузится
+        window.addEventListener('load', () => {
+            console.log('📄 Страница полностью загружена');
+            setTimeout(() => {
+                window.app = new EcoGrowApp();
+            }, 500);
+        });
     </script>
 </body>
 </html>
