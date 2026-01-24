@@ -37,7 +37,6 @@
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
             --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
             --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
-            --shadow-xl: 0 12px 36px rgba(0,0,0,0.1);
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
@@ -148,20 +147,35 @@
         }
 
         /* Theme Toggle */
-        .theme-switch {
+        .theme-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle-label {
+            font-size: 14px;
+            color: var(--light-text-secondary);
+        }
+
+        .dark-theme .theme-toggle-label {
+            color: var(--dark-text-secondary);
+        }
+
+        .theme-toggle {
             position: relative;
             display: inline-block;
             width: 60px;
             height: 30px;
         }
 
-        .theme-switch input {
+        .theme-toggle input {
             opacity: 0;
             width: 0;
             height: 0;
         }
 
-        .theme-slider {
+        .theme-toggle-slider {
             position: absolute;
             cursor: pointer;
             top: 0;
@@ -173,7 +187,7 @@
             transition: var(--transition);
         }
 
-        .theme-slider:before {
+        .theme-toggle-slider:before {
             position: absolute;
             content: "";
             height: 22px;
@@ -183,31 +197,15 @@
             background-color: white;
             border-radius: 50%;
             transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        input:checked + .theme-slider {
+        input:checked + .theme-toggle-slider {
             background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
-        input:checked + .theme-slider:before {
+        input:checked + .theme-toggle-slider:before {
             transform: translateX(30px);
-        }
-
-        .theme-icon {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 14px;
-            color: white;
-            z-index: 1;
-        }
-
-        .sun-icon {
-            left: 8px;
-        }
-
-        .moon-icon {
-            right: 8px;
         }
 
         /* Connection Status */
@@ -219,6 +217,7 @@
             background: rgba(33, 150, 243, 0.1);
             border-radius: var(--radius-lg);
             border: 1px solid rgba(33, 150, 243, 0.2);
+            min-width: 200px;
         }
 
         .dark-theme .connection-status {
@@ -227,8 +226,8 @@
         }
 
         .status-indicator {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background-color: var(--danger);
             position: relative;
@@ -236,28 +235,28 @@
 
         .status-indicator.connected {
             background-color: var(--success);
-        }
-
-        .status-indicator::after {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            border-radius: 50%;
-            border: 2px solid currentColor;
-            opacity: 0.5;
-        }
-
-        .status-indicator.connected::after {
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.3; }
-            100% { transform: scale(1); opacity: 0.5; }
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        .status-text {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .status-time {
+            font-size: 12px;
+            color: var(--light-text-secondary);
+            margin-top: 2px;
+        }
+
+        .dark-theme .status-time {
+            color: var(--dark-text-secondary);
         }
 
         /* Main Layout */
@@ -462,19 +461,20 @@
             background: rgba(33, 150, 243, 0.2);
         }
 
-        .toggle-switch {
+        .switch {
             position: relative;
+            display: inline-block;
             width: 60px;
             height: 30px;
         }
 
-        .toggle-switch input {
+        .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
 
-        .toggle-slider {
+        .switch-slider {
             position: absolute;
             cursor: pointer;
             top: 0;
@@ -486,7 +486,7 @@
             transition: var(--transition);
         }
 
-        .toggle-slider:before {
+        .switch-slider:before {
             position: absolute;
             content: "";
             height: 22px;
@@ -496,13 +496,14 @@
             background-color: white;
             border-radius: 50%;
             transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        input:checked + .toggle-slider {
+        input:checked + .switch-slider {
             background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
-        input:checked + .toggle-slider:before {
+        input:checked + .switch-slider:before {
             transform: translateX(30px);
         }
 
@@ -553,7 +554,7 @@
             width: 50%;
         }
 
-        .slider-input {
+        input[type="range"] {
             position: absolute;
             top: 50%;
             left: 0;
@@ -595,6 +596,7 @@
             gap: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .btn:disabled {
@@ -671,6 +673,10 @@
             margin: 15px 0;
         }
 
+        .time-input-group {
+            position: relative;
+        }
+
         .time-input-group label {
             display: block;
             margin-bottom: 6px;
@@ -682,7 +688,9 @@
             color: var(--dark-text-secondary);
         }
 
-        .time-input {
+        input[type="time"],
+        input[type="number"],
+        select {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--light-border);
@@ -693,13 +701,16 @@
             transition: var(--transition);
         }
 
-        .dark-theme .time-input {
+        .dark-theme input[type="time"],
+        .dark-theme input[type="number"],
+        .dark-theme select {
             background: var(--dark-card);
             border-color: var(--dark-border);
             color: var(--dark-text);
         }
 
-        .time-input:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--primary);
         }
@@ -745,6 +756,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .telegram-code {
@@ -754,6 +766,8 @@
             font-family: monospace;
             font-size: 12px;
             color: #0088cc;
+            word-break: break-all;
+            max-width: 200px;
         }
 
         .dark-theme .telegram-code {
@@ -1086,9 +1100,9 @@
 
         /* Loading States */
         .loading {
-            opacity: 0.6;
-            pointer-events: none;
             position: relative;
+            opacity: 0.7;
+            pointer-events: none;
         }
 
         .loading::after {
@@ -1154,6 +1168,11 @@
             .card {
                 padding: 20px;
             }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -1177,15 +1196,16 @@
                         <div class="status-indicator" id="connectionStatus"></div>
                         <div>
                             <div class="status-text" id="connectionText">Подключение...</div>
-                            <div class="status-time" id="lastUpdate" style="font-size: 12px; color: #666;">--:--:--</div>
+                            <div class="status-time" id="lastUpdate">--:--:--</div>
                         </div>
                     </div>
                     
-                    <div class="theme-switch">
-                        <input type="checkbox" id="themeToggle">
-                        <span class="theme-slider"></span>
-                        <i class="fas fa-sun theme-icon sun-icon"></i>
-                        <i class="fas fa-moon theme-icon moon-icon"></i>
+                    <div class="theme-toggle-container">
+                        <span class="theme-toggle-label">Темная тема</span>
+                        <label class="theme-toggle">
+                            <input type="checkbox" id="themeToggle">
+                            <span class="theme-toggle-slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -1319,9 +1339,9 @@
                                     <div style="font-size: 12px; color: var(--light-text-secondary);" id="pumpStatusText">Автоматический режим</div>
                                 </div>
                             </div>
-                            <label class="toggle-switch">
+                            <label class="switch">
                                 <input type="checkbox" id="pumpToggle">
-                                <span class="toggle-slider"></span>
+                                <span class="switch-slider"></span>
                             </label>
                         </div>
                         
@@ -1335,9 +1355,9 @@
                                     <div style="font-size: 12px; color: var(--light-text-secondary);" id="lightStatusText">Автоматический режим</div>
                                 </div>
                             </div>
-                            <label class="toggle-switch">
+                            <label class="switch">
                                 <input type="checkbox" id="lightToggle">
-                                <span class="toggle-slider"></span>
+                                <span class="switch-slider"></span>
                             </label>
                         </div>
                     </div>
@@ -1356,7 +1376,7 @@
                             <div class="slider-container">
                                 <div class="slider-track"></div>
                                 <div class="slider-fill" id="thresholdFill"></div>
-                                <input type="range" min="10" max="90" value="50" class="slider-input" id="thresholdSlider">
+                                <input type="range" min="10" max="90" value="50" id="thresholdSlider">
                                 <div class="slider-thumb" id="thresholdThumb"></div>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--light-text-secondary); margin-top: 5px;">
@@ -1373,7 +1393,7 @@
                             <div class="slider-container">
                                 <div class="slider-track"></div>
                                 <div class="slider-fill" id="durationFill"></div>
-                                <input type="range" min="1" max="60" value="10" class="slider-input" id="durationSlider">
+                                <input type="range" min="1" max="60" value="10" id="durationSlider">
                                 <div class="slider-thumb" id="durationThumb"></div>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--light-text-secondary); margin-top: 5px;">
@@ -1399,9 +1419,9 @@
                                     <div style="font-size: 12px; color: var(--light-text-secondary);">Принудительное отключение системы</div>
                                 </div>
                             </div>
-                            <label class="toggle-switch">
+                            <label class="switch">
                                 <input type="checkbox" id="sleepToggle">
-                                <span class="toggle-slider"></span>
+                                <span class="switch-slider"></span>
                             </label>
                         </div>
                         
@@ -1442,7 +1462,7 @@
                             <div class="slider-container">
                                 <div class="slider-track"></div>
                                 <div class="slider-fill" id="intervalFill"></div>
-                                <input type="range" min="1" max="60" value="10" class="slider-input" id="intervalSlider">
+                                <input type="range" min="1" max="60" value="10" id="intervalSlider">
                                 <div class="slider-thumb" id="intervalThumb"></div>
                             </div>
                         </div>
@@ -1450,22 +1470,22 @@
                         <div class="time-picker">
                             <div class="time-input-group">
                                 <label for="blockStart">Начало блокировки полива</label>
-                                <input type="time" id="blockStart" class="time-input" value="23:00">
+                                <input type="time" id="blockStart" value="23:00">
                             </div>
                             <div class="time-input-group">
                                 <label for="blockEnd">Конец блокировки полива</label>
-                                <input type="time" id="blockEnd" class="time-input" value="08:00">
+                                <input type="time" id="blockEnd" value="08:00">
                             </div>
                         </div>
                         
                         <div class="time-picker">
                             <div class="time-input-group">
                                 <label for="lightStart">Время включения света</label>
-                                <input type="time" id="lightStart" class="time-input" value="08:00">
+                                <input type="time" id="lightStart" value="08:00">
                             </div>
                             <div class="time-input-group">
                                 <label for="lightDuration">Длительность света (часы)</label>
-                                <input type="number" id="lightDuration" class="time-input" value="12" min="1" max="24">
+                                <input type="number" id="lightDuration" value="12" min="1" max="24">
                             </div>
                         </div>
                     </div>
@@ -1477,13 +1497,13 @@
                         </div>
                         
                         <div class="time-picker">
-                            <div class="time-input-group">
+                            <div class="time-input-group" style="grid-column: 1 / -1;">
                                 <label for="currentTime">Установить время RTC</label>
-                                <input type="time" id="currentTime" class="time-input" value="">
+                                <input type="time" id="currentTime">
                             </div>
                         </div>
                         
-                        <div class="btn-group">
+                        <div class="btn-group" style="margin-top: 10px;">
                             <button class="btn btn-primary" id="setTimeBtn">
                                 <i class="fas fa-clock"></i>
                                 Установить время
@@ -1758,15 +1778,15 @@
     </div>
 
     <script>
-        // Firebase Configuration (Замените на свои реальные данные!)
+        // Firebase Configuration - ИСПРАВЬТЕ ЭТИ ДАННЫЕ НА СВОИ!
         const firebaseConfig = {
-            apiKey: "AIzaSyDEXAMPLEKEY",
+            apiKey: "AIzaSyDmQ5yN1QqHnBfJNcX1fX7qY2ZvK8L9M0N",
             authDomain: "ecogrow-remote-default-rtdb.firebaseapp.com",
             databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
             projectId: "ecogrow-remote-default-rtdb",
             storageBucket: "ecogrow-remote-default-rtdb.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890"
         };
 
         // Initialize Firebase
@@ -1823,7 +1843,7 @@
             errors: []
         };
         
-        // System state (получается из Firebase)
+        // System state
         let systemState = {
             connected: false,
             lastUpdate: null,
@@ -1896,8 +1916,7 @@
                     systemState.connected = true;
                     systemState.lastUpdate = Date.now();
                     
-                    // Parse data from ESP8266 format
-                    // Формат данных: DATA:M:65,P:0,L:1,T:1430,S:450,TH:50,MT:AUT,ML:AUT
+                    // Update system state from Firebase data
                     if (data.moisture !== undefined) {
                         systemState.moisture = data.moisture;
                         systemState.pump = data.pump || false;
@@ -1906,7 +1925,6 @@
                         systemState.pump_mode = data.pump_mode || "AUT";
                         systemState.light_mode = data.light_mode || "AUT";
                         systemState.time = data.time || "--:--";
-                        systemState.rawMoisture = data.raw || null;
                         
                         // Add to history
                         addToHistory({
@@ -1929,7 +1947,7 @@
                     connectionText.textContent = 'Подключено к ESP8266';
                     lastUpdate.textContent = `Обновлено: ${new Date().toLocaleTimeString()}`;
                     
-                    // Check for errors
+                    // Check for errors (включая проверку влажности < 5%)
                     checkForErrors();
                     
                 } else {
@@ -2310,7 +2328,7 @@
             thresholdValue.textContent = systemState.threshold;
             systemTime.textContent = systemState.time;
             
-            // Parse date from time string (format: HHMM)
+            // Parse date from time string (format: HH:MM)
             if (systemState.time && systemState.time.length === 5) {
                 const [hours, minutes] = systemState.time.split(':');
                 const date = new Date();
@@ -2336,8 +2354,12 @@
             
             // Update moisture status
             if (systemState.moisture !== null) {
-                if (systemState.moisture < (systemState.threshold - 15)) {
-                    moistureStatus.textContent = 'КРИТИЧЕСКИ НИЗКАЯ';
+                if (systemState.moisture < 5) {
+                    moistureStatus.textContent = 'КРИТИЧЕСКИ НИЗКАЯ (<5%)';
+                    moistureStatus.className = 'danger';
+                    moistureIndicator.className = 'fas fa-circle danger';
+                } else if (systemState.moisture < (systemState.threshold - 15)) {
+                    moistureStatus.textContent = 'ОЧЕНЬ НИЗКАЯ';
                     moistureStatus.className = 'danger';
                     moistureIndicator.className = 'fas fa-circle danger';
                 } else if (systemState.moisture < systemState.threshold) {
@@ -2372,22 +2394,19 @@
         // Check for errors
         function checkForErrors() {
             if (systemState.moisture !== null) {
-                // Check for sensor errors
-                if (systemState.rawMoisture !== null) {
-                    if (systemState.rawMoisture <= 10 || systemState.rawMoisture >= 1013) {
-                        addError('danger', 'Ошибка датчика влажности');
-                        showNotification('Ошибка!', 'Неисправность датчика влажности', 'error');
-                    }
+                // Проверка влажности ниже 5% - КРИТИЧЕСКАЯ ОШИБКА
+                if (systemState.moisture < 5) {
+                    addError('danger', `КРИТИЧЕСКАЯ ОШИБКА: Влажность ниже 5% (${systemState.moisture}%)`);
+                    showNotification('КРИТИЧЕСКАЯ ОШИБКА!', `Влажность критически низкая: ${systemState.moisture}%`, 'error');
                 }
-                
-                // Check for low moisture
-                if (systemState.moisture < (systemState.threshold - 15)) {
-                    addError('warning', `Критически низкая влажность: ${systemState.moisture}%`);
+                // Проверка низкой влажности
+                else if (systemState.moisture < (systemState.threshold - 15)) {
+                    addError('warning', `Очень низкая влажность: ${systemState.moisture}%`);
                 } else if (systemState.moisture < systemState.threshold) {
                     addError('info', `Низкая влажность: ${systemState.moisture}%`);
                 }
                 
-                // Check for connection issues
+                // Проверка проблем с подключением
                 if (systemState.lastUpdate && (Date.now() - systemState.lastUpdate) > 30000) {
                     addError('warning', 'Нет данных от устройства более 30 секунд');
                 }
@@ -2466,7 +2485,7 @@
             });
         }
         
-        // Send command to Firebase
+        // Send command to Firebase (ESP8266 будет читать команды отсюда)
         function sendCommand(command) {
             if (!systemState.connected) {
                 showNotification('Ошибка', 'Нет подключения к устройству', 'error');
@@ -2486,12 +2505,14 @@
                 }, 2000);
             }
             
+            // Отправляем команду в Firebase (ESP8266 будет читать из /commands/ecogrow_main)
             database.ref('commands/ecogrow_main').set(command)
                 .then(() => {
-                    console.log(`Команда отправлена: ${command}`);
+                    console.log(`Команда отправлена в Firebase: ${command}`);
+                    showNotification('Команда отправлена', `Команда "${command}" отправлена на ESP8266`, 'success');
                 })
                 .catch(error => {
-                    console.error('Ошибка отправки команды:', error);
+                    console.error('Ошибка отправки команды в Firebase:', error);
                     showNotification('Ошибка', 'Не удалось отправить команду', 'error');
                 });
         }
@@ -2503,10 +2524,17 @@
             const lightStart = document.getElementById('lightStart').value;
             const lightDuration = document.getElementById('lightDuration').value;
             const interval = intervalSlider.value;
+            const threshold = thresholdSlider.value;
+            const duration = durationSlider.value;
             
             // Send settings to ESP
-            sendCommand(`SETTINGS:${blockStart}:${blockEnd}:${lightStart}:${lightDuration}:${interval}`);
-            showNotification('Настройки', 'Настройки сохранены успешно', 'success');
+            sendCommand(`SETTINGS:BLOCK:${blockStart}:${blockEnd}`);
+            sendCommand(`SETTINGS:LIGHT:${lightStart}:${lightDuration}`);
+            sendCommand(`SETTINGS:INTERVAL:${interval}`);
+            sendCommand(`THRESHOLD:${threshold}`);
+            sendCommand(`PUMPDURATION:${duration}`);
+            
+            showNotification('Настройки', 'Все настройки сохранены и отправлены на ESP8266', 'success');
         }
         
         // Reset settings
@@ -2545,20 +2573,20 @@
             const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             document.getElementById('currentTime').value = time;
             sendCommand(`SETTIME:${time.replace(':', ':')}`);
-            showNotification('Время', `Время синхронизировано: ${time}`, 'success');
+            showNotification('Время', `Время синхронизировано с браузером: ${time}`, 'success');
         }
         
         // Test Telegram notification
         function testTelegram() {
             sendCommand('TEST_TELEGRAM');
-            showNotification('Telegram', 'Тестовое уведомление отправлено', 'success');
+            showNotification('Telegram', 'Тестовое уведомление отправлено на ESP8266', 'success');
         }
         
         // Clear Telegram history
         function clearTelegram() {
             if (confirm('Очистить историю Telegram уведомлений?')) {
                 sendCommand('CLEAR_TELEGRAM');
-                showNotification('Telegram', 'История уведомлений очищена', 'warning');
+                showNotification('Telegram', 'Команда очистки истории отправлена', 'warning');
             }
         }
         
