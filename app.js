@@ -1,790 +1,670 @@
-// Global variables
-let currentDevice = null;
-let moistureChart = null;
-let statsChart = null;
-let currentTheme = 'light';
-let deviceState = null;
-let deviceSettings = null;
+// EcoGrow Assistant Web Application
+// Created by Kupchenya Evgeniy Andreevich
 
-// Initialize application
-document.addEventListener('DOMContentLoaded', () => {
-    initializeTheme();
-    initializeCharts();
-    loadSavedDevice();
-    setupEventListeners();
-    setupPeriodicUpdates();
-});
-
-// Theme management
-function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-}
-
-function setTheme(theme) {
-    currentTheme = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    
-    // Update theme button
-    const themeBtn = document.querySelector('.btn-primary');
-    if (themeBtn) {
-        themeBtn.innerHTML = theme === 'dark' 
-            ? '<i class="fas fa-sun"></i> Светлая тема'
-            : '<i class="fas fa-moon"></i> Тёмная тема';
+class EcoGrowApp {
+    constructor() {
+        this.init();
     }
-}
 
-function toggleTheme() {
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-}
+    async init() {
+        // Initialize Firebase
+        this.db = window.firebaseDatabase;
+        this.ref = window.firebaseRef;
+        this.onValue = window.firebaseOnValue;
+        this.set = window.firebaseSet;
+        this.update = window.firebaseUpdate;
+        this.push = window.firebasePush;
 
-// Charts initialization
-function initializeCharts() {
-    // Moisture Chart
-    const moistureCtx = document.getElementById('moisture_chart').getContext('2d');
-    moistureChart = new Chart(moistureCtx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Влажность',
-                data: [],
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                borderWidth: 3,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 0,
-                pointHoverRadius: 5
-            }, {
-                label: 'Порог',
-                data: [],
-                borderColor: '#e74c3c',
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                fill: false,
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color'),
-                        font: {
-                            size: 12
+        // Initialize components
+        await this.initComponents();
+        this.initEventListeners();
+        this.startDataPolling();
+        this.startSystemClock();
+
+        // Hide preloader
+        setTimeout(() => {
+            document.querySelector('.preloader').style.opacity = '0';
+            setTimeout(() => {
+                document.querySelector('.preloader').style.display = 'none';
+            }, 500);
+        }, 1500);
+
+        this.showToast('Система EcoGrow Assistant успешно запущена!', 'success');
+    }
+
+    async initComponents() {
+        // Initialize charts
+        this.initMoistureChart();
+        this.initMiniChart();
+
+        // Load initial data
+        await this.loadInitialData();
+
+        // Update UI
+        this.updateUI();
+    }
+
+    initMoistureChart() {
+        const ctx = document.getElementById('moistureChart').getContext('2d');
+        
+        // Generate mock data for last 24 hours
+        const labels = [];
+        const data = [];
+        const now = new Date();
+        
+        for (let i = 23; i >= 0; i--) {
+            const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+            labels.push(time.getHours().toString().padStart(2, '0') + ':00');
+            
+            // Generate realistic moisture data
+            const baseMoisture = 50 + Math.sin(i * 0.5) * 10;
+            const random = Math.random() * 5 - 2.5;
+            data.push(Math.max(10, Math.min(90, Math.round(baseMoisture + random))));
+        }
+
+        this.moistureChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Влажность почвы (%)',
+                    data: data,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `Влажность: ${context.parsed.y}%`;
+                            }
                         }
                     }
                 },
-                tooltip: {
-                    mode: 'index',
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(148, 163, 184)'
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(148, 163, 184)',
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                interaction: {
                     intersect: false,
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    titleFont: { size: 13 },
-                    bodyFont: { size: 13 },
-                    padding: 10
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.08)'
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary'),
-                        font: { size: 11 },
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    }
+                    mode: 'nearest'
                 },
-                x: {
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.08)'
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary'),
-                        font: { size: 11 },
-                        maxTicksLimit: 8
-                    }
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            }
-        }
-    });
-
-    // Stats Chart
-    const statsCtx = document.getElementById('stats_chart').getContext('2d');
-    statsChart = new Chart(statsCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-            datasets: [{
-                label: 'Поливы',
-                data: [3, 5, 2, 4, 6, 3, 4],
-                backgroundColor: 'rgba(52, 152, 219, 0.7)',
-                borderColor: '#3498db',
-                borderWidth: 1
-            }, {
-                label: 'Часы света',
-                data: [8, 10, 12, 9, 11, 8, 10],
-                backgroundColor: 'rgba(243, 156, 18, 0.7)',
-                borderColor: '#f39c12',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color'),
-                        font: {
-                            size: 11
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.08)'
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary'),
-                        font: { size: 10 }
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.08)'
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary'),
-                        font: { size: 10 }
+                animations: {
+                    tension: {
+                        duration: 1000,
+                        easing: 'linear'
                     }
                 }
             }
-        }
-    });
-}
+        });
 
-// Device management
-function loadSavedDevice() {
-    const savedDeviceId = localStorage.getItem('last_device_id');
-    if (savedDeviceId) {
-        connectToDevice(savedDeviceId);
+        // Update chart stats
+        this.updateChartStats(data);
     }
-}
 
-async function scanForDevices() {
-    showNotification('Поиск устройств...', 'info');
-    
-    const connectionModal = document.getElementById('connection_modal');
-    connectionModal.classList.add('show');
-    
-    try {
-        const devices = await firebaseService.scanForDevices();
+    initMiniChart() {
+        const ctx = document.getElementById('miniMoistureChart').getContext('2d');
         
-        if (devices.length === 0) {
-            document.getElementById('found_devices_list').innerHTML = `
-                <div class="no-devices">
-                    <i class="fas fa-search"></i>
-                    <p>Устройства не найдены. Убедитесь, что устройство включено и подключено к интернету.</p>
-                </div>
-            `;
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['', '', '', '', ''],
+                datasets: [{
+                    data: [65, 60, 55, 50, 45],
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: false
+                    }
+                },
+                scales: {
+                    x: {
+                        display: false
+                    },
+                    y: {
+                        display: false
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 0
+                    }
+                }
+            }
+        });
+    }
+
+    async loadInitialData() {
+        try {
+            // Simulate loading data from Firebase
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Mock data
+            this.systemData = {
+                moisture: 65,
+                temperature: 24.5,
+                pumpStatus: false,
+                lightStatus: true,
+                autoWatering: true,
+                threshold: 50,
+                pumpDuration: 10,
+                checkInterval: 10,
+                nextWatering: '2:30',
+                lightTimer: '4:12',
+                wateringsToday: 3,
+                lightHours: 8.5,
+                waterSaved: 12,
+                daysRunning: 15,
+                errors: [
+                    { type: 'sensor', message: 'Калибровка датчика влажности', time: '10:30' },
+                    { type: 'pump', message: 'Задержка запуска насоса', time: '09:15' }
+                ]
+            };
+
+            this.connectionStatus = 'connected';
+            this.lastUpdate = new Date();
+            
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+            this.showToast('Ошибка загрузки данных системы', 'error');
+        }
+    }
+
+    updateUI() {
+        // Update main stats
+        document.getElementById('moistureValue').textContent = `${this.systemData.moisture}%`;
+        document.getElementById('temperatureValue').textContent = `${this.systemData.temperature}°C`;
+        document.getElementById('pumpStatus').textContent = this.systemData.pumpStatus ? 'ВКЛ' : 'ВЫКЛ';
+        document.getElementById('lightStatus').textContent = this.systemData.lightStatus ? 'ВКЛ' : 'ВЫКЛ';
+        document.getElementById('nextWatering').textContent = this.systemData.nextWatering;
+        document.getElementById('lightTimer').textContent = this.systemData.lightTimer;
+        
+        // Update statistics
+        document.getElementById('wateringsToday').textContent = this.systemData.wateringsToday;
+        document.getElementById('lightHours').textContent = this.systemData.lightHours;
+        document.getElementById('waterSaved').textContent = `${this.systemData.waterSaved}л`;
+        document.getElementById('daysRunning').textContent = this.systemData.daysRunning;
+        
+        // Update controls
+        document.getElementById('moistureThreshold').value = this.systemData.threshold;
+        document.getElementById('thresholdValue').textContent = `${this.systemData.threshold}%`;
+        document.getElementById('pumpDuration').value = this.systemData.pumpDuration;
+        document.getElementById('checkInterval').value = this.systemData.checkInterval;
+        document.getElementById('autoWateringToggle').checked = this.systemData.autoWatering;
+        
+        // Update manual controls
+        const pumpBtn = document.getElementById('manualPumpBtn');
+        const lightBtn = document.getElementById('manualLightBtn');
+        
+        if (this.systemData.pumpStatus) {
+            pumpBtn.innerHTML = '<i class="fas fa-water"></i><span>Выключить насос</span>';
+            pumpBtn.classList.add('active');
         } else {
-            let devicesHTML = '';
-            devices.forEach(device => {
-                devicesHTML += `
-                    <div class="device-item" onclick="connectToDevice('${device.id}')">
-                        <div class="device-icon">
-                            <i class="fas fa-microchip"></i>
-                        </div>
-                        <div class="device-details">
-                            <div class="device-name">${device.name}</div>
-                            <div class="device-ip">${device.ip}</div>
-                        </div>
-                        <div class="device-status online">Online</div>
-                    </div>
-                `;
-            });
-            document.getElementById('found_devices_list').innerHTML = devicesHTML;
-        }
-    } catch (error) {
-        console.error('Error scanning devices:', error);
-        showNotification('Ошибка поиска устройств', 'error');
-    }
-}
-
-function closeModal() {
-    document.getElementById('connection_modal').classList.remove('show');
-}
-
-async function connectToDevice(deviceId) {
-    if (!deviceId) {
-        deviceId = document.getElementById('device_id_input').value.trim();
-        if (!deviceId) {
-            showNotification('Введите ID устройства', 'warning');
-            return;
-        }
-    }
-    
-    showNotification('Подключение к устройству...', 'info');
-    updateConnectionStatus('connecting');
-    
-    try {
-        const isOnline = await firebaseService.checkDeviceOnline(deviceId);
-        
-        if (!isOnline) {
-            throw new Error('Устройство не в сети');
+            pumpBtn.innerHTML = '<i class="fas fa-water"></i><span>Включить насос</span>';
+            pumpBtn.classList.remove('active');
         }
         
-        currentDevice = deviceId;
-        firebaseService.connectToDevice(deviceId);
+        if (this.systemData.lightStatus) {
+            lightBtn.innerHTML = '<i class="fas fa-lightbulb"></i><span>Выключить свет</span>';
+            lightBtn.classList.add('active');
+        } else {
+            lightBtn.innerHTML = '<i class="fas fa-lightbulb"></i><span>Включить свет</span>';
+            lightBtn.classList.remove('active');
+        }
         
-        // Save device ID
-        localStorage.setItem('last_device_id', deviceId);
+        // Update connection status
+        const statusDot = document.querySelector('.status-dot');
+        const statusText = document.querySelector('.status-indicator span:last-child');
         
-        // Switch to dashboard view
-        document.getElementById('device_selector').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
+        if (this.connectionStatus === 'connected') {
+            statusDot.classList.add('connected');
+            statusText.textContent = 'Подключено';
+        } else {
+            statusDot.classList.remove('connected');
+            statusText.textContent = 'Подключение...';
+        }
         
-        // Update device info
-        document.getElementById('display_device_id').textContent = deviceId;
+        // Update last update time
+        document.getElementById('lastUpdate').textContent = 
+            `Обновлено: ${this.lastUpdate.toLocaleTimeString()}`;
         
-        // Start listening for updates
-        startListening();
+        // Update errors list
+        this.updateErrorsList();
         
-        showNotification('Успешно подключено к устройству', 'success');
-        updateConnectionStatus('online');
-        
-        closeModal();
-        
-    } catch (error) {
-        console.error('Error connecting to device:', error);
-        showNotification(`Ошибка подключения: ${error.message}`, 'error');
-        updateConnectionStatus('offline');
+        // Update chart stats
+        const currentData = this.moistureChart.data.datasets[0].data;
+        this.updateChartStats(currentData);
     }
-}
 
-function disconnectDevice() {
-    if (currentDevice) {
-        firebaseService.disconnect();
-        currentDevice = null;
-        
-        // Switch back to device selector
-        document.getElementById('device_selector').style.display = 'block';
-        document.getElementById('dashboard').style.display = 'none';
-        
-        showNotification('Отключено от устройства', 'info');
-        updateConnectionStatus('offline');
-        
-        // Clear saved device
-        localStorage.removeItem('last_device_id');
-    }
-}
-
-function startListening() {
-    // Listen for state changes
-    firebaseService.listenToState((state) => {
-        deviceState = state;
-        updateUI();
-    });
-    
-    // Listen for settings changes
-    firebaseService.listenToSettings((settings) => {
-        deviceSettings = settings;
-        updateSettingsUI();
-    });
-}
-
-// UI Updates
-function updateUI() {
-    if (!deviceState) return;
-    
-    // Update status values
-    document.getElementById('current_moisture').textContent = 
-        deviceState.moisture !== undefined ? deviceState.moisture + '%' : '--%';
-    
-    document.getElementById('pump_status').textContent = 
-        deviceState.pump ? 'Вкл' : 'Выкл';
-    
-    document.getElementById('light_status').textContent = 
-        deviceState.light ? 'Вкл' : 'Выкл';
-    
-    document.getElementById('current_time').textContent = 
-        deviceState.time || '--:--';
-    
-    // Update status badges
-    updateStatusBadge('pump_badge', deviceState.pump);
-    updateStatusBadge('light_badge', deviceState.light);
-    
-    // Update device info
-    document.getElementById('device_ip').textContent = 
-        deviceState.ip ? `IP: ${deviceState.ip}` : 'IP: --.--.--.--';
-    
-    // Update statistics
-    if (deviceState.total_waterings) {
-        document.getElementById('total_waterings').textContent = deviceState.total_waterings;
-    }
-    
-    if (deviceState.total_light_hours) {
-        document.getElementById('total_light_hours').textContent = deviceState.total_light_hours;
-    }
-    
-    // Update chart
-    updateMoistureChart();
-}
-
-function updateStatusBadge(badgeId, isActive) {
-    const badge = document.getElementById(badgeId);
-    if (!badge) return;
-    
-    if (isActive) {
-        badge.innerHTML = '<span class="badge online">Активно</span>';
-    } else {
-        badge.innerHTML = '<span class="badge offline">Неактивно</span>';
-    }
-}
-
-function updateSettingsUI() {
-    if (!deviceSettings) return;
-    
-    // Update threshold
-    if (deviceSettings.moistureThreshold) {
-        document.getElementById('moisture_threshold').value = deviceSettings.moistureThreshold;
-        document.getElementById('threshold_display').textContent = deviceSettings.moistureThreshold + '%';
-        document.getElementById('threshold_value').textContent = deviceSettings.moistureThreshold + '%';
-    }
-    
-    // Update pump settings
-    if (deviceSettings.wateringDelayMinutes) {
-        document.getElementById('watering_delay').value = deviceSettings.wateringDelayMinutes;
-    }
-    
-    if (deviceSettings.wateringDurationSec) {
-        document.getElementById('watering_duration').value = deviceSettings.wateringDurationSec;
-    }
-    
-    // Update light settings
-    if (deviceSettings.lampEnabled !== undefined) {
-        document.getElementById('light_auto_enabled').checked = deviceSettings.lampEnabled;
-    }
-    
-    if (deviceSettings.lamp_start && deviceSettings.lamp_end) {
-        document.getElementById('light_start_time').value = deviceSettings.lamp_start;
-        document.getElementById('light_end_time').value = deviceSettings.lamp_end;
-        document.getElementById('light_schedule_display').textContent = 
-            `${deviceSettings.lamp_start} - ${deviceSettings.lamp_end}`;
-    }
-    
-    // Update sleep settings
-    if (deviceSettings.sleepEnabled !== undefined) {
-        document.getElementById('sleep_mode_enabled').checked = deviceSettings.sleepEnabled;
-    }
-    
-    if (deviceSettings.sleep_start && deviceSettings.sleep_end) {
-        document.getElementById('sleep_start_time').value = deviceSettings.sleep_start;
-        document.getElementById('sleep_end_time').value = deviceSettings.sleep_end;
-    }
-}
-
-function updateMoistureChart() {
-    if (!deviceState || !moistureChart) return;
-    
-    // Generate time labels for the last 24 hours
-    const labels = [];
-    const data = [];
-    const thresholdData = [];
-    
-    const now = new Date();
-    for (let i = 23; i >= 0; i--) {
-        const time = new Date(now);
-        time.setHours(now.getHours() - i);
-        labels.push(time.getHours().toString().padStart(2, '0') + ':00');
-        
-        // Simulate data (in real app, this would come from Firebase)
-        const baseValue = deviceState.moisture || 50;
-        const variation = Math.sin(i * 0.5) * 10;
-        data.push(Math.max(0, Math.min(100, baseValue + variation)));
-        
-        // Threshold line
-        thresholdData.push(deviceSettings?.moistureThreshold || 50);
-    }
-    
-    moistureChart.data.labels = labels;
-    moistureChart.data.datasets[0].data = data;
-    moistureChart.data.datasets[1].data = thresholdData;
-    moistureChart.update();
-    
-    // Update stats
-    if (data.length > 0) {
-        const sum = data.reduce((a, b) => a + b, 0);
-        const avg = Math.round(sum / data.length);
+    updateChartStats(data) {
+        const avg = Math.round(data.reduce((a, b) => a + b, 0) / data.length);
         const min = Math.min(...data);
         const max = Math.max(...data);
+        const trend = data[data.length - 1] > data[0] ? '↗ Рост' : '↘ Спад';
         
-        document.getElementById('avg_moisture').textContent = avg + '%';
-        document.getElementById('min_moisture').textContent = min + '%';
-        document.getElementById('max_moisture').textContent = max + '%';
+        document.getElementById('avgMoisture').textContent = `${avg}%`;
+        document.getElementById('minMoisture').textContent = `${min}%`;
+        document.getElementById('maxMoisture').textContent = `${max}%`;
+        document.getElementById('moistureTrendValue').textContent = trend;
+        
+        // Update trend color
+        const trendElement = document.getElementById('moistureTrendValue');
+        trendElement.className = 'value ' + (data[data.length - 1] > data[0] ? 'trend-up' : 'trend-down');
     }
-}
 
-// Control functions
-function togglePump() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
+    updateErrorsList() {
+        const errorsList = document.getElementById('errorsList');
+        const noErrors = document.getElementById('noErrors');
+        
+        if (this.systemData.errors.length === 0) {
+            errorsList.style.display = 'none';
+            noErrors.style.display = 'block';
+        } else {
+            errorsList.style.display = 'block';
+            noErrors.style.display = 'none';
+            
+            errorsList.innerHTML = '';
+            this.systemData.errors.forEach(error => {
+                const errorItem = document.createElement('div');
+                errorItem.className = 'error-item';
+                errorItem.innerHTML = `
+                    <div class="error-message">${error.message}</div>
+                    <div class="error-time">${error.time}</div>
+                `;
+                errorsList.appendChild(errorItem);
+            });
+        }
     }
-    
-    const isOn = deviceState?.pump || false;
-    const command = isOn ? 'pump_off' : 'pump_on';
-    
-    firebaseService.sendCommand('action', command);
-    showNotification(isOn ? 'Насос выключен' : 'Насос включен', 'success');
-}
 
-function toggleLight() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    const isOn = deviceState?.light || false;
-    const command = isOn ? 'light_off' : 'light_on';
-    
-    firebaseService.sendCommand('action', command);
-    showNotification(isOn ? 'Свет выключен' : 'Свет включен', 'success');
-}
-
-function manualWatering() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    firebaseService.sendCommand('action', 'manual_water');
-    showNotification('Запущен ручной полив', 'success');
-}
-
-function updateThresholdValue(value) {
-    document.getElementById('threshold_display').textContent = value + '%';
-}
-
-function adjustValue(inputId, delta) {
-    const input = document.getElementById(inputId);
-    let value = parseInt(input.value) || 0;
-    value += delta;
-    
-    const min = parseInt(input.min) || 0;
-    const max = parseInt(input.max) || 100;
-    
-    if (value < min) value = min;
-    if (value > max) value = max;
-    
-    input.value = value;
-}
-
-// Settings save functions
-function savePumpSettings() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    const settings = {
-        moistureThreshold: parseInt(document.getElementById('moisture_threshold').value),
-        wateringDelayMinutes: parseInt(document.getElementById('watering_delay').value),
-        wateringDurationSec: parseInt(document.getElementById('watering_duration').value)
-    };
-    
-    firebaseService.updateSettings(settings);
-    firebaseService.sendCommand('moistureThreshold', settings.moistureThreshold);
-    
-    showNotification('Настройки насоса сохранены', 'success');
-}
-
-function saveLightSettings() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    const settings = {
-        lampEnabled: document.getElementById('light_auto_enabled').checked,
-        lamp_start: document.getElementById('light_start_time').value,
-        lamp_end: document.getElementById('light_end_time').value
-    };
-    
-    firebaseService.updateSettings(settings);
-    showNotification('Настройки света сохранены', 'success');
-}
-
-function saveSleepSettings() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    const settings = {
-        sleepEnabled: document.getElementById('sleep_mode_enabled').checked,
-        sleep_start: document.getElementById('sleep_start_time').value,
-        sleep_end: document.getElementById('sleep_end_time').value
-    };
-    
-    firebaseService.updateSettings(settings);
-    showNotification('Настройки режима сна сохранены', 'success');
-}
-
-// Time functions
-function setCurrentTime() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    
-    firebaseService.sendCommand({
-        time_hours: hours,
-        time_minutes: minutes
-    });
-    
-    showNotification(`Установлено время: ${hours}:${minutes}`, 'success');
-}
-
-function setCustomTime() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    const hours = document.getElementById('time_hours').value.padStart(2, '0');
-    const minutes = document.getElementById('time_minutes').value.padStart(2, '0');
-    
-    if (!hours || !minutes) {
-        showNotification('Введите корректное время', 'warning');
-        return;
-    }
-    
-    firebaseService.sendCommand({
-        time_hours: hours,
-        time_minutes: minutes
-    });
-    
-    showNotification(`Установлено время: ${hours}:${minutes}`, 'success');
-}
-
-// Error management
-async function refreshErrors() {
-    if (!currentDevice) return;
-    
-    const errors = await firebaseService.getErrors();
-    displayErrors(errors);
-}
-
-function displayErrors(errors) {
-    const container = document.getElementById('errors_container');
-    const countElement = document.getElementById('error_count');
-    
-    if (!errors || errors.length === 0) {
-        container.innerHTML = `
-            <div class="no-errors">
-                <i class="fas fa-check-circle"></i>
-                <p>Ошибок нет</p>
-            </div>
-        `;
-        countElement.textContent = '0';
-        return;
-    }
-    
-    let errorsHTML = '';
-    errors.slice(0, 5).forEach((error, index) => {
-        const time = new Date(parseInt(error.id)).toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit'
+    initEventListeners() {
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('change', (e) => {
+            document.body.classList.toggle('dark-theme', e.target.checked);
+            this.showToast(`Тема переключена на ${e.target.checked ? 'темную' : 'светлую'}`, 'success');
         });
-        
-        errorsHTML += `
-            <div class="error-item">
-                <div class="error-header">
-                    <div class="error-time">
-                        <i class="fas fa-clock"></i> ${time}
-                    </div>
-                </div>
-                <div class="error-message">${error.message}</div>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = errorsHTML;
-    countElement.textContent = errors.length;
-}
 
-async function clearErrors() {
-    if (!currentDevice) {
-        showNotification('Сначала подключитесь к устройству', 'warning');
-        return;
-    }
-    
-    await firebaseService.clearErrors();
-    displayErrors([]);
-    showNotification('Ошибки очищены', 'success');
-}
+        // Sleep mode
+        document.getElementById('sleepModeBtn').addEventListener('click', () => {
+            this.showSleepModeModal();
+        });
 
-// Chart functions
-function updateChartRange() {
-    const range = document.getElementById('chart_range').value;
-    updateMoistureChart(); // In real app, this would fetch different data range
-}
+        // Manual controls
+        document.getElementById('manualPumpBtn').addEventListener('click', () => {
+            this.togglePump();
+        });
 
-// Utility functions
-function updateConnectionStatus(status) {
-    const statusElement = document.getElementById('connection_status');
-    if (!statusElement) return;
-    
-    const dot = statusElement.querySelector('.status-dot');
-    const text = statusElement.querySelector('.status-text');
-    
-    dot.className = 'status-dot ' + status;
-    
-    switch(status) {
-        case 'online':
-            text.textContent = 'Подключено';
-            break;
-        case 'offline':
-            text.textContent = 'Не подключено';
-            break;
-        case 'connecting':
-            text.textContent = 'Подключение...';
-            break;
-    }
-}
+        document.getElementById('manualLightBtn').addEventListener('click', () => {
+            this.toggleLight();
+        });
 
-function showNotification(message, type = 'info') {
-    const container = document.getElementById('notification_container');
-    const notification = document.createElement('div');
-    
-    let icon = 'info-circle';
-    switch(type) {
-        case 'success':
-            icon = 'check-circle';
-            break;
-        case 'error':
-            icon = 'exclamation-circle';
-            break;
-        case 'warning':
-            icon = 'exclamation-triangle';
-            break;
-    }
-    
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <i class="fas fa-${icon}"></i>
-        <span>${message}</span>
-    `;
-    
-    container.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    container.removeChild(notification);
+        // Sliders and inputs
+        document.getElementById('moistureThreshold').addEventListener('input', (e) => {
+            document.getElementById('thresholdValue').textContent = `${e.target.value}%`;
+        });
+
+        document.getElementById('moistureThreshold').addEventListener('change', (e) => {
+            this.updateSetting('threshold', parseInt(e.target.value));
+        });
+
+        document.getElementById('pumpDuration').addEventListener('change', (e) => {
+            this.updateSetting('pumpDuration', parseInt(e.target.value));
+        });
+
+        document.getElementById('checkInterval').addEventListener('change', (e) => {
+            this.updateSetting('checkInterval', parseInt(e.target.value));
+        });
+
+        // Auto watering toggle
+        document.getElementById('autoWateringToggle').addEventListener('change', (e) => {
+            this.updateSetting('autoWatering', e.target.checked);
+        });
+
+        // Time range buttons
+        document.querySelectorAll('.time-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                // In real app, this would update the chart data
+            });
+        });
+
+        // Time sync
+        document.getElementById('syncTimeBtn').addEventListener('click', () => {
+            this.syncSystemTime();
+        });
+
+        // Clear errors
+        document.getElementById('clearErrorsBtn').addEventListener('click', () => {
+            this.clearErrors();
+        });
+
+        // Test notification
+        document.getElementById('testNotificationBtn').addEventListener('click', () => {
+            this.sendTestNotification();
+        });
+
+        // Apply schedule
+        document.getElementById('applyScheduleBtn').addEventListener('click', () => {
+            this.applyLightSchedule();
+        });
+
+        // Modal close buttons
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            });
+        });
+
+        // Confirm sleep mode
+        document.getElementById('confirmSleepBtn').addEventListener('click', () => {
+            this.activateSleepMode();
+        });
+
+        // Update values on input changes
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const valueSpan = e.target.parentElement.querySelector('.slider-value');
+                if (valueSpan) {
+                    valueSpan.textContent = e.target.value + (e.target.id === 'moistureThreshold' ? '%' : '');
                 }
-            }, 300);
-        }
-    }, 5000);
-}
+            });
+        });
+    }
 
-function setupEventListeners() {
-    // Device ID input enter key
-    document.getElementById('device_id_input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            connectToDevice();
-        }
-    });
-    
-    // Real-time clock update
-    setInterval(updateRealTimeClock, 1000);
-}
-
-function updateRealTimeClock() {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-    
-    const dateStr = now.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-    
-    document.getElementById('system_time_display').textContent = timeStr;
-    document.getElementById('system_date_display').textContent = dateStr;
-}
-
-function setupPeriodicUpdates() {
-    // Update UI every 5 seconds
-    setInterval(() => {
-        if (currentDevice) {
-            updateUI();
-        }
-    }, 5000);
-    
-    // Update next watering timer
-    setInterval(updateNextWateringTimer, 1000);
-}
-
-function updateNextWateringTimer() {
-    // In real app, this would calculate based on device state
-    const timerElement = document.getElementById('next_watering_timer');
-    if (!timerElement) return;
-    
-    // Simulate countdown (example)
-    const currentText = timerElement.textContent;
-    if (currentText === '--:--') {
-        timerElement.textContent = '30:00';
-    } else {
-        const [minutes, seconds] = currentText.split(':').map(Number);
-        let totalSeconds = minutes * 60 + seconds - 1;
+    togglePump() {
+        this.systemData.pumpStatus = !this.systemData.pumpStatus;
+        this.updateUI();
         
-        if (totalSeconds < 0) {
-            totalSeconds = 30 * 60; // Reset to 30 minutes
-        }
+        const action = this.systemData.pumpStatus ? 'включен' : 'выключен';
+        this.showToast(`Насос ${action} вручную`, 'success');
         
-        const newMinutes = Math.floor(totalSeconds / 60);
-        const newSeconds = totalSeconds % 60;
-        timerElement.textContent = 
-            newMinutes.toString().padStart(2, '0') + ':' + 
-            newSeconds.toString().padStart(2, '0');
+        // In real app, send command to Arduino
+        this.sendCommand('pump', this.systemData.pumpStatus ? 'ON' : 'OFF');
+    }
+
+    toggleLight() {
+        this.systemData.lightStatus = !this.systemData.lightStatus;
+        this.updateUI();
+        
+        const action = this.systemData.lightStatus ? 'включен' : 'выключен';
+        this.showToast(`Свет ${action} вручную`, 'success');
+        
+        // In real app, send command to Arduino
+        this.sendCommand('light', this.systemData.lightStatus ? 'ON' : 'OFF');
+    }
+
+    updateSetting(setting, value) {
+        this.systemData[setting] = value;
+        this.showToast(`Настройка "${setting}" обновлена`, 'success');
+        
+        // In real app, update Firebase
+        console.log(`Setting updated: ${setting} = ${value}`);
+    }
+
+    syncSystemTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.getElementById('currentTime').textContent = timeString;
+        
+        this.showToast('Время синхронизировано', 'success');
+        
+        // In real app, send time to Arduino
+        this.sendCommand('time', now);
+    }
+
+    clearErrors() {
+        this.systemData.errors = [];
+        this.updateErrorsList();
+        this.showToast('История ошибок очищена', 'success');
+    }
+
+    sendTestNotification() {
+        this.showToast('Тестовое уведомление отправлено в Telegram', 'success');
+        
+        // In real app, send notification via Firebase Cloud Functions
+        console.log('Sending test notification...');
+    }
+
+    applyLightSchedule() {
+        const startTime = document.getElementById('lightStartTime').value;
+        const duration = document.getElementById('lightDuration').value;
+        
+        this.showToast(`Расписание света обновлено: ${startTime} на ${duration} часов`, 'success');
+        
+        // In real app, update schedule in Firebase
+        console.log(`Light schedule: ${startTime} for ${duration} hours`);
+    }
+
+    showSleepModeModal() {
+        document.getElementById('sleepModeModal').classList.add('active');
+    }
+
+    activateSleepMode() {
+        const duration = document.getElementById('sleepDuration').value;
+        document.getElementById('sleepModeModal').classList.remove('active');
+        
+        this.showToast(`Режим сна активирован на ${duration} часов`, 'warning');
+        
+        // In real app, send sleep command to Arduino
+        this.sendCommand('sleep', duration);
+    }
+
+    sendCommand(type, value) {
+        // In real app, this would send command to Firebase
+        // which would be picked up by ESP8266 and sent to Arduino
+        console.log(`Sending command: ${type} = ${value}`);
+        
+        // Simulate sending to Firebase
+        if (window.firebaseUpdate) {
+            const commandRef = window.firebaseRef(window.firebaseDatabase, `commands/${type}`);
+            window.firebaseUpdate(commandRef, {
+                value: value,
+                timestamp: new Date().toISOString()
+            }).then(() => {
+                console.log('Command sent to Firebase');
+            }).catch(error => {
+                console.error('Error sending command:', error);
+            });
+        }
+    }
+
+    startDataPolling() {
+        // Simulate real-time data updates
+        setInterval(() => {
+            // Simulate moisture change
+            const change = Math.random() * 2 - 1; // -1 to +1
+            this.systemData.moisture = Math.max(10, Math.min(90, 
+                Math.round((this.systemData.moisture + change) * 10) / 10
+            ));
+            
+            // Simulate temperature fluctuation
+            const tempChange = Math.random() * 0.2 - 0.1;
+            this.systemData.temperature = Math.round((this.systemData.temperature + tempChange) * 10) / 10;
+            
+            // Update chart with new data point
+            if (this.moistureChart) {
+                const chart = this.moistureChart;
+                const now = new Date();
+                const timeLabel = now.getHours().toString().padStart(2, '0') + ':' + 
+                                now.getMinutes().toString().padStart(2, '0');
+                
+                // Add new data point
+                chart.data.labels.push(timeLabel);
+                chart.data.datasets[0].data.push(this.systemData.moisture);
+                
+                // Remove first data point if too many
+                if (chart.data.labels.length > 24) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                }
+                
+                chart.update('none');
+                
+                // Update stats
+                this.updateChartStats(chart.data.datasets[0].data);
+            }
+            
+            // Update UI
+            this.updateUI();
+            
+            // Simulate occasional errors
+            if (Math.random() < 0.01) { // 1% chance
+                const errorTypes = [
+                    { type: 'sensor', message: 'Временная ошибка датчика влажности' },
+                    { type: 'network', message: 'Потеря связи с модулем WiFi' },
+                    { type: 'pump', message: 'Превышено время работы насоса' }
+                ];
+                const error = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+                const now = new Date();
+                const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                                 now.getMinutes().toString().padStart(2, '0');
+                
+                this.systemData.errors.push({
+                    ...error,
+                    time: timeString
+                });
+                
+                this.updateErrorsList();
+                
+                if (error.type === 'sensor' || error.type === 'pump') {
+                    this.showToast(`Обнаружена ошибка: ${error.message}`, 'error');
+                }
+            }
+            
+        }, 5000); // Update every 5 seconds
+    }
+
+    startSystemClock() {
+        setInterval(() => {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('currentTime').textContent = timeString;
+            
+            // Update last update time periodically
+            if (now.getSeconds() % 30 === 0) {
+                this.lastUpdate = now;
+                document.getElementById('lastUpdate').textContent = 
+                    `Обновлено: ${now.toLocaleTimeString()}`;
+            }
+            
+            // Update uptime
+            document.getElementById('uptime').textContent = 
+                `${Math.floor(now.getHours() / 24)}д ${now.getHours() % 24}ч ${now.getMinutes()}м`;
+            
+        }, 1000);
+    }
+
+    showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        let icon = 'fas fa-check-circle';
+        if (type === 'error') icon = 'fas fa-exclamation-circle';
+        if (type === 'warning') icon = 'fas fa-exclamation-triangle';
+        
+        toast.innerHTML = `
+            <i class="${icon}"></i>
+            <span>${message}</span>
+        `;
+        
+        container.appendChild(toast);
+        
+        // Remove toast after 5 seconds
+        setTimeout(() => {
+            toast.style.animation = 'toastOut 0.5s ease forwards';
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 5000);
     }
 }
 
-// Initialize real-time clock on load
-updateRealTimeClock();
+// Initialize application when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.ecoGrowApp = new EcoGrowApp();
+});
+
+// Firebase Data Listener Example (for real implementation)
+function setupFirebaseListeners() {
+    // This would be the real implementation for Firebase data sync
+    
+    const dataRef = window.firebaseRef(window.firebaseDatabase, 'data');
+    
+    window.firebaseOnValue(dataRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Update local state with Firebase data
+            window.ecoGrowApp.systemData = {
+                ...window.ecoGrowApp.systemData,
+                moisture: data.moisture,
+                temperature: data.temperature || 24.5,
+                pumpStatus: data.pump === 1,
+                lightStatus: data.light === 1
+            };
+            
+            window.ecoGrowApp.updateUI();
+        }
+    }, (error) => {
+        console.error('Firebase error:', error);
+        window.ecoGrowApp.showToast('Ошибка подключения к серверу', 'error');
+    });
+}
+
+// Uncomment this when Firebase is properly configured
+// setupFirebaseListeners();
