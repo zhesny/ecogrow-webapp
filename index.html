@@ -3,871 +3,523 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoGrow Control</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>EcoGrow Remote Control</title>
+    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/3095/3095103.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg-primary: #f8f9fa;
-            --bg-card: #ffffff;
-            --text-primary: #2c3e50;
-            --text-secondary: #7f8c8d;
-            --accent-green: #27ae60;
-            --accent-blue: #3498db;
-            --accent-red: #e74c3c;
-            --accent-orange: #f39c12;
-            --border-color: #e1e8ed;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        [data-theme="dark"] {
-            --bg-primary: #1a1a2e;
-            --bg-card: #16213e;
-            --text-primary: #ecf0f1;
-            --text-secondary: #bdc3c7;
-            --border-color: #2c3e50;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-                max-width: 100%;
-            }
-            
-            .grid {
-                grid-template-columns: 1fr !important;
-            }
-            
-            .header {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 1.5rem;
-            }
-            
-            .card {
-                padding: 15px;
-            }
-            
-            .btn-group {
-                grid-template-columns: 1fr !important;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            box-shadow: var(--shadow);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 2rem;
-        }
-        
-        .theme-toggle {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .theme-toggle:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 25px;
-        }
-        
-        .card {
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-            transition: transform 0.3s;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        
-        .card-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        
-        .status-on {
-            background: rgba(39, 174, 96, 0.15);
-            color: var(--accent-green);
-        }
-        
-        .status-off {
-            background: rgba(243, 156, 18, 0.15);
-            color: var(--accent-orange);
-        }
-        
-        .status-error {
-            background: rgba(231, 76, 60, 0.15);
-            color: var(--accent-red);
-        }
-        
-        .chart-container {
-            height: 200px;
-            margin: 15px 0;
-            position: relative;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 15px 0;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        [data-theme="dark"] .stat-card {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-blue);
-            margin-bottom: 3px;
-        }
-        
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .control-group {
-            margin: 15px 0;
-        }
-        
-        .control-item {
-            margin-bottom: 12px;
-        }
-        
-        .control-item label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-        
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .slider-value {
-            min-width: 40px;
-            text-align: center;
-            font-weight: 600;
-            color: var(--accent-blue);
-        }
-        
-        input[type="range"] {
-            flex: 1;
-            height: 6px;
-            border-radius: 3px;
-            background: var(--border-color);
-            outline: none;
-            -webkit-appearance: none;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--accent-blue);
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        input[type="number"], input[type="time"], input[type="text"] {
-            width: 100%;
-            padding: 8px 12px;
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-card);
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            transition: all 0.3s;
-        }
-        
-        input[type="number"]:focus, input[type="time"]:focus, input[type="text"]:focus {
-            border-color: var(--accent-blue);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        }
-        
-        .switch-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .switch-row:last-child {
-            border-bottom: none;
-        }
-        
-        .switch-label {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-        
-        .switch-label .subtext {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 52px;
-            height: 26px;
-        }
-        
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .slider-switch {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            border-radius: 34px;
-            transition: .4s;
-        }
-        
-        .slider-switch:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            border-radius: 50%;
-            transition: .4s;
-        }
-        
-        input:checked + .slider-switch {
-            background-color: var(--accent-green);
-        }
-        
-        input:checked + .slider-switch:before {
-            transform: translateX(26px);
-        }
-        
-        .btn-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .btn {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), #2980b9);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, var(--accent-green), #229954);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
-        }
-        
-        .btn-secondary {
-            background: var(--border-color);
-            color: var(--text-primary);
-        }
-        
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, var(--accent-red), #c0392b);
-            color: white;
-        }
-        
-        .timer-display {
-            background: linear-gradient(135deg, rgba(39, 174, 96, 0.08), rgba(46, 204, 113, 0.12));
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin: 15px 0;
-            border: 2px solid rgba(39, 174, 96, 0.15);
-        }
-        
-        .timer-value {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: var(--accent-green);
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            line-height: 1;
-        }
-        
-        .timer-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-top: 5px;
-        }
-        
-        .errors-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin: 15px 0;
-            padding-right: 8px;
-        }
-        
-        .error-item {
-            background: rgba(231, 76, 60, 0.08);
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            border-left: 4px solid var(--accent-red);
-        }
-        
-        .error-time {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
-            margin-bottom: 3px;
-            color: var(--accent-red);
-            font-size: 0.85rem;
-        }
-        
-        .error-msg {
-            color: var(--text-primary);
-            font-size: 0.85rem;
-            line-height: 1.3;
-        }
-        
-        .telegram-card {
-            background: linear-gradient(135deg, #0088cc, #00acee);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            grid-column: 1 / -1;
-        }
-        
-        .telegram-card h3 {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-        
-        .time-input-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        
-        .wide-card {
-            grid-column: 1 / -1;
-        }
-        
-        .compact-input-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .compact-input-group .control-item {
-            margin-bottom: 0;
-        }
-        
-        .time-display {
-            font-size: 1.1rem;
-            color: var(--accent-blue);
-            font-weight: 600;
-            text-align: center;
-            margin: 10px 0;
-            padding: 8px;
-            background: rgba(52, 152, 219, 0.1);
-            border-radius: 8px;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--bg-card);
-            color: var(--text-primary);
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1000;
-            border-left: 4px solid #27ae60;
-            transform: translateX(120%);
-            transition: transform 0.3s ease-out;
-            max-width: 300px;
-            font-weight: 500;
-        }
-        
-        .connection-panel {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: var(--bg-card);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-            z-index: 1000;
-            width: 300px;
-        }
-        
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        
-        .status-dot.connected {
-            background: var(--accent-green);
-            box-shadow: 0 0 10px var(--accent-green);
-        }
-        
-        .status-dot.disconnected {
-            background: var(--accent-red);
-            box-shadow: 0 0 10px var(--accent-red);
-        }
-    </style>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Панель подключения -->
-    <div class="connection-panel">
-        <div class="connection-status">
-            <span id="connection_dot" class="status-dot disconnected"></span>
-            <span id="connection_status">Отключено</span>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Адрес ESP8266:</label>
-            <input type="text" id="esp_address" class="form-control" placeholder="http://192.168.1.100">
-        </div>
-        <button class="btn btn-success w-100" onclick="connectToESP()">
-            <i class="fas fa-plug"></i> Подключиться
-        </button>
-    </div>
-
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-seedling"></i> EcoGrow Control Panel</h1>
-            <button class="theme-toggle" onclick="toggleTheme()">
-                <i class="fas fa-moon"></i> Сменить тему
-            </button>
+            <h1><i class="fas fa-seedling"></i> EcoGrow Remote Control</h1>
+            <div class="header-controls">
+                <div class="connection-status" id="connection_status">
+                    <span class="status-dot offline"></span>
+                    <span class="status-text">Не подключено</span>
+                </div>
+                <button class="btn btn-primary" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i> Тема
+                </button>
+                <button class="btn btn-secondary" onclick="scanForDevices()">
+                    <i class="fas fa-sync-alt"></i> Поиск устройств
+                </button>
+            </div>
         </div>
 
-        <div class="grid">
-            <div class="card wide-card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-chart-line"></i> График влажности
-                    </div>
-                    <div id="moist_status" class="status-badge">--%</div>
-                </div>
-                
-                <div class="chart-container">
-                    <canvas id="moist_chart"></canvas>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div id="current_moist" class="stat-value">--%</div>
-                        <div class="stat-label">Текущая</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="avg_moist" class="stat-value">--%</div>
-                        <div class="stat-label">Средняя</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="min_moist" class="stat-value">--%</div>
-                        <div class="stat-label">Минимум</div>
-                    </div>
+        <!-- Device Selector -->
+        <div class="card" id="device_selector">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-microchip"></i> Выбор устройства
                 </div>
             </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-tint"></i> Управление насосом
-                    </div>
-                    <div id="pump_status" class="status-badge status-off">ВЫКЛ</div>
+            <div class="device-list" id="device_list">
+                <div class="no-devices">
+                    <i class="fas fa-search"></i>
+                    <p>Устройства не найдены. Нажмите "Поиск устройств"</p>
                 </div>
-                
-                <div class="control-group">
-                    <div class="control-item">
-                        <label>Порог влажности: <span id="thresh_val" class="slider-value">50%</span></label>
-                        <div class="slider-container">
-                            <input id="moist_threshold" type="range" min="10" max="90" step="1" 
-                                   oninput="updateThreshold(this.value)" onchange="saveSettings()">
+            </div>
+            <div class="manual-connect">
+                <h3>Или подключитесь вручную:</h3>
+                <div class="input-group">
+                    <input type="text" id="device_id_input" placeholder="Введите Device ID">
+                    <button class="btn btn-success" onclick="connectToDevice()">
+                        <i class="fas fa-link"></i> Подключиться
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard (hidden until device connected) -->
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <div class="grid">
+                <!-- Current Status Card -->
+                <div class="card wide-card status-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-heartbeat"></i> Текущий статус
+                        </div>
+                        <div class="device-info" id="device_info">
+                            <span id="device_name">Устройство не выбрано</span>
+                            <span class="ip" id="device_ip">IP: --.--.--.--</span>
                         </div>
                     </div>
                     
-                    <div class="control-item">
-                        <label>Задержка между поливами (минут)</label>
-                        <input id="watering_delay" type="number" min="5" max="1440" step="5" onchange="saveSettings()">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-icon moisture">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div class="status-content">
+                                <div class="status-label">Влажность</div>
+                                <div class="status-value" id="current_moisture">--%</div>
+                                <div class="status-trend" id="moisture_trend">
+                                    <i class="fas fa-arrow-right"></i> Стабильно
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="status-item">
+                            <div class="status-icon pump">
+                                <i class="fas fa-faucet"></i>
+                            </div>
+                            <div class="status-content">
+                                <div class="status-label">Насос</div>
+                                <div class="status-value" id="pump_status">Выкл</div>
+                                <div class="status-time" id="pump_time">--:--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="status-item">
+                            <div class="status-icon light">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="status-content">
+                                <div class="status-label">Свет</div>
+                                <div class="status-value" id="light_status">Выкл</div>
+                                <div class="status-time" id="light_time">--:--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="status-item">
+                            <div class="status-icon time">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="status-content">
+                                <div class="status-label">Время</div>
+                                <div class="status-value" id="current_time">--:--</div>
+                                <div class="status-date" id="current_date">--.--.----</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Moisture Chart -->
+                <div class="card wide-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i> График влажности
+                        </div>
+                        <div class="chart-controls">
+                            <select id="chart_range" onchange="updateChartRange()">
+                                <option value="1">1 час</option>
+                                <option value="6">6 часов</option>
+                                <option value="24" selected>24 часа</option>
+                                <option value="168">7 дней</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="moisture_chart"></canvas>
+                    </div>
+                    <div class="chart-stats">
+                        <div class="chart-stat">
+                            <div class="stat-value" id="avg_moisture">--%</div>
+                            <div class="stat-label">Средняя</div>
+                        </div>
+                        <div class="chart-stat">
+                            <div class="stat-value" id="min_moisture">--%</div>
+                            <div class="stat-label">Минимум</div>
+                        </div>
+                        <div class="chart-stat">
+                            <div class="stat-value" id="max_moisture">--%</div>
+                            <div class="stat-label">Максимум</div>
+                        </div>
+                        <div class="chart-stat">
+                            <div class="stat-value" id="threshold_value">--%</div>
+                            <div class="stat-label">Порог</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pump Control -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-faucet"></i> Управление насосом
+                        </div>
+                        <div class="status-badge" id="pump_badge">
+                            <span class="badge offline">Неактивно</span>
+                        </div>
                     </div>
                     
-                    <div class="control-item">
-                        <label>Длительность полива (секунд)</label>
-                        <input id="watering_duration" type="number" min="1" max="300" step="1" onchange="saveSettings()">
+                    <div class="control-section">
+                        <div class="control-group">
+                            <div class="control-item">
+                                <label>Порог влажности</label>
+                                <div class="slider-container">
+                                    <input type="range" id="moisture_threshold" min="10" max="90" step="1" 
+                                           oninput="updateThresholdValue(this.value)">
+                                    <span class="slider-value" id="threshold_display">50%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="control-item">
+                                <label>Задержка между поливами (мин)</label>
+                                <div class="number-input">
+                                    <button onclick="adjustValue('watering_delay', -5)">-</button>
+                                    <input type="number" id="watering_delay" min="5" max="1440" step="5" value="30">
+                                    <button onclick="adjustValue('watering_delay', 5)">+</button>
+                                </div>
+                            </div>
+                            
+                            <div class="control-item">
+                                <label>Длительность полива (сек)</label>
+                                <div class="number-input">
+                                    <button onclick="adjustValue('watering_duration', -1)">-</button>
+                                    <input type="number" id="watering_duration" min="1" max="300" step="1" value="2">
+                                    <button onclick="adjustValue('watering_duration', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pump-timer">
+                            <div class="timer-display">
+                                <div class="timer-value" id="next_watering_timer">--:--</div>
+                                <div class="timer-label">До следующего полива</div>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-success" onclick="manualWatering()">
+                                <i class="fas fa-tint"></i> Полить сейчас
+                            </button>
+                            <button class="btn btn-secondary" onclick="togglePump()" id="pump_toggle_btn">
+                                <i class="fas fa-power-off"></i> Включить насос
+                            </button>
+                            <button class="btn btn-primary" onclick="savePumpSettings()">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Light Control -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-lightbulb"></i> Управление светом
+                        </div>
+                        <div class="status-badge" id="light_badge">
+                            <span class="badge offline">Выкл</span>
+                        </div>
                     </div>
                     
-                    <div class="control-item">
-                        <label>Время ручного включения (секунд)</label>
-                        <input id="manual_pump_time" type="number" min="5" max="300" step="5" onchange="saveSettings()">
-                    </div>
-                </div>
-                
-                <div class="switch-row">
-                    <div class="switch-label">
-                        <span style="font-weight: 500;">Ручное управление</span>
-                        <span id="pump_mode" class="subtext">Режим: АВТО</span>
-                    </div>
-                    <label class="switch">
-                        <input id="pump_switch" type="checkbox" onchange="togglePump()">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-success" onclick="manualWatering()">
-                        <i class="fas fa-tint"></i> Полить сейчас
-                    </button>
-                    <button class="btn btn-secondary" onclick="setPumpAuto()">
-                        <i class="fas fa-cogs"></i> Авторежим
-                    </button>
-                </div>
-                
-                <div class="timer-display">
-                    <div id="timer_value" class="timer-value">--</div>
-                    <div class="timer-label">До следующего полива (минут)</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-lightbulb"></i> Фитолампа
-                    </div>
-                    <div id="light_status" class="status-badge status-off">ВЫКЛ</div>
-                </div>
-                
-                <div class="control-group">
-                    <div class="time-input-group">
-                        <div class="control-item">
-                            <label>Включение</label>
-                            <input id="lamp_start" type="time" onchange="saveSettings()">
+                    <div class="control-section">
+                        <div class="control-group">
+                            <div class="control-item">
+                                <label>Время включения</label>
+                                <input type="time" id="light_start_time" value="08:00">
+                            </div>
+                            
+                            <div class="control-item">
+                                <label>Время выключения</label>
+                                <input type="time" id="light_end_time" value="20:00">
+                            </div>
+                            
+                            <div class="switch-row">
+                                <div class="switch-label">
+                                    <span>Автоматическое включение</span>
+                                    <span class="subtext">По расписанию</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="light_auto_enabled" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="control-item">
-                            <label>Выключение</label>
-                            <input id="lamp_end" type="time" onchange="saveSettings()">
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-success" onclick="toggleLight()" id="light_toggle_btn">
+                                <i class="fas fa-power-off"></i> Включить свет
+                            </button>
+                            <button class="btn btn-primary" onclick="saveLightSettings()">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                        
+                        <div class="light-schedule">
+                            <h4>Расписание:</h4>
+                            <div class="schedule-display">
+                                <span id="light_schedule_display">08:00 - 20:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sleep Mode -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-moon"></i> Режим сна
+                        </div>
+                        <div class="status-badge" id="sleep_badge">
+                            <span class="badge">Неактивен</span>
                         </div>
                     </div>
                     
-                    <div class="control-item">
-                        <label>Время ручного включения (часов)</label>
-                        <input id="manual_light_time" type="number" min="1" max="24" step="1" onchange="saveSettings()">
-                    </div>
-                </div>
-                
-                <div class="switch-row">
-                    <div class="switch-label">
-                        <span style="font-weight: 500;">Расписание</span>
-                        <span class="subtext">Автовключение по времени</span>
-                    </div>
-                    <label class="switch">
-                        <input id="lamp_enabled" type="checkbox" onchange="saveSettings()">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="switch-row">
-                    <div class="switch-label">
-                        <span style="font-weight: 500;">Ручное управление</span>
-                        <span id="light_mode" class="subtext">Режим: АВТО</span>
-                    </div>
-                    <label class="switch">
-                        <input id="light_switch" type="checkbox" onchange="toggleLight()">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-secondary" onclick="setLightAuto()">
-                        <i class="fas fa-cogs"></i> Авторежим света
-                    </button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-moon"></i> Режим сна
-                    </div>
-                    <div id="sleep_status" class="status-badge status-off">Неактивен</div>
-                </div>
-                
-                <div class="control-group">
-                    <div class="time-input-group">
-                        <div class="control-item">
-                            <label>Начало</label>
-                            <input id="sleep_start" type="time" onchange="saveSettings()">
+                    <div class="control-section">
+                        <div class="switch-row">
+                            <div class="switch-label">
+                                <span>Включить режим сна</span>
+                                <span class="subtext">Отключение системы в ночное время</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="sleep_mode_enabled">
+                                <span class="slider"></span>
+                            </label>
                         </div>
-                        <div class="control-item">
-                            <label>Конец</label>
-                            <input id="sleep_end" type="time" onchange="saveSettings()">
+                        
+                        <div class="control-group">
+                            <div class="control-item">
+                                <label>Начало</label>
+                                <input type="time" id="sleep_start_time" value="23:00">
+                            </div>
+                            
+                            <div class="control-item">
+                                <label>Конец</label>
+                                <input type="time" id="sleep_end_time" value="07:00">
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="saveSleepSettings()">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                        
+                        <div class="sleep-info">
+                            <p><i class="fas fa-info-circle"></i> В режиме сна система отключает полив и освещение</p>
                         </div>
                     </div>
                 </div>
-                
-                <div class="switch-row">
-                    <div class="switch-label">
-                        <span style="font-weight: 500;">Включить режим сна</span>
-                        <span class="subtext">Принудительное отключение</span>
+
+                <!-- Statistics -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-bar"></i> Статистика
+                        </div>
                     </div>
-                    <label class="switch">
-                        <input id="sleep_enabled" type="checkbox" onchange="saveSettings()">
-                        <span class="slider-switch"></span>
-                    </label>
+                    
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="total_waterings">0</div>
+                                <div class="stat-label">Всего поливов</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="total_light_hours">0</div>
+                                <div class="stat-label">Часов света</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="energy_consumption">0</div>
+                                <div class="stat-label">Вт·ч</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="system_uptime">0</div>
+                                <div class="stat-label">Дней работы</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-chart">
+                        <canvas id="stats_chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- System Errors -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-exclamation-triangle"></i> Ошибки системы
+                        </div>
+                        <div class="error-count" id="error_count">0</div>
+                    </div>
+                    
+                    <div class="errors-container" id="errors_container">
+                        <div class="no-errors">
+                            <i class="fas fa-check-circle"></i>
+                            <p>Ошибок нет</p>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="clearErrors()">
+                            <i class="fas fa-trash"></i> Очистить ошибки
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshErrors()">
+                            <i class="fas fa-sync-alt"></i> Обновить
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Time Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-clock"></i> Настройка времени
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="current-time-display">
+                            <div class="time-display-large" id="system_time_display">--:--</div>
+                            <div class="date-display" id="system_date_display">--.--.----</div>
+                        </div>
+                        
+                        <div class="switch-row">
+                            <div class="switch-label">
+                                <span>Синхронизация с интернетом</span>
+                                <span class="subtext">Автоматическая настройка времени</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="time_sync_enabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="time-controls">
+                            <div class="input-group">
+                                <input type="number" id="time_hours" min="0" max="23" value="12" placeholder="Час">
+                                <span>:</span>
+                                <input type="number" id="time_minutes" min="0" max="59" value="0" placeholder="Мин">
+                            </div>
+                            
+                            <div class="btn-group">
+                                <button class="btn btn-success" onclick="setCurrentTime()">
+                                    <i class="fas fa-clock"></i> Текущее время
+                                </button>
+                                <button class="btn btn-primary" onclick="setCustomTime()">
+                                    <i class="fas fa-check"></i> Установить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remote Access Info -->
+                <div class="card telegram-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-globe"></i> Удаленный доступ
+                        </div>
+                    </div>
+                    
+                    <div class="telegram-content">
+                        <h3><i class="fab fa-telegram"></i> Telegram Мониторинг</h3>
+                        <p>Бот используется для уведомлений об ошибках и мониторинга системы</p>
+                        
+                        <div class="telegram-info">
+                            <p><strong>Бот:</strong> @EcoGrow_assis_Bot</p>
+                            <p><strong>Команды:</strong></p>
+                            <ul>
+                                <li><code>/moisture</code> - текущая влажность</li>
+                                <li><code>/status</code> - статус системы</li>
+                                <li><code>/errors</code> - список ошибок</li>
+                                <li><code>/web</code> - ссылка на эту панель</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="device-id-display">
+                            <p><strong>ID устройства:</strong></p>
+                            <code id="display_device_id">Не подключено</code>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-exclamation-triangle"></i> Ошибки системы
-                    </div>
-                    <div id="error_count" class="status-badge">0</div>
+        <!-- Connection Modal -->
+        <div class="modal" id="connection_modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-wifi"></i> Подключение к устройству</h3>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
                 </div>
-                
-                <div id="errors_container" class="errors-list">
-                    <div class="error-item">
-                        <div class="error-msg">Ошибок нет</div>
+                <div class="modal-body">
+                    <div class="connection-status">
+                        <div class="status-step">
+                            <div class="step-number active">1</div>
+                            <div class="step-text">Поиск устройств</div>
+                        </div>
+                        <div class="status-step">
+                            <div class="step-number">2</div>
+                            <div class="step-text">Подключение</div>
+                        </div>
+                        <div class="status-step">
+                            <div class="step-number">3</div>
+                            <div class="step-text">Загрузка данных</div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-danger" onclick="clearErrors()">
-                        <i class="fas fa-trash"></i> Очистить
-                    </button>
-                    <button class="btn btn-primary" onclick="refreshErrors()">
-                        <i class="fas fa-sync"></i> Обновить
-                    </button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-chart-bar"></i> Статистика
+                    
+                    <div class="scanning-devices" id="scanning_devices">
+                        <div class="spinner"></div>
+                        <p>Поиск устройств в сети...</p>
                     </div>
+                    
+                    <div class="found-devices" id="found_devices_list"></div>
                 </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div id="total_waterings" class="stat-value">0</div>
-                        <div class="stat-label">Всего поливов</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="total_light_hours" class="stat-value">0</div>
-                        <div class="stat-label">Часов света</div>
-                    </div>
-                    <div class="stat-card">
-                        <div id="energy_consumption" class="stat-value">0</div>
-                        <div class="stat-label">Вт·ч</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-clock"></i> Установка времени
-                    </div>
-                    <div id="time_mode" class="status-badge">Авто</div>
-                </div>
-                
-                <div class="time-display" id="current_time_display">
-                    Текущее: --:--
-                </div>
-                
-                <div class="compact-input-group">
-                    <div class="control-item">
-                        <label>Часы (0-23)</label>
-                        <input id="time_hours" type="number" min="0" max="23" step="1" value="12">
-                    </div>
-                    <div class="control-item">
-                        <label>Минуты (0-59)</label>
-                        <input id="time_minutes" type="number" min="0" max="59" step="1" value="0">
-                    </div>
-                </div>
-                
-                <div class="switch-row">
-                    <div class="switch-label">
-                        <span style="font-weight: 500;">Ручная корректировка</span>
-                        <span class="subtext">Добавить к системному времени</span>
-                    </div>
-                    <label class="switch">
-                        <input id="time_manual" type="checkbox" onchange="toggleTimeMode()">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-success" onclick="setCurrentTime()">
-                        <i class="fas fa-clock"></i> Установить сейчас
-                    </button>
-                    <button class="btn btn-primary" onclick="setCustomTime()">
-                        <i class="fas fa-clock"></i> Установить время
-                    </button>
-                </div>
-            </div>
-
-            <div class="telegram-card">
-                <h3><i class="fab fa-telegram"></i> Telegram Мониторинг</h3>
-                <p style="margin-bottom: 15px; font-size: 1rem;">Telegram бот используется только для уведомлений об ошибках и мониторинга</p>
-                <p style="margin-bottom: 10px; opacity: 0.9;">Бот: @EcoGrow_assis_Bot</p>
-                <p style="opacity: 0.9;">Команды: /moisture - влажность, /status - статус, /errors - ошибки</p>
             </div>
         </div>
     </div>
 
-    <!-- Уведомление -->
-    <div id="notification" class="notification"></div>
+    <!-- Notification Container -->
+    <div id="notification_container"></div>
 
-    <script src="config.js"></script>
-    <script src="script.js"></script>
+    <!-- Scripts -->
+    <script src="firebase.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
