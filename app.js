@@ -8,7 +8,7 @@ class EcoGrowApp {
         }
         
         this.systemData = {
-            moisture: 50,  // Начальное значение для демо
+            moisture: 50,
             pump: 0,
             light: 0,
             temperature: 25,
@@ -31,12 +31,18 @@ class EcoGrowApp {
         this.maxChartPoints = 24;
         
         this.chart = null;
-        this.miniChart = null;
-        
-        // Флаг инициализации
         this.isInitialized = false;
         
-        this.init();
+        // Сохраняем экземпляр в глобальной области
+        window.ecoGrowApp = this;
+        window.app = this;
+        
+        // Инициализация при загрузке DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
     }
 
     async init() {
@@ -49,10 +55,19 @@ class EcoGrowApp {
         this.isInitialized = true;
         
         try {
-            // Сначала инициализируем Firebase
+            // Обновляем статус прелоадера
+            const preloaderStatus = document.getElementById('preloaderStatus');
+            if (preloaderStatus) {
+                preloaderStatus.textContent = 'Проверка элементов...';
+            }
+            
+            // Проверяем основные элементы
+            this.checkEssentialElements();
+            
+            // Инициализируем Firebase
             await this.initFirebase();
             
-            // Затем инициализируем компоненты
+            // Инициализируем компоненты
             this.initCharts();
             this.initEventListeners();
             
@@ -80,16 +95,32 @@ class EcoGrowApp {
         }
     }
 
+    checkEssentialElements() {
+        console.log('🔍 Проверка элементов...');
+        
+        const essentialElements = [
+            'moistureValue', 'pumpStatus', 'lightStatus',
+            'manualPumpBtn', 'manualLightBtn', 'moistureChart',
+            'currentTime', 'lastUpdate', 'statusDot', 'statusText'
+        ];
+        
+        essentialElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) {
+                console.error(`❌ Критический элемент #${id} не найден!`);
+            } else {
+                console.log(`✅ Элемент #${id} найден`);
+            }
+        });
+    }
+
     async initFirebase() {
         return new Promise((resolve, reject) => {
-            const maxAttempts = 30;
-            let attempts = 0;
+            console.log('🔌 Подключение к Firebase...');
             
             const checkFirebase = () => {
-                attempts++;
-                
-                if (window.firebaseDatabase && window.firebaseDatabase.ref) {
-                    console.log('✅ Firebase обнаружен и готов к работе');
+                if (window.firebaseDatabase && typeof window.firebaseDatabase.ref === 'function') {
+                    console.log('✅ Firebase готов к работе');
                     this.db = window.firebaseDatabase;
                     this.isFirebaseReady = true;
                     
@@ -100,20 +131,21 @@ class EcoGrowApp {
                     this.updateConnectionStatus('connected');
                     
                     resolve();
-                    
-                } else if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Firebase не обнаружен, переходим в демо-режим');
-                    this.updateConnectionStatus('disconnected');
-                    reject(new Error('Firebase не загрузился'));
-                    
                 } else {
-                    const delay = attempts < 10 ? 200 : 500;
-                    setTimeout(checkFirebase, delay);
+                    console.log('⏳ Ожидание Firebase...');
+                    setTimeout(checkFirebase, 500);
                 }
             };
             
             // Даем время на загрузку Firebase
-            setTimeout(checkFirebase, 1000);
+            setTimeout(() => {
+                if (!window.firebaseDatabase) {
+                    console.warn('⚠️ Firebase не загрузился');
+                    reject(new Error('Firebase не загрузился'));
+                } else {
+                    checkFirebase();
+                }
+            }, 3000);
         });
     }
 
@@ -128,12 +160,14 @@ class EcoGrowApp {
             dataRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    console.log('📥 Данные получены из Firebase:', data);
+                    console.log('📥 Данные из Firebase:', data);
                     this.updateSystemData(data);
                     this.lastUpdate = Date.now();
-                } else {
-                    console.log('📭 Нет данных в Firebase');
+                    this.updateConnectionStatus('connected');
                 }
+            }, (error) => {
+                console.error('❌ Ошибка чтения данных:', error);
+                this.updateConnectionStatus('error');
             });
             
             // Статистика
@@ -167,51 +201,39 @@ class EcoGrowApp {
     }
 
     initCharts() {
-        // Проверяем, не существует ли уже графиков
         const mainCanvas = document.getElementById('moistureChart');
-        const miniCanvas = document.getElementById('miniMoistureChart');
-        
         if (!mainCanvas) {
-            console.error('❌ Canvas элемент moistureChart не найден');
+            console.error('❌ Canvas элемент не найден');
             return;
         }
         
-        // Уничтожаем существующие графики если они есть
-        if (this.chart) {
-            this.chart.destroy();
-            this.chart = null;
-        }
-        
-        if (this.miniChart) {
-            this.miniChart.destroy();
-            this.miniChart = null;
-        }
-        
-        // Очищаем контексты
-        const mainCtx = mainCanvas.getContext('2d');
-        mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-        
         try {
-            // Основной график влажности
-            this.chart = new Chart(mainCtx, {
+            // Уничтожаем старый график если есть
+            if (this.chart) {
+                this.chart.destroy();
+            }
+            
+            // Создаем новый график
+            const ctx = mainCanvas.getContext('2d');
+            this.chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: Array.from({length: 24}, (_, i) => {
-                        const hour = (new Date().getHours() - (23 - i) + 24) % 24;
-                        return hour.toString().padStart(2, '0') + ':00';
+                    labels: Array.from({length: 12}, (_, i) => {
+                        const hour = new Date().getHours();
+                        return `${((hour - 11 + i + 24) % 24).toString().padStart(2, '0')}:00`;
                     }),
                     datasets: [{
                         label: 'Влажность почвы',
-                        data: Array(24).fill(50),
+                        data: Array(12).fill(50),
                         borderColor: 'rgb(59, 130, 246)',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
+                        borderWidth: 3,
                         fill: true,
                         tension: 0.4,
                         pointBackgroundColor: 'rgb(59, 130, 246)',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
-                        pointRadius: 3
+                        pointRadius: 4
                     }]
                 },
                 options: {
@@ -222,6 +244,9 @@ class EcoGrowApp {
                         tooltip: {
                             mode: 'index',
                             intersect: false,
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#e2e8f0',
+                            bodyColor: '#cbd5e1',
                             callbacks: {
                                 label: (context) => `Влажность: ${context.parsed.y}%`
                             }
@@ -229,18 +254,31 @@ class EcoGrowApp {
                     },
                     scales: {
                         x: {
-                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
-                            ticks: { color: 'rgb(148, 163, 184)' }
+                            grid: { 
+                                color: 'rgba(148, 163, 184, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: { 
+                                color: '#94a3b8',
+                                maxRotation: 0
+                            }
                         },
                         y: {
                             min: 0,
                             max: 100,
-                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            grid: { 
+                                color: 'rgba(148, 163, 184, 0.1)',
+                                drawBorder: false
+                            },
                             ticks: {
-                                color: 'rgb(148, 163, 184)',
+                                color: '#94a3b8',
                                 callback: (value) => value + '%'
                             }
                         }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
                     }
                 }
             });
@@ -248,7 +286,7 @@ class EcoGrowApp {
             console.log('📊 График инициализирован');
             
         } catch (error) {
-            console.error('❌ Ошибка инициализации графиков:', error);
+            console.error('❌ Ошибка инициализации графика:', error);
         }
     }
 
@@ -261,7 +299,11 @@ class EcoGrowApp {
         this.systemData.humidity = data.humidity || 50;
         this.systemData.timestamp = data.timestamp || Date.now();
         
-        console.log('📊 Обновление данных:', this.systemData);
+        console.log('🔄 Обновление данных:', {
+            moisture: this.systemData.moisture,
+            pump: this.systemData.pump,
+            light: this.systemData.light
+        });
         
         this.updateUI();
         this.updateChart();
@@ -271,14 +313,23 @@ class EcoGrowApp {
         try {
             // Основные показатели
             const moistureEl = document.getElementById('moistureValue');
-            const temperatureEl = document.getElementById('temperatureValue');
             const pumpStatusEl = document.getElementById('pumpStatus');
             const lightStatusEl = document.getElementById('lightStatus');
             
-            if (moistureEl) moistureEl.textContent = `${this.systemData.moisture}%`;
-            if (temperatureEl) temperatureEl.textContent = `${this.systemData.temperature}°C`;
-            if (pumpStatusEl) pumpStatusEl.textContent = this.systemData.pump ? 'ВКЛ' : 'ВЫКЛ';
-            if (lightStatusEl) lightStatusEl.textContent = this.systemData.light ? 'ВКЛ' : 'ВЫКЛ';
+            if (moistureEl) {
+                moistureEl.textContent = `${this.systemData.moisture}%`;
+                moistureEl.style.color = this.getMoistureColor(this.systemData.moisture);
+            }
+            
+            if (pumpStatusEl) {
+                pumpStatusEl.textContent = this.systemData.pump ? 'ВКЛ' : 'ВЫКЛ';
+                pumpStatusEl.style.color = this.systemData.pump ? '#10b981' : '#ef4444';
+            }
+            
+            if (lightStatusEl) {
+                lightStatusEl.textContent = this.systemData.light ? 'ВКЛ' : 'ВЫКЛ';
+                lightStatusEl.style.color = this.systemData.light ? '#f59e0b' : '#94a3b8';
+            }
             
             // Обновление времени
             const now = new Date();
@@ -299,18 +350,22 @@ class EcoGrowApp {
             // Обновление тренда
             this.updateMoistureTrend();
             
-            // Обновление статуса датчиков
-            this.updateSensorStatus();
-            
         } catch (error) {
             console.error('❌ Ошибка обновления UI:', error);
         }
     }
 
+    getMoistureColor(moisture) {
+        if (moisture < 30) return '#ef4444'; // Красный
+        if (moisture < 50) return '#f59e0b'; // Оранжевый
+        if (moisture < 70) return '#10b981'; // Зеленый
+        return '#3b82f6'; // Синий
+    }
+
     updateControlButtons() {
         try {
-            const pumpBtn = document.getElementById('togglePumpBtn');
-            const lightBtn = document.getElementById('toggleLightBtn');
+            const pumpBtn = document.getElementById('manualPumpBtn');
+            const lightBtn = document.getElementById('manualLightBtn');
             const pumpBtnText = document.getElementById('pumpBtnText');
             const lightBtnText = document.getElementById('lightBtnText');
             
@@ -318,9 +373,11 @@ class EcoGrowApp {
                 if (this.systemData.pump) {
                     pumpBtnText.textContent = 'Выключить насос';
                     pumpBtn.classList.add('active');
+                    pumpBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
                 } else {
                     pumpBtnText.textContent = 'Включить насос';
                     pumpBtn.classList.remove('active');
+                    pumpBtn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
                 }
             }
             
@@ -333,6 +390,7 @@ class EcoGrowApp {
                     lightBtn.classList.remove('active');
                 }
             }
+            
         } catch (error) {
             console.error('❌ Ошибка обновления кнопок:', error);
         }
@@ -346,17 +404,9 @@ class EcoGrowApp {
             
             const wateringsEl = document.getElementById('wateringsToday');
             const waterSavedEl = document.getElementById('waterSaved');
-            const lightHoursEl = document.getElementById('lightHours');
-            const efficiencyEl = document.getElementById('efficiencyValue');
             
             if (wateringsEl) wateringsEl.textContent = stats.wateringsToday || 0;
             if (waterSavedEl) waterSavedEl.textContent = `${(stats.totalWaterUsed || 0).toFixed(1)}л`;
-            
-            // Расчет часов света
-            if (lightHoursEl) {
-                const lightHours = (stats.totalPowerUsed || 0).toFixed(1);
-                lightHoursEl.textContent = lightHours;
-            }
             
         } catch (error) {
             console.error('❌ Ошибка обновления статистики:', error);
@@ -367,21 +417,13 @@ class EcoGrowApp {
         if (!info) return;
         
         try {
-            // Обновление времени системы
-            const lastUpdateEl = document.getElementById('lastSystemUpdate');
-            if (lastUpdateEl && info.time) {
-                lastUpdateEl.textContent = info.time;
-            }
-            
             // Обновление аптайма
             const uptimeEl = document.getElementById('uptime');
-            const daysRunningEl = document.getElementById('daysRunning');
-            if (uptimeEl && daysRunningEl && info.uptime) {
+            if (uptimeEl && info.uptime) {
                 const days = Math.floor(info.uptime / 86400);
                 const hours = Math.floor((info.uptime % 86400) / 3600);
                 const minutes = Math.floor((info.uptime % 3600) / 60);
                 uptimeEl.textContent = `${days}д ${hours}ч ${minutes}м`;
-                daysRunningEl.textContent = days + 1;
             }
             
         } catch (error) {
@@ -392,16 +434,9 @@ class EcoGrowApp {
     updateArduinoStatus(status) {
         try {
             const arduinoStatus = document.getElementById('arduinoStatus');
-            const arduinoItem = document.getElementById('arduinoStatusItem');
-            
-            if (arduinoStatus && arduinoItem) {
-                if (status === 1) {
-                    arduinoStatus.textContent = 'Онлайн';
-                    arduinoItem.className = 'status-item online';
-                } else {
-                    arduinoStatus.textContent = 'Офлайн';
-                    arduinoItem.className = 'status-item error';
-                }
+            if (arduinoStatus) {
+                arduinoStatus.textContent = status ? 'Онлайн' : 'Офлайн';
+                arduinoStatus.style.color = status ? '#10b981' : '#ef4444';
             }
         } catch (error) {
             console.error('❌ Ошибка обновления статуса Arduino:', error);
@@ -410,46 +445,30 @@ class EcoGrowApp {
 
     updateConnectionStatus(status) {
         try {
-            const statusDot = document.querySelector('.status-dot');
-            const statusText = document.querySelector('.status-indicator span:last-child');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
             
             if (statusDot && statusText) {
-                switch (status) {
+                switch(status) {
                     case 'connected':
                         statusDot.className = 'status-dot connected';
+                        statusDot.style.background = '#10b981';
                         statusText.textContent = 'Подключено';
                         break;
                     case 'disconnected':
-                        statusDot.className = 'status-dot';
+                        statusDot.className = 'status-dot disconnected';
+                        statusDot.style.background = '#ef4444';
                         statusText.textContent = 'Отключено';
                         break;
-                    default:
+                    case 'error':
                         statusDot.className = 'status-dot';
+                        statusDot.style.background = '#f59e0b';
                         statusText.textContent = 'Ошибка';
+                        break;
                 }
             }
         } catch (error) {
             console.error('❌ Ошибка обновления статуса подключения:', error);
-        }
-    }
-
-    updateSensorStatus() {
-        try {
-            const sensorStatus = document.getElementById('sensorStatus');
-            const sensorItem = document.getElementById('sensorStatusItem');
-            
-            // Статус датчика влажности
-            if (sensorStatus && sensorItem) {
-                if (this.systemData.moisture > 0) {
-                    sensorStatus.textContent = 'Работает';
-                    sensorItem.className = 'status-item online';
-                } else {
-                    sensorStatus.textContent = 'Ошибка';
-                    sensorItem.className = 'status-item error';
-                }
-            }
-        } catch (error) {
-            console.error('❌ Ошибка обновления статуса датчиков:', error);
         }
     }
 
@@ -461,23 +480,23 @@ class EcoGrowApp {
             const previous = this.chartData[this.chartData.length - 2] || current;
             
             let trend, color;
-            if (current > previous) {
-                trend = '↗ Рост';
+            if (current > previous + 2) {
+                trend = '↗';
                 color = '#10b981';
-            } else if (current < previous) {
-                trend = '↘ Спад';
+            } else if (current < previous - 2) {
+                trend = '↘';
                 color = '#ef4444';
             } else {
-                trend = '→ Стабильно';
+                trend = '→';
                 color = '#f59e0b';
             }
             
             const trendElement = document.getElementById('trendValue');
-            
             if (trendElement) {
                 trendElement.textContent = trend;
                 trendElement.style.color = color;
             }
+            
         } catch (error) {
             console.error('❌ Ошибка обновления тренда:', error);
         }
@@ -487,18 +506,18 @@ class EcoGrowApp {
         if (!this.chart) return;
         
         try {
-            // Добавление данных в историю
+            // Добавляем данные в историю
             this.chartData.push(this.systemData.moisture);
             if (this.chartData.length > this.maxChartPoints) {
                 this.chartData.shift();
             }
             
-            // Обновление основного графика
+            // Обновляем график
             const now = new Date();
             const timeLabel = now.getHours().toString().padStart(2, '0') + ':' + 
                              now.getMinutes().toString().padStart(2, '0');
             
-            // Обновляем метки времени
+            // Сдвигаем метки времени
             this.chart.data.labels.shift();
             this.chart.data.labels.push(timeLabel);
             
@@ -537,83 +556,92 @@ class EcoGrowApp {
     }
 
     initEventListeners() {
+        console.log('🎛️ Инициализация слушателей событий...');
+        
         try {
-            console.log('🎛️ Инициализация слушателей событий...');
-
-            // Управление насосом
-            const pumpBtn = document.getElementById('togglePumpBtn');
+            // 1. Ручное управление насосом
+            const pumpBtn = document.getElementById('manualPumpBtn');
             if (pumpBtn) {
+                console.log('✅ Обработчик кнопки насоса');
                 pumpBtn.addEventListener('click', () => {
+                    console.log('👉 Кнопка насоса нажата');
                     this.togglePump();
                 });
             }
 
-            // Управление светом
-            const lightBtn = document.getElementById('toggleLightBtn');
+            // 2. Ручное управление светом
+            const lightBtn = document.getElementById('manualLightBtn');
             if (lightBtn) {
+                console.log('✅ Обработчик кнопки света');
                 lightBtn.addEventListener('click', () => {
+                    console.log('👉 Кнопка света нажата');
                     this.toggleLight();
                 });
             }
 
-            // Порог влажности
+            // 3. Быстрый полив
+            document.querySelectorAll('.quick-water-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const seconds = parseInt(e.target.dataset.seconds);
+                    console.log(`👉 Быстрый полив на ${seconds} секунд`);
+                    this.quickWater(seconds);
+                });
+            });
+
+            // 4. Слайдер порога влажности
             const thresholdSlider = document.getElementById('moistureThreshold');
             if (thresholdSlider) {
+                const valueDisplay = document.getElementById('thresholdValue');
+                
                 thresholdSlider.addEventListener('input', (e) => {
-                    const valueDisplay = document.getElementById('thresholdValue');
                     if (valueDisplay) {
                         valueDisplay.textContent = `${e.target.value}%`;
                     }
                 });
 
                 thresholdSlider.addEventListener('change', (e) => {
+                    console.log('📊 Изменение порога влажности:', e.target.value);
                     this.updateSetting('threshold', e.target.value);
                 });
             }
 
-            // Длительность полива
+            // 5. Длительность полива
             const pumpDuration = document.getElementById('pumpDuration');
             if (pumpDuration) {
                 pumpDuration.addEventListener('change', (e) => {
+                    console.log('⏱️ Изменение длительности полива:', e.target.value);
                     this.updateSetting('pumpTime', e.target.value);
                 });
             }
 
-            // Автополив
+            // 6. Автополив
             const autoWateringToggle = document.getElementById('autoWateringToggle');
             if (autoWateringToggle) {
                 autoWateringToggle.addEventListener('change', (e) => {
+                    console.log('🤖 Изменение автополива:', e.target.checked);
                     this.updateSetting('autoWatering', e.target.checked);
                 });
             }
 
-            // Синхронизация времени
+            // 7. Синхронизация времени
             const syncBtn = document.getElementById('syncTimeBtn');
             if (syncBtn) {
                 syncBtn.addEventListener('click', () => {
+                    console.log('⏰ Синхронизация времени');
                     this.syncTime();
                 });
             }
 
-            // Очистка ошибок
+            // 8. Очистка ошибок
             const clearErrorsBtn = document.getElementById('clearErrorsBtn');
             if (clearErrorsBtn) {
                 clearErrorsBtn.addEventListener('click', () => {
+                    console.log('🧹 Очистка ошибок');
                     this.clearErrors();
                 });
             }
 
-            // Кнопки быстрого полива
-            const quickWaterButtons = document.querySelectorAll('[onclick^="quickWater"]');
-            quickWaterButtons.forEach(btn => {
-                const onclick = btn.getAttribute('onclick');
-                const seconds = onclick.match(/quickWater\((\d+)\)/)[1];
-                btn.addEventListener('click', () => {
-                    this.quickWater(parseInt(seconds));
-                });
-            });
-            
-            console.log('✅ Слушатели событий инициализированы');
+            console.log('✅ Все обработчики событий инициализированы');
             
         } catch (error) {
             console.error('❌ Ошибка инициализации слушателей событий:', error);
@@ -644,40 +672,61 @@ class EcoGrowApp {
 
     checkConnection() {
         if (this.lastUpdate && Date.now() - this.lastUpdate > 60000) {
-            this.connectionStatus = 'disconnected';
-            this.updateConnectionStatus(this.connectionStatus);
+            this.updateConnectionStatus('disconnected');
             this.showToast('Нет данных от системы более 1 минуты', 'warning');
         }
     }
 
     async togglePump() {
+        console.log('🔧 Переключение насоса...');
+        
         try {
             const newState = !this.systemData.pump;
             const command = newState ? 'ON' : 'OFF';
             
             await this.sendCommand('pump', command);
+            
+            // Локальное обновление UI
             this.systemData.pump = newState ? 1 : 0;
-            this.updateUI();
+            this.updateControlButtons();
+            
+            const pumpStatusEl = document.getElementById('pumpStatus');
+            if (pumpStatusEl) {
+                pumpStatusEl.textContent = newState ? 'ВКЛ' : 'ВЫКЛ';
+                pumpStatusEl.style.color = newState ? '#10b981' : '#ef4444';
+            }
+            
             this.showToast(`Насос ${newState ? 'включен' : 'выключен'}`, 'success');
             
         } catch (error) {
-            console.error('Ошибка управления насосом:', error);
+            console.error('❌ Ошибка управления насосом:', error);
             this.showToast('Ошибка отправки команды', 'error');
         }
     }
 
     async toggleLight() {
+        console.log('💡 Переключение света...');
+        
         try {
             const newState = !this.systemData.light;
             const command = newState ? 'ON' : 'OFF';
             
             await this.sendCommand('light', command);
+            
+            // Локальное обновление UI
             this.systemData.light = newState ? 1 : 0;
-            this.updateUI();
+            this.updateControlButtons();
+            
+            const lightStatusEl = document.getElementById('lightStatus');
+            if (lightStatusEl) {
+                lightStatusEl.textContent = newState ? 'ВКЛ' : 'ВЫКЛ';
+                lightStatusEl.style.color = newState ? '#f59e0b' : '#94a3b8';
+            }
+            
             this.showToast(`Свет ${newState ? 'включен' : 'выключен'}`, 'success');
             
         } catch (error) {
-            console.error('Ошибка управления светом:', error);
+            console.error('❌ Ошибка управления светом:', error);
             this.showToast('Ошибка отправки команды', 'error');
         }
     }
@@ -687,26 +736,71 @@ class EcoGrowApp {
             try {
                 if (!this.db) {
                     console.log('DEMO: Отправка команды', type, '=', value);
-                    // В демо-режиме симулируем отправку команды
+                    // В демо-режиме симулируем отправку
                     setTimeout(() => {
-                        this.showToast(`Команда отправлена: ${type}=${value}`, 'success');
+                        console.log('✅ Демо-команда выполнена');
                         resolve();
-                    }, 500);
+                    }, 300);
                     return;
                 }
+                
+                console.log(`📤 Отправка команды в Firebase: ${type}=${value}`);
                 
                 const commandRef = this.db.ref(`commands/${type}`);
                 commandRef.set(value)
                     .then(() => {
-                        console.log(`✅ Команда отправлена: ${type}=${value}`);
+                        console.log(`✅ Команда отправлена в Firebase`);
                         resolve();
                     })
-                    .catch(reject);
+                    .catch(error => {
+                        console.error('❌ Ошибка отправки в Firebase:', error);
+                        reject(error);
+                    });
                     
             } catch (error) {
+                console.error('❌ Критическая ошибка отправки:', error);
                 reject(error);
             }
         });
+    }
+
+    quickWater(seconds) {
+        console.log(`💧 Быстрый полив на ${seconds} секунд`);
+        
+        // Временное включение насоса в UI
+        const originalState = this.systemData.pump;
+        this.systemData.pump = 1;
+        this.updateControlButtons();
+        
+        const pumpStatusEl = document.getElementById('pumpStatus');
+        if (pumpStatusEl) {
+            pumpStatusEl.textContent = 'ВКЛ';
+            pumpStatusEl.style.color = '#10b981';
+        }
+        
+        this.showToast(`⏱️ Полив на ${seconds} секунд`, 'info');
+        
+        // Отправляем команду в фоновом режиме
+        this.sendCommand('quickWater', seconds.toString())
+            .then(() => {
+                console.log(`✅ Команда быстрого полива отправлена`);
+            })
+            .catch(error => {
+                console.error('❌ Ошибка быстрого полива:', error);
+            });
+        
+        // Автоматическое выключение через указанное время
+        setTimeout(() => {
+            this.systemData.pump = originalState;
+            this.updateControlButtons();
+            
+            if (pumpStatusEl) {
+                pumpStatusEl.textContent = originalState ? 'ВКЛ' : 'ВЫКЛ';
+                pumpStatusEl.style.color = originalState ? '#10b981' : '#ef4444';
+            }
+            
+            this.showToast('✅ Полив завершен', 'success');
+        }, seconds * 1000);
     }
 
     async updateSetting(setting, value) {
@@ -751,34 +845,13 @@ class EcoGrowApp {
         }
     }
 
-    quickWater(seconds) {
-        this.sendCommand('quickWater', seconds.toString())
-            .then(() => {
-                this.showToast(`Быстрый полив на ${seconds} секунд`, 'info');
-                // Временное включение насоса в UI
-                this.systemData.pump = 1;
-                this.updateUI();
-                
-                // Автоматическое выключение через указанное время
-                setTimeout(() => {
-                    this.systemData.pump = 0;
-                    this.updateUI();
-                    this.showToast('Полив завершен', 'success');
-                }, seconds * 1000);
-            })
-            .catch(error => {
-                console.error('Ошибка быстрого полива:', error);
-                this.showToast('Ошибка полива', 'error');
-            });
-    }
-
     startDemoMode() {
         console.log('🔄 Запуск демо-режима');
         
         // Симуляция получения данных каждые 3 секунды
         setInterval(() => {
             // Генерация реалистичных данных
-            const moistureChange = (Math.random() - 0.5) * 2; // -1 до +1
+            const moistureChange = (Math.random() - 0.5) * 2;
             this.systemData.moisture = Math.max(20, Math.min(80, 
                 this.systemData.moisture + moistureChange
             ));
@@ -790,10 +863,6 @@ class EcoGrowApp {
             if (Math.random() > 0.97) {
                 this.systemData.light = 1 - this.systemData.light;
             }
-            
-            // Температура и влажность
-            this.systemData.temperature = 22 + Math.sin(Date.now() / 100000) * 3;
-            this.systemData.humidity = 40 + Math.cos(Date.now() / 150000) * 20;
             
             this.systemData.timestamp = Date.now();
             
@@ -824,10 +893,18 @@ class EcoGrowApp {
             const container = document.getElementById('toastContainer');
             if (!container) {
                 console.log('Toast container не найден, создаю...');
-                // Создаем контейнер если его нет
                 const newContainer = document.createElement('div');
                 newContainer.id = 'toastContainer';
-                newContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000;';
+                newContainer.style.cssText = `
+                    position: fixed;
+                    bottom: 25px;
+                    right: 25px;
+                    z-index: 10000;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    align-items: flex-end;
+                `;
                 document.body.appendChild(newContainer);
                 this.showToast(message, type);
                 return;
@@ -835,40 +912,6 @@ class EcoGrowApp {
             
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.style.cssText = `
-                background: #1e293b;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                margin-bottom: 10px;
-                animation: slideIn 0.3s ease;
-                max-width: 350px;
-            `;
-            
-            // Добавляем анимацию если ее нет
-            if (!document.querySelector('#toast-animations')) {
-                const style = document.createElement('style');
-                style.id = 'toast-animations';
-                style.textContent = `
-                    @keyframes slideIn {
-                        from { transform: translateX(100px); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOut {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100px); opacity: 0; }
-                    }
-                    .toast { border-left: 4px solid #3b82f6; }
-                    .toast.success { border-left-color: #10b981; }
-                    .toast.error { border-left-color: #ef4444; }
-                    .toast.warning { border-left-color: #f59e0b; }
-                `;
-                document.head.appendChild(style);
-            }
             
             let icon = 'fas fa-info-circle';
             if (type === 'success') icon = 'fas fa-check-circle';
@@ -898,8 +941,17 @@ class EcoGrowApp {
     }
 }
 
-// Инициализация приложения при загрузке страницы
+// Автоматическая инициализация при загрузке
 window.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM загружен, запуск приложения...');
-    window.ecoGrowApp = new EcoGrowApp();
+    if (!window.ecoGrowApp) {
+        window.ecoGrowApp = new EcoGrowApp();
+    }
 });
+
+// Глобальная функция для быстрого полива (для совместимости)
+window.quickWater = function(seconds) {
+    if (window.ecoGrowApp) {
+        window.ecoGrowApp.quickWater(seconds);
+    }
+};
