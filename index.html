@@ -1,59 +1,902 @@
-<!-- В header -->
-<div class="header-controls">
-    <div class="connection-status">
-        <div class="status-indicator">
-            <div class="status-dot" id="statusDot"></div>
-            <span id="statusText">Подключение...</span>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoGrow Assistant</title>
+    
+    <!-- Иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase 8.10.1 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <style>
+        /* БАЗОВЫЕ СТИЛИ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            min-height: 100vh;
+            transition: background 0.3s ease;
+        }
+        
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        /* Header */
+        .header { 
+            background: rgba(30, 41, 59, 0.9); 
+            padding: 15px 0; 
+            border-bottom: 2px solid #334155;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+        }
+        
+        .logo i { 
+            color: #10b981; 
+            font-size: 2.2rem; 
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .logo h1 { 
+            font-size: 1.6rem; 
+            font-weight: 700;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Status Dot */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .status-dot { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+            display: inline-block; 
+            margin-right: 8px; 
+            background: #f59e0b;
+            animation: blink 2s infinite;
+        }
+        
+        .status-dot.connected { 
+            background: #10b981; 
+            animation: none;
+        }
+        
+        .status-dot.disconnected { 
+            background: #ef4444; 
+            animation: none;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Cards */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+            margin: 20px 0; 
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+        
+        .stat-card { 
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 25px; 
+            border-radius: 16px; 
+            border-left: 5px solid #3b82f6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+        
+        .stat-card:hover { 
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-card.warning { 
+            border-left-color: #f59e0b; 
+        }
+        
+        .stat-card.warning::before {
+            background: linear-gradient(90deg, #f59e0b, #f97316);
+        }
+        
+        .stat-card.success { 
+            border-left-color: #10b981; 
+        }
+        
+        .stat-card.success::before {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+        
+        .stat-icon { 
+            font-size: 2.2rem; 
+            margin-bottom: 15px; 
+            color: #3b82f6; 
+        }
+        
+        .stat-card.warning .stat-icon { color: #f59e0b; }
+        .stat-card.success .stat-icon { color: #10b981; }
+        
+        .stat-value { 
+            font-size: 2.8rem; 
+            font-weight: 800; 
+            margin: 10px 0; 
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(90deg, #e2e8f0, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-trend { 
+            font-size: 0.95rem; 
+            color: #94a3b8; 
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Main Layout */
+        .main-layout { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 25px; 
+            margin-top: 25px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+        
+        .section { 
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 25px; 
+            border-radius: 16px; 
+            margin-bottom: 25px; 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .section h2 { 
+            margin-bottom: 20px; 
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+        }
+        
+        /* Chart */
+        .chart-wrapper { 
+            height: 300px; 
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        /* Controls */
+        .controls-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 25px; 
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .controls-grid { grid-template-columns: 1fr; }
+        }
+        
+        .control-group { 
+            background: rgba(15, 23, 42, 0.8); 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .control-group h3 { 
+            margin-bottom: 20px; 
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .slider-container { margin: 20px 0; }
+        .slider-container label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #94a3b8; 
+            font-size: 0.95rem;
+        }
+        
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slider { 
+            flex: 1;
+            -webkit-appearance: none;
+            height: 10px;
+            background: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 3px solid #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .slider-value { 
+            min-width: 45px; 
+            text-align: center; 
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #e2e8f0;
+        }
+        
+        .manual-controls { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        
+        .control-btn { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
+        
+        .control-btn:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .control-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .control-btn.active { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .control-btn.warning { 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .control-btn.warning:hover {
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        }
+        
+        /* Status List */
+        .status-list { margin: 20px 0; }
+        .status-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 14px 16px; 
+            background: rgba(15, 23, 42, 0.6); 
+            margin: 8px 0; 
+            border-radius: 10px; 
+            border-left: 4px solid #334155;
+            transition: all 0.2s ease;
+        }
+        
+        .status-item:hover {
+            background: rgba(15, 23, 42, 0.8);
+            transform: translateX(5px);
+        }
+        
+        .status-item.online { border-left-color: #10b981; }
+        .status-item.warning { border-left-color: #f59e0b; }
+        .status-item.error { border-left-color: #ef4444; }
+        
+        .status-item i { 
+            font-size: 1.3rem; 
+            width: 24px; 
+            color: #94a3b8;
+        }
+        
+        .status-item.online i { color: #10b981; }
+        .status-item.warning i { color: #f59e0b; }
+        .status-item.error i { color: #ef4444; }
+        
+        .status-badge { 
+            padding: 6px 14px; 
+            background: rgba(16, 185, 129, 0.15); 
+            color: #10b981; 
+            border-radius: 20px; 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+        }
+        
+        .status-item.error .status-badge { 
+            background: rgba(239, 68, 68, 0.15); 
+            color: #ef4444; 
+        }
+        
+        .status-item.warning .status-badge { 
+            background: rgba(245, 158, 11, 0.15); 
+            color: #f59e0b; 
+        }
+        
+        /* Footer */
+        .footer { 
+            margin-top: 40px; 
+            padding-top: 25px; 
+            border-top: 1px solid #334155; 
+            text-align: center; 
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 18px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10000;
+            animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 380px;
+            border-left: 5px solid #3b82f6;
+        }
+        
+        .toast.success { 
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+        }
+        
+        .toast.error { 
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+        }
+        
+        .toast.warning { 
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+        }
+        
+        @keyframes slideIn {
+            from { 
+                transform: translateX(100px) scale(0.8); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(0) scale(1); 
+                opacity: 1; 
+            }
+        }
+        
+        @keyframes slideOut {
+            from { 
+                transform: translateX(0) scale(1); 
+                opacity: 1; 
+            }
+            to { 
+                transform: translateX(100px) scale(0.8); 
+                opacity: 0; 
+            }
+        }
+        
+        /* No Data Message */
+        .no-data { 
+            text-align: center; 
+            padding: 50px 20px; 
+            color: #94a3b8; 
+        }
+        
+        .no-data i { 
+            font-size: 3.5rem; 
+            margin-bottom: 20px; 
+            color: #64748b; 
+            opacity: 0.5;
+        }
+        
+        /* Loading */
+        .loading { 
+            text-align: center; 
+            padding: 40px 20px; 
+            color: #94a3b8; 
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(51, 65, 85, 0.3);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .preloader-content {
+            text-align: center;
+        }
+        
+        .preloader-spinner {
+            font-size: 4rem;
+            color: #10b981;
+            margin-bottom: 25px;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Time */
+        .current-time {
+            font-size: 2.2rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
+            color: #3b82f6;
+            margin: 15px 0;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Error History */
+        .error-item {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 5px solid #ef4444;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .error-time {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Form Elements */
+        input[type="number"], 
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #334155;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="number"]:focus, 
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Checkbox */
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+        
+        /* Quick Water Buttons */
+        .quick-water-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .quick-water-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-water-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px 15px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(15, 23, 42, 0.8);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container { padding: 15px; }
+            .section { padding: 20px; }
+            .stat-card { padding: 20px; }
+            .stat-value { font-size: 2.2rem; }
+            .current-time { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-spinner">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <div>Загрузка EcoGrow Assistant...</div>
+            <div style="margin-top: 10px; font-size: 0.9rem; color: #94a3b8;" id="preloaderStatus">Инициализация системы</div>
         </div>
-        <div class="last-update" id="lastUpdate">--:--:--</div>
     </div>
-    
-    <!-- Переключатель темы -->
-    <label class="switch">
-        <input type="checkbox" id="themeToggle">
-        <span class="slider">
-            <i class="fas fa-sun"></i>
-            <i class="fas fa-moon"></i>
-        </span>
-    </label>
-    
-    <!-- Кнопка режима сна -->
-    <button class="sleep-mode-btn" id="sleepModeBtn">
-        <i class="fas fa-moon"></i> Режим сна
-    </button>
-</div>
 
-<!-- В блоке управления -->
-<div class="manual-controls">
-    <button class="control-btn" id="manualPumpBtn">
-        <i class="fas fa-water"></i>
-        <span id="pumpBtnText">Включить насос</span>
-    </button>
-    
-    <button class="control-btn warning" id="manualLightBtn">
-        <i class="fas fa-lightbulb"></i>
-        <span id="lightBtnText">Включить свет</span>
-    </button>
-    
-    <div style="margin-top: 15px;">
-        <label>Быстрый полив:</label>
-        <div style="display: flex; gap: 10px; margin-top: 5px;">
-            <button class="control-btn quick-water-btn" data-seconds="5">5с</button>
-            <button class="control-btn quick-water-btn" data-seconds="10">10с</button>
-            <button class="control-btn quick-water-btn" data-seconds="30">30с</button>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-seedling"></i>
+                    <h1>EcoGrow Assistant</h1>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Подключение...</span>
+                    <span id="lastUpdate" style="margin-left: 15px; font-size: 0.9rem; color: #94a3b8;">--:--:--</span>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+    </header>
 
-<!-- В блоке статуса системы -->
-<div id="statusContainer">
-    <!-- Статусные элементы будут добавлены динамически -->
-</div>
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Top Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <h3>Влажность почвы</h3>
+                <div class="stat-value" id="moistureValue">--%</div>
+                <div class="stat-trend" id="moistureTrend">↗ Загрузка...</div>
+            </div>
+            
+            <div class="stat-card warning">
+                <div class="stat-icon">
+                    <i class="fas fa-sun"></i>
+                </div>
+                <h3>Свет</h3>
+                <div class="stat-value" id="lightStatus">ВЫКЛ</div>
+                <div class="stat-trend" id="lightTimer">--:--</div>
+            </div>
+            
+            <div class="stat-card success">
+                <div class="stat-icon">
+                    <i class="fas fa-water"></i>
+                </div>
+                <h3>Насос</h3>
+                <div class="stat-value" id="pumpStatus">ВЫКЛ</div>
+                <div class="stat-trend" id="pumpTimer">--:--</div>
+            </div>
+        </div>
 
-<!-- В блоке ошибок -->
-<div id="errorList">
-    <div class="no-data">
-        <i class="fas fa-check-circle"></i>
-        <p>Ошибок не обнаружено</p>
-    </div>
-</div>
+        <div class="main-layout">
+            <!-- Left Column: Chart & Controls -->
+            <div>
+                <!-- Chart -->
+                <div class="section">
+                    <h2><i class="fas fa-chart-line"></i> График влажности</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="moistureChart"></canvas>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.9rem; color: #94a3b8;">Средняя</div>
+                            <div class="stat-value" style="font-size: 1.5rem;" id="avgMoisture">--%</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.9rem; color: #94a3b8;">Минимум</div>
+                            <div class="stat-value" style="font-size: 1.5rem;" id="minMoisture">--%</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.9rem; color: #94a3b8;">Максимум</div>
+                            <div class="stat-value" style="font-size: 1.5rem;" id="maxMoisture">--%</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.9rem; color: #94a3b8;">Тренд</div>
+                            <div class="stat-value" style="font-size: 1.5rem;" id="trendValue">→</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="section">
+                    <h2><i class="fas fa-sliders-h"></i> Управление системой</h2>
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <h3><i class="fas fa-cogs"></i> Автополив</h3>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                    <input type="checkbox" id="autoWateringToggle" checked style="width: 20px; height: 20px;">
+                                    <span>Автополив включен</span>
+                                </label>
+                            </div>
+                            
+                            <div class="slider-container">
+                                <label>Порог влажности:</label>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="moistureThreshold" min="10" max="90" value="50" class="slider">
+                                    <span class="slider-value" id="thresholdValue">50%</span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin: 15px 0;">
+                                <label>Длительность полива (сек):</label>
+                                <input type="number" id="pumpDuration" min="1" max="300" value="10" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.8); border: 2px solid #334155; border-radius: 8px; color: white; margin-top: 8px;">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <h3><i class="fas fa-hand-paper"></i> Ручное управление</h3>
+                            <div class="manual-controls">
+                                <button class="control-btn" id="manualPumpBtn">
+                                    <i class="fas fa-water"></i>
+                                    <span id="pumpBtnText">Включить насос</span>
+                                </button>
+                                <button class="control-btn warning" id="manualLightBtn">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span id="lightBtnText">Включить свет</span>
+                                </button>
+                                
+                                <div style="margin-top: 15px;">
+                                    <label>Быстрый полив:</label>
+                                    <div class="quick-water-buttons">
+                                        <button class="quick-water-btn" data-seconds="5">5с</button>
+                                        <button class="quick-water-btn" data-seconds="10">10с</button>
+                                        <button class="quick-water-btn" data-seconds="30">30с</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Status & Info -->
+            <div>
+                <!-- System Status -->
+                <div class="section">
+                    <h2><i class="fas fa-heartbeat"></i> Статус системы</h2>
+                    <div id="statusContainer">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <div>Загрузка статуса...</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 25px;">
+                        <h3><i class="fas fa-clock"></i> Системное время</h3>
+                        <div class="current-time" id="currentTime">--:--:--</div>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="control-btn" style="background: linear-gradient(135deg, #475569 0%, #334155 100%); padding: 12px 24px;" id="syncTimeBtn">
+                                <i class="fas fa-sync-alt"></i> Синхронизировать время
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Error History -->
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2 style="margin: 0;"><i class="fas fa-exclamation-triangle"></i> История ошибок</h2>
+                        <button id="clearErrorsBtn" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 2px solid rgba(239, 68, 68, 0.3); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
+                            <i class="fas fa-trash"></i> Очистить
+                        </button>
+                    </div>
+                    
+                    <div id="errorList">
+                        <div class="no-data">
+                            <i class="fas fa-check-circle"></i>
+                            <p>Ошибок не обнаружено</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer container">
+        <p>EcoGrow Assistant v4.5 | Разработано Купченя Евгением</p>
+        <p style="margin-top: 5px; font-size: 0.9rem;">Система автоматического полива растений</p>
+        <p style="margin-top: 10px; font-size: 0.8rem; color: #64748b;">Время сервера: <span id="serverTime">--:--:--</span> | Аптайм: <span id="uptime">--</span></p>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Firebase Initialization -->
+    <script>
+        // Простая инициализация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
+            authDomain: "ecogrow-remote.firebaseapp.com",
+            databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
+            projectId: "ecogrow-remote",
+            storageBucket: "ecogrow-remote.firebasestorage.app",
+            messagingSenderId: "121689275158",
+            appId: "1:121689275158:web:f3b1829755c8b8a1fb2e37",
+            measurementId: "G-PG5116NH38"
+        };
+        
+        console.log('🔥 Инициализация Firebase...');
+        
+        try {
+            // Проверяем, загружен ли Firebase
+            if (typeof firebase === 'undefined') {
+                console.error('❌ Firebase SDK не загружен!');
+                throw new Error('Firebase SDK не загружен');
+            }
+            
+            // Инициализируем Firebase
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+            
+            // Сохраняем в глобальную область
+            window.firebaseDatabase = database;
+            
+            console.log('✅ Firebase инициализирован');
+            
+            // Тестируем соединение
+            database.ref('.info/connected').on('value', (snap) => {
+                console.log('📡 Firebase подключение:', snap.val() ? '✅ Подключено' : '❌ Отключено');
+            });
+            
+        } catch (error) {
+            console.error('❌ Ошибка Firebase:', error);
+            window.firebaseDatabase = null;
+        }
+    </script>
+    
+    <!-- Main App -->
+    <script src="app.js"></script>
+</body>
+</html>
