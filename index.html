@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400&display=swap">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="dark-theme">
@@ -235,22 +240,22 @@
                             <div class="status-item online">
                                 <i class="fas fa-microchip"></i>
                                 <span>Arduino UNO</span>
-                                <span class="status-badge">Онлайн</span>
+                                <span class="status-badge" id="arduinoStatus">Офлайн</span>
                             </div>
                             <div class="status-item online">
                                 <i class="fas fa-wifi"></i>
                                 <span>WiFi модуль</span>
-                                <span class="status-badge">Подключен</span>
+                                <span class="status-badge" id="wifiStatus">Подключен</span>
                             </div>
                             <div class="status-item warning">
                                 <i class="fas fa-tachometer-alt"></i>
                                 <span>Датчик влажности</span>
-                                <span class="status-badge">Требуется калибровка</span>
+                                <span class="status-badge" id="sensorStatus">Загрузка...</span>
                             </div>
                             <div class="status-item online">
                                 <i class="fas fa-clock"></i>
                                 <span>Часы RTC</span>
-                                <span class="status-badge">Синхронизировано</span>
+                                <span class="status-badge" id="rtcStatus">Синхронизация</span>
                             </div>
                         </div>
                         
@@ -414,7 +419,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-info">
-                    <h3>EcoGrow Assistant v3.3</h3>
+                    <h3>EcoGrow Assistant v4.5</h3>
                     <p>Система автоматического полива растений с интеллектуальным управлением</p>
                     <div class="contact-info">
                         <p><i class="fas fa-envelope"></i> zhenya.kupchenya@mail.ru</p>
@@ -433,7 +438,7 @@
                 
                 <div class="system-info">
                     <h4>Системная информация</h4>
-                    <p>Версия прошивки: 3.3.1</p>
+                    <p>Версия прошивки: 4.5.1</p>
                     <p>Последнее обновление: <span id="lastSystemUpdate">--</span></p>
                     <p>Потребление RAM: <span id="ramUsage">--</span></p>
                     <p>Аптайм: <span id="uptime">--</span></p>
@@ -470,11 +475,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getDatabase, ref, onValue, set, update, push } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
-
+    <!-- Firebase Configuration -->
+    <script>
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBsZr7vWJDFt_S5i0Rvj6ejp6QT0JX9SPk",
             authDomain: "ecogrow-remote.firebaseapp.com",
@@ -486,16 +489,12 @@
             measurementId: "G-PG5116NH38"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
         
         // Make database available globally
         window.firebaseDatabase = database;
-        window.firebaseRef = ref;
-        window.firebaseOnValue = onValue;
-        window.firebaseSet = set;
-        window.firebaseUpdate = update;
-        window.firebasePush = push;
     </script>
     
     <!-- Main Script -->
