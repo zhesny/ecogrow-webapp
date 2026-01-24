@@ -1,7 +1,7 @@
 // config.js - Конфигурация приложения
 const DEFAULT_CONFIG = {
     // Базовый URL для локального тестирования
-    ESP_BASE_URL: "http://192.168.1.100",
+    ESP_BASE_URL: "http://192.168.0.187",
     
     // Порт ESP8266
     PORT: 80,
