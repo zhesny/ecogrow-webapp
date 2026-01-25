@@ -2,46 +2,56 @@
     "name": "EcoGrow Control",
     "short_name": "EcoGrow",
     "description": "Умная система полива и контроля микроклимата растений",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#0a192f",
     "theme_color": "#64ffda",
-    "orientation": "any",
+    "orientation": "portrait",
     "icons": [
         {
-            "src": "/icon-192.png",
+            "src": "./icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icon-512.png",
+            "src": "./icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
         }
     ],
-    "categories": ["utilities", "productivity"],
+    "categories": ["productivity", "utilities"],
     "lang": "ru-RU",
     "dir": "ltr",
     "prefer_related_applications": false,
-    "scope": "/",
-    "share_target": {
-        "action": "/",
-        "method": "GET",
-        "params": {
-            "title": "EcoGrow Control",
-            "text": "Управление системой полива",
-            "url": "/"
-        }
-    },
+    "scope": "./",
     "shortcuts": [
         {
             "name": "Панель управления",
             "short_name": "Управление",
             "description": "Открыть панель управления",
-            "url": "/#controls",
-            "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+            "url": "./#controls"
+        },
+        {
+            "name": "Статистика",
+            "short_name": "Статистика",
+            "description": "Просмотр статистики",
+            "url": "./#stats"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "./screenshot-mobile.png",
+            "sizes": "360x640",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "protocol_handlers": [
+        {
+            "protocol": "web+ecogrow",
+            "url": "./?url=%s"
         }
     ]
 }
