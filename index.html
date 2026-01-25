@@ -14,21 +14,26 @@
         :root {
             --primary: #2196F3;
             --primary-light: #64B5F6;
-            --primary-dark: #1976D2;
+            --primary-dark: #1565C0;
             --secondary: #4CAF50;
             --secondary-light: #81C784;
             --secondary-dark: #388E3C;
             --accent: #FF4081;
+            
+            /* Светлая тема */
             --light-bg: #f5f7fa;
             --light-card: #ffffff;
             --light-border: #e0e0e0;
             --light-text: #333333;
             --light-text-secondary: #666666;
-            --dark-bg: #121212;
-            --dark-card: #1e1e1e;
-            --dark-border: #333333;
-            --dark-text: #ffffff;
-            --dark-text-secondary: #aaaaaa;
+            
+            /* Темно-синяя тема */
+            --dark-bg: #0a1929;
+            --dark-card: #132f4c;
+            --dark-border: #1e4976;
+            --dark-text: #e3f2fd;
+            --dark-text-secondary: #90caf9;
+            
             --success: #4CAF50;
             --warning: #FF9800;
             --danger: #F44336;
@@ -82,7 +87,8 @@
 
         .dark-theme header {
             background: var(--dark-card);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            border-bottom: 1px solid var(--dark-border);
         }
 
         .header-content {
@@ -224,8 +230,8 @@
         }
 
         .dark-theme .connection-status {
-            background: rgba(33, 150, 243, 0.2);
-            border-color: rgba(33, 150, 243, 0.3);
+            background: rgba(100, 181, 246, 0.15);
+            border-color: rgba(100, 181, 246, 0.3);
         }
 
         .status-indicator {
@@ -287,7 +293,7 @@
         .dark-theme .card {
             background: var(--dark-card);
             border-color: var(--dark-border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .card::before {
@@ -354,7 +360,7 @@
         }
 
         .dark-theme .data-item {
-            background: rgba(33, 150, 243, 0.1);
+            background: rgba(100, 181, 246, 0.1);
         }
 
         .data-item:hover {
@@ -484,7 +490,7 @@
         }
 
         .dark-theme .toggle-icon {
-            background: rgba(33, 150, 243, 0.2);
+            background: rgba(100, 181, 246, 0.2);
         }
 
         .toggle-text {
@@ -596,7 +602,7 @@
         }
 
         .dark-theme .slider-track {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.15);
         }
 
         .slider-fill {
@@ -680,8 +686,9 @@
         }
 
         .dark-theme .btn-secondary {
-            background: rgba(33, 150, 243, 0.2);
-            border-color: rgba(33, 150, 243, 0.4);
+            background: rgba(100, 181, 246, 0.15);
+            border-color: rgba(100, 181, 246, 0.4);
+            color: var(--primary-light);
         }
 
         .btn-secondary:hover:not(:disabled) {
@@ -690,7 +697,7 @@
         }
 
         .dark-theme .btn-secondary:hover:not(:disabled) {
-            background: rgba(33, 150, 243, 0.3);
+            background: rgba(100, 181, 246, 0.25);
         }
 
         .btn-success {
@@ -765,7 +772,7 @@
         .dark-theme input[type="time"],
         .dark-theme input[type="number"],
         .dark-theme select {
-            background: var(--dark-card);
+            background: rgba(255, 255, 255, 0.05);
             border-color: var(--dark-border);
             color: var(--dark-text);
         }
@@ -815,7 +822,7 @@
         }
 
         .dark-theme .telegram-details {
-            background: rgba(0, 136, 204, 0.2);
+            background: rgba(0, 136, 204, 0.15);
         }
 
         .telegram-details p {
@@ -865,7 +872,7 @@
         }
 
         .dark-theme .error-item {
-            background: rgba(244, 67, 54, 0.2);
+            background: rgba(244, 67, 54, 0.15);
         }
 
         .error-item.warning {
@@ -874,7 +881,7 @@
         }
 
         .dark-theme .error-item.warning {
-            background: rgba(255, 152, 0, 0.2);
+            background: rgba(255, 152, 0, 0.15);
         }
 
         .error-item.info {
@@ -883,7 +890,7 @@
         }
 
         .dark-theme .error-item.info {
-            background: rgba(33, 150, 243, 0.2);
+            background: rgba(33, 150, 243, 0.15);
         }
 
         .error-header {
@@ -945,7 +952,7 @@
         }
 
         .dark-theme .stat-item {
-            background: rgba(33, 150, 243, 0.1);
+            background: rgba(100, 181, 246, 0.1);
         }
 
         .stat-item:hover {
@@ -993,7 +1000,7 @@
         }
 
         .dark-theme .developer-card {
-            background: rgba(33, 150, 243, 0.1);
+            background: rgba(100, 181, 246, 0.1);
         }
 
         .developer-avatar {
@@ -1053,7 +1060,8 @@
         }
 
         .dark-theme .social-link {
-            background: rgba(33, 150, 243, 0.2);
+            background: rgba(100, 181, 246, 0.15);
+            color: var(--primary-light);
         }
 
         .social-link:hover {
@@ -1154,7 +1162,7 @@
 
         .dark-theme .notification {
             background: var(--dark-card);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
 
         .notification.show {
@@ -1953,13 +1961,13 @@
     <script>
         // Firebase Configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDmQ5yN1QqHnBfJNcX1fX7qY2ZvK8L9M0N",
+            apiKey: "AIzaSyBX3dP3nUP9CRcZ0Z1KHRFGeR6N6nZx1kM",
             authDomain: "ecogrow-remote-default-rtdb.firebaseapp.com",
-            databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
+            databaseURL: "https://ecogrow-remote-default-rtdb-default-rtdb.firebaseio.com",
             projectId: "ecogrow-remote-default-rtdb",
             storageBucket: "ecogrow-remote-default-rtdb.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef1234567890"
+            messagingSenderId: "557290315760",
+            appId: "1:557290315760:web:3b0ee54c2eb11ae2994ef1"
         };
 
         // Initialize Firebase
@@ -2031,20 +2039,6 @@
             errors: []
         };
         
-        // UI State (для хранения текущих значений элементов управления)
-        let uiState = {
-            thresholdSlider: 50,
-            durationSlider: 10,
-            intervalSlider: 10,
-            blockStart: "23:00",
-            blockEnd: "08:00",
-            lightStart: "08:00",
-            lightDuration: 12,
-            pumpToggle: false,
-            lightToggle: false,
-            sleepToggle: false
-        };
-        
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
@@ -2057,18 +2051,6 @@
             const now = new Date();
             document.getElementById('currentTime').value = 
                 `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-            
-            // Initialize UI state from DOM
-            uiState.thresholdSlider = parseInt(thresholdSlider.value);
-            uiState.durationSlider = parseInt(durationSlider.value);
-            uiState.intervalSlider = parseInt(intervalSlider.value);
-            uiState.blockStart = document.getElementById('blockStart').value;
-            uiState.blockEnd = document.getElementById('blockEnd').value;
-            uiState.lightStart = document.getElementById('lightStart').value;
-            uiState.lightDuration = parseInt(document.getElementById('lightDuration').value);
-            uiState.pumpToggle = pumpToggle.checked;
-            uiState.lightToggle = lightToggle.checked;
-            uiState.sleepToggle = sleepToggle.checked;
         });
         
         // Initialize theme
@@ -2117,7 +2099,7 @@
                     
                     // Update system state from Firebase data
                     if (data.moisture !== undefined) {
-                        systemState.moisture = Number(data.moisture);
+                        systemState.moisture = data.moisture;
                         systemState.pump = data.pump || false;
                         systemState.light = data.light || false;
                         systemState.threshold = data.threshold || 50;
@@ -2305,79 +2287,40 @@
                 updateChart(parseInt(this.value));
             });
             
-            // Toggle switches with debounce
-            let pumpToggleTimeout;
+            // Toggle switches with immediate action
             pumpToggle.addEventListener('change', function() {
-                clearTimeout(pumpToggleTimeout);
-                uiState.pumpToggle = this.checked;
-                pumpToggleTimeout = setTimeout(() => {
-                    const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
-                    sendCommand(command);
-                    showNotification('Насос', this.checked ? 'Включен вручную' : 'Выключен', 'success');
-                }, 300);
+                const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
+                sendCommand(command);
+                showNotification('Насос', this.checked ? 'Включен вручную' : 'Выключен', 'success');
             });
             
-            let lightToggleTimeout;
             lightToggle.addEventListener('change', function() {
-                clearTimeout(lightToggleTimeout);
-                uiState.lightToggle = this.checked;
-                lightToggleTimeout = setTimeout(() => {
-                    const command = this.checked ? 'LIGHT:ON' : 'LIGHT:OFF';
-                    sendCommand(command);
-                    showNotification('Свет', this.checked ? 'Включен вручную' : 'Выключен', 'success');
-                }, 300);
+                const command = this.checked ? 'LIGHT:ON' : 'LIGHT:OFF';
+                sendCommand(command);
+                showNotification('Свет', this.checked ? 'Включен вручную' : 'Выключен', 'success');
             });
             
             sleepToggle.addEventListener('change', function() {
-                uiState.sleepToggle = this.checked;
                 const command = this.checked ? 'SLEEP:ON' : 'SLEEP:OFF';
                 sendCommand(command);
                 showNotification('Режим сна', this.checked ? 'Включен' : 'Выключен', 'warning');
             });
             
-            // Sliders with debounce
-            let thresholdSliderTimeout;
+            // Sliders with immediate action
             thresholdSlider.addEventListener('input', function() {
-                clearTimeout(thresholdSliderTimeout);
                 updateThresholdSlider.call(this);
-                uiState.thresholdSlider = parseInt(this.value);
-                thresholdSliderTimeout = setTimeout(() => {
-                    sendCommand(`THRESHOLD:${this.value}`);
-                }, 1000);
+                sendCommand(`THRESHOLD:${this.value}`);
+                showNotification('Порог', `Установлен на ${this.value}%`, 'info');
             });
             
-            let durationSliderTimeout;
             durationSlider.addEventListener('input', function() {
-                clearTimeout(durationSliderTimeout);
                 updateDurationSlider.call(this);
-                uiState.durationSlider = parseInt(this.value);
-                durationSliderTimeout = setTimeout(() => {
-                    sendCommand(`PUMPDURATION:${this.value}`);
-                }, 1000);
+                sendCommand(`PUMPDURATION:${this.value}`);
+                showNotification('Длительность полива', `Установлена на ${this.value} сек`, 'info');
             });
             
-            let intervalSliderTimeout;
             intervalSlider.addEventListener('input', function() {
-                clearTimeout(intervalSliderTimeout);
                 updateIntervalSlider.call(this);
-                uiState.intervalSlider = parseInt(this.value);
-            });
-            
-            // Time inputs
-            document.getElementById('blockStart').addEventListener('change', function() {
-                uiState.blockStart = this.value;
-            });
-            
-            document.getElementById('blockEnd').addEventListener('change', function() {
-                uiState.blockEnd = this.value;
-            });
-            
-            document.getElementById('lightStart').addEventListener('change', function() {
-                uiState.lightStart = this.value;
-            });
-            
-            document.getElementById('lightDuration').addEventListener('change', function() {
-                uiState.lightDuration = parseInt(this.value);
             });
             
             // Buttons
@@ -2443,20 +2386,7 @@
         
         // Add data to history
         function addToHistory(data) {
-            // Генерируем реалистичные данные для графика
-            const now = Date.now();
-            const timeVariation = Math.sin(now / 100000) * 5 + Math.random() * 3;
-            
-            // Добавляем небольшие колебания к данным для реалистичности
-            const realisticData = {
-                timestamp: now,
-                moisture: Math.max(0, Math.min(100, data.moisture + timeVariation)),
-                pump: data.pump,
-                light: data.light,
-                threshold: data.threshold
-            };
-            
-            historyData.push(realisticData);
+            historyData.push(data);
             
             // Keep only last 1000 points
             if (historyData.length > 1000) {
@@ -2482,21 +2412,13 @@
         
         // Update chart with current data
         function updateChart(hours) {
-            if (historyData.length === 0) {
-                // Если нет данных, создаем демо-данные
-                generateDemoData(hours);
-                return;
-            }
+            if (historyData.length === 0) return;
             
             // Filter data based on time range
             const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
-            let filteredData = historyData.filter(d => d.timestamp >= cutoffTime);
+            const filteredData = historyData.filter(d => d.timestamp >= cutoffTime);
             
-            // Если недостаточно данных, добавляем демо
-            if (filteredData.length < 2) {
-                generateDemoData(hours);
-                filteredData = historyData.filter(d => d.timestamp >= cutoffTime);
-            }
+            if (filteredData.length === 0) return;
             
             // Prepare labels and data
             const labels = filteredData.map(d => {
@@ -2517,25 +2439,6 @@
             updateChartStats(filteredData);
         }
         
-        // Generate demo data for chart
-        function generateDemoData(hours) {
-            const now = Date.now();
-            const points = hours <= 24 ? 24 : 100; // Количество точек
-            
-            for (let i = points; i >= 0; i--) {
-                const timestamp = now - (i * hours * 60 * 60 * 1000 / points);
-                const moisture = 50 + Math.sin(i / 3) * 15 + Math.random() * 10;
-                
-                historyData.push({
-                    timestamp,
-                    moisture: Math.max(10, Math.min(90, moisture)),
-                    pump: Math.random() > 0.9,
-                    light: i > points / 3 && i < points * 2/3,
-                    threshold: 50
-                });
-            }
-        }
-        
         // Update chart statistics
         function updateChartStats(data) {
             if (data.length === 0) return;
@@ -2547,8 +2450,8 @@
             const trend = moistures.length > 1 ? moistures[moistures.length - 1] - moistures[0] : 0;
             
             document.getElementById('avgMoisture').textContent = `${avg.toFixed(1)}%`;
-            document.getElementById('minMoisture').textContent = `${min.toFixed(1)}%`;
-            document.getElementById('maxMoisture').textContent = `${max.toFixed(1)}%`;
+            document.getElementById('minMoisture').textContent = `${min}%`;
+            document.getElementById('maxMoisture').textContent = `${max}%`;
             document.getElementById('trendMoisture').textContent = `${trend > 0 ? '+' : ''}${trend.toFixed(1)}%`;
         }
         
@@ -2606,10 +2509,6 @@
             // Convert light minutes to hours
             dailyStats.lights = dailyStats.lights.map(minutes => Math.round(minutes / 60 * 10) / 10);
             
-            // Add some random variation for demo
-            dailyStats.pumps = dailyStats.pumps.map(val => val + Math.floor(Math.random() * 3));
-            dailyStats.lights = dailyStats.lights.map(val => Math.max(0, val + Math.random() * 2 - 1));
-            
             // Update chart
             statsChart.data.datasets[0].data = dailyStats.pumps;
             statsChart.data.datasets[1].data = dailyStats.lights;
@@ -2619,7 +2518,7 @@
         // Update display with current state
         function updateDisplay() {
             // Update values
-            moistureValue.textContent = systemState.moisture !== null ? systemState.moisture.toFixed(1) : '--';
+            moistureValue.textContent = systemState.moisture !== null ? systemState.moisture : '--';
             thresholdValue.textContent = systemState.threshold;
             systemTime.textContent = systemState.time;
             
@@ -2677,19 +2576,16 @@
                 systemMode.style.color = '#2196F3';
             }
             
-            // Update toggle switches only if они не были изменены пользователем недавно
-            if (Date.now() - systemState.lastUpdate < 5000) {
+            // Update toggle switches to match current state
+            if (Date.now() - systemState.lastUpdate < 2000) {
                 pumpToggle.checked = systemState.pump;
                 lightToggle.checked = systemState.light;
-                uiState.pumpToggle = systemState.pump;
-                uiState.lightToggle = systemState.light;
             }
             
             // Update threshold slider
-            if (systemState.threshold !== null && systemState.threshold !== uiState.thresholdSlider) {
+            if (systemState.threshold !== null && systemState.threshold !== parseInt(thresholdSlider.value)) {
                 thresholdSlider.value = systemState.threshold;
                 updateThresholdSlider.call(thresholdSlider);
-                uiState.thresholdSlider = systemState.threshold;
             }
         }
         
@@ -2698,14 +2594,14 @@
             if (systemState.moisture !== null) {
                 // Проверка влажности ниже 5% - КРИТИЧЕСКАЯ ОШИБКА
                 if (systemState.moisture < 5) {
-                    addError('danger', `КРИТИЧЕСКАЯ ОШИБКА: Влажность ниже 5% (${systemState.moisture.toFixed(1)}%)`);
-                    showNotification('КРИТИЧЕСКАЯ ОШИБКА!', `Влажность критически низкая: ${systemState.moisture.toFixed(1)}%`, 'error');
+                    addError('danger', `КРИТИЧЕСКАЯ ОШИБКА: Влажность ниже 5% (${systemState.moisture}%)`);
+                    showNotification('КРИТИЧЕСКАЯ ОШИБКА!', `Влажность критически низкая: ${systemState.moisture}%`, 'error');
                 }
                 // Проверка низкой влажности
                 else if (systemState.moisture < (systemState.threshold - 15)) {
-                    addError('warning', `Очень низкая влажность: ${systemState.moisture.toFixed(1)}%`);
+                    addError('warning', `Очень низкая влажность: ${systemState.moisture}%`);
                 } else if (systemState.moisture < systemState.threshold) {
-                    addError('info', `Низкая влажность: ${systemState.moisture.toFixed(1)}%`);
+                    addError('info', `Низкая влажность: ${systemState.moisture}%`);
                 }
                 
                 // Проверка проблем с подключением
@@ -2808,15 +2704,18 @@
             }
             
             // Отправляем команду в Firebase (ESP8266 будет читать из /commands/ecogrow_main)
-            database.ref('commands/ecogrow_main').set(command)
-                .then(() => {
-                    console.log(`Команда отправлена в Firebase: ${command}`);
-                    showNotification('Команда отправлена', `Команда "${command}" отправлена на ESP8266`, 'success');
-                })
-                .catch(error => {
-                    console.error('Ошибка отправки команды в Firebase:', error);
-                    showNotification('Ошибка', 'Не удалось отправить команду', 'error');
-                });
+            database.ref('commands/ecogrow_main').set({
+                command: command,
+                timestamp: Date.now()
+            })
+            .then(() => {
+                console.log(`Команда отправлена в Firebase: ${command}`);
+                showNotification('Команда отправлена', `Команда "${command}" отправлена на ESP8266`, 'success');
+            })
+            .catch(error => {
+                console.error('Ошибка отправки команды в Firebase:', error);
+                showNotification('Ошибка', 'Не удалось отправить команду', 'error');
+            });
         }
         
         // Save settings
@@ -2836,15 +2735,6 @@
             sendCommand(`THRESHOLD:${threshold}`);
             sendCommand(`PUMPDURATION:${duration}`);
             
-            // Update UI state
-            uiState.blockStart = blockStart;
-            uiState.blockEnd = blockEnd;
-            uiState.lightStart = lightStart;
-            uiState.lightDuration = parseInt(lightDuration);
-            uiState.intervalSlider = parseInt(interval);
-            uiState.thresholdSlider = parseInt(threshold);
-            uiState.durationSlider = parseInt(duration);
-            
             showNotification('Настройки', 'Все настройки сохранены и отправлены на ESP8266', 'success');
         }
         
@@ -2862,15 +2752,6 @@
                 document.getElementById('blockEnd').value = '08:00';
                 document.getElementById('lightStart').value = '08:00';
                 document.getElementById('lightDuration').value = '12';
-                
-                // Update UI state
-                uiState.thresholdSlider = 50;
-                uiState.durationSlider = 10;
-                uiState.intervalSlider = 10;
-                uiState.blockStart = '23:00';
-                uiState.blockEnd = '08:00';
-                uiState.lightStart = '08:00';
-                uiState.lightDuration = 12;
                 
                 sendCommand('RESET_SETTINGS');
                 showNotification('Настройки', 'Настройки сброшены к заводским', 'warning');
@@ -2989,7 +2870,6 @@
             setInterval(() => {
                 localStorage.setItem('ecogrow_errors', JSON.stringify(systemState.errors));
                 localStorage.setItem('ecogrow_history', JSON.stringify(historyData.slice(-500)));
-                localStorage.setItem('ecogrow_ui_state', JSON.stringify(uiState));
             }, 300000);
             
             // Update display every second
@@ -2999,28 +2879,6 @@
                     connectionText.textContent = 'Нет связи с ESP8266';
                 }
             }, 1000);
-            
-            // Load UI state
-            const savedUIState = localStorage.getItem('ecogrow_ui_state');
-            if (savedUIState) {
-                const parsedState = JSON.parse(savedUIState);
-                Object.assign(uiState, parsedState);
-                
-                // Apply UI state
-                thresholdSlider.value = uiState.thresholdSlider;
-                updateThresholdSlider.call(thresholdSlider);
-                durationSlider.value = uiState.durationSlider;
-                updateDurationSlider.call(durationSlider);
-                intervalSlider.value = uiState.intervalSlider;
-                updateIntervalSlider.call(intervalSlider);
-                document.getElementById('blockStart').value = uiState.blockStart;
-                document.getElementById('blockEnd').value = uiState.blockEnd;
-                document.getElementById('lightStart').value = uiState.lightStart;
-                document.getElementById('lightDuration').value = uiState.lightDuration;
-                pumpToggle.checked = uiState.pumpToggle;
-                lightToggle.checked = uiState.lightToggle;
-                sleepToggle.checked = uiState.sleepToggle;
-            }
         }
     </script>
 </body>
