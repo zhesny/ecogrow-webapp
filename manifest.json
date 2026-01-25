@@ -1,0 +1,91 @@
+{
+    "name": "EcoGrow Control Panel",
+    "short_name": "EcoGrow",
+    "description": "Умная система полива и контроля микроклимата растений",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a192f",
+    "theme_color": "#64ffda",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "assets/icons/icon-72.png",
+            "sizes": "72x72",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/icon-96.png",
+            "sizes": "96x96",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/icon-128.png",
+            "sizes": "128x128",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/icon-144.png",
+            "sizes": "144x144",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/icon-152.png",
+            "sizes": "152x152",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/icons/icon-384.png",
+            "sizes": "384x384",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "assets/screenshots/desktop.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide"
+        },
+        {
+            "src": "assets/screenshots/mobile.png",
+            "sizes": "750x1334",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Панель управления",
+            "short_name": "Управление",
+            "description": "Открыть панель управления",
+            "url": "/#controls"
+        },
+        {
+            "name": "Графики",
+            "short_name": "Графики",
+            "description": "Просмотр графиков влажности",
+            "url": "/#charts"
+        },
+        {
+            "name": "Настройки",
+            "short_name": "Настройки",
+            "description": "Настройки системы",
+            "url": "/#settings"
+        }
+    ],
+    "categories": ["utilities", "productivity"],
+    "lang": "ru-RU",
+    "dir": "ltr",
+    "prefer_related_applications": false
+}
