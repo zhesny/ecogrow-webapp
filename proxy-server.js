@@ -21,8 +21,8 @@ app.use(express.json());
 
 // Конфигурация
 const ESP_CONFIG = {
-    LOCAL_URL: 'http://192.168.1.100', // Локальный IP вашего ESP8266
-    LOCAL_WS_URL: 'ws://192.168.1.100:81',
+    LOCAL_URL: 'http://192.168.0.187', // Локальный IP вашего ESP8266
+    LOCAL_WS_URL: 'ws://192.168.0.187:81',
     PING_INTERVAL: 30000,
     RECONNECT_DELAY: 5000
 };
