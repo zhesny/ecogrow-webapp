@@ -2127,6 +2127,9 @@
         
         // Initialize Firebase connection
         function initFirebase() {
+            console.log('Initializing Firebase connection...');
+            console.log('Database URL:', firebaseConfig.databaseURL);
+            
             const deviceRef = database.ref('devices/ecogrow_main');
             
             deviceRef.on('value', (snapshot) => {
@@ -2146,6 +2149,7 @@
                         systemState.light_mode = data.light_mode || "AUT";
                         systemState.time = data.time || "--:--";
                         
+                        console.log(`Получены данные: влажность=${data.moisture}%, насос=${data.pump ? 'ВКЛ' : 'ВЫКЛ'}, свет=${data.light ? 'ВКЛ' : 'ВЫКЛ'}`);
                         addDebugLog(`Получены данные: влажность=${data.moisture}%, насос=${data.pump ? 'ВКЛ' : 'ВЫКЛ'}, свет=${data.light ? 'ВКЛ' : 'ВЫКЛ'}`);
                         
                         // Add to history
@@ -2176,7 +2180,7 @@
                     systemState.connected = false;
                     connectionStatus.classList.remove('connected');
                     connectionText.textContent = 'Нет данных от ESP8266';
-                    showNotification('Внимание', 'Нет данных от устройства ESP8266', 'warning');
+                    console.log('Нет данных от Firebase');
                     addDebugLog('Нет данных от Firebase');
                 }
             }, (error) => {
@@ -2193,7 +2197,14 @@
             commandRef.on('value', (snapshot) => {
                 const response = snapshot.val();
                 if (response) {
-                    addDebugLog(`Ответ от ESP: ${response}`);
+                    console.log(`Ответ от ESP: ${JSON.stringify(response)}`);
+                    addDebugLog(`Ответ от ESP: ${JSON.stringify(response)}`);
+                    
+                    // Если ответ содержит поле response, показываем уведомление
+                    if (response.response) {
+                        showNotification('Ответ от ESP', response.response, 'success');
+                    }
+                    
                     // Clear response after reading
                     setTimeout(() => {
                         database.ref('commands/ecogrow_main_response').set(null);
@@ -2762,6 +2773,7 @@
                 return;
             }
             
+            console.log(`Отправка команды: ${command}`);
             addDebugLog(`Отправка команды: ${command}`);
             
             // Disable button temporarily
@@ -2787,7 +2799,38 @@
             .then(() => {
                 console.log(`Команда отправлена в Firebase: ${command}`);
                 addDebugLog(`Команда "${command}" отправлена в Firebase`);
-                showNotification('Команда отправлена', `Команда "${command}" отправлена на ESP8266`, 'success');
+                
+                // Ждем ответ от ESP в течение 5 секунд
+                const responseRef = database.ref('commands/ecogrow_main_response');
+                const startTime = Date.now();
+                const timeout = 5000; // 5 секунд
+                
+                const responseListener = responseRef.on('value', (snapshot) => {
+                    const response = snapshot.val();
+                    if (response && response.response) {
+                        console.log(`Получен ответ от ESP: ${response.response}`);
+                        addDebugLog(`Получен ответ от ESP: ${response.response}`);
+                        
+                        // Показываем уведомление с ответом
+                        showNotification('Команда выполнена', `ESP ответил: ${response.response}`, 'success');
+                        
+                        // Удаляем слушатель
+                        responseRef.off('value', responseListener);
+                        
+                        // Очищаем ответ через 1 секунду
+                        setTimeout(() => {
+                            database.ref('commands/ecogrow_main_response').set(null);
+                        }, 1000);
+                    }
+                });
+                
+                // Таймаут ожидания ответа
+                setTimeout(() => {
+                    responseRef.off('value', responseListener);
+                    if (Date.now() - startTime > timeout) {
+                        showNotification('Внимание', 'Нет ответа от устройства в течение 5 секунд', 'warning');
+                    }
+                }, timeout);
                 
                 // Обновим состояние переключателей в соответствии с командой
                 if (command === 'PUMP:ON') pumpToggle.checked = true;
