@@ -1,16 +1,10 @@
-const CACHE_NAME = 'ecogrow-v3.3';
+const CACHE_NAME = 'ecogrow-v4.5';
 const urlsToCache = [
     '/',
     '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/config.js',
-    '/api-client.js',
-    '/charts.js',
-    '/theme.js',
-    '/notifications.js',
-    '/assets/icons/icon-192.png',
-    '/assets/icons/icon-512.png'
+    '/manifest.json',
+    '/icon-192.png',
+    '/icon-512.png'
 ];
 
 // Install event
@@ -71,14 +65,5 @@ self.addEventListener('sync', event => {
 
 async function syncData() {
     // Implement offline data sync
-    const requests = await indexedDB.getAll('pending-requests');
-    
-    for (const request of requests) {
-        try {
-            await fetch(request.url, request.options);
-            await indexedDB.delete('pending-requests', request.id);
-        } catch (error) {
-            console.error('Sync failed:', error);
-        }
-    }
+    console.log('Syncing data in background...');
 }
