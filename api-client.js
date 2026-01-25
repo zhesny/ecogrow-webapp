@@ -1,7 +1,7 @@
 class EcoGrowAPI {
     constructor() {
         this.baseUrl = '';
-        this.timeout = 5000;
+        this.timeout = 8000; // Увеличен для мобильных
     }
     
     async request(endpoint, options = {}) {
@@ -34,7 +34,11 @@ class EcoGrowAPI {
     }
     
     setBaseUrl(ip) {
-        this.baseUrl = `http://${ip}`;
+        if (!ip.startsWith('http://') && !ip.startsWith('https://')) {
+            this.baseUrl = `http://${ip}`;
+        } else {
+            this.baseUrl = ip;
+        }
     }
     
     // System Info
@@ -82,6 +86,14 @@ class EcoGrowAPI {
         return await this.request('/api/time', {
             method: 'POST',
             body: JSON.stringify({ hours, minutes })
+        });
+    }
+    
+    // Sync Time (новый метод)
+    async syncTime(ip) {
+        this.setBaseUrl(ip);
+        return await this.request('/api/time/sync', {
+            method: 'POST'
         });
     }
     
