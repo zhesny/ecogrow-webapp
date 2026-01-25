@@ -20,14 +20,12 @@
             --secondary-dark: #2E7D32;
             --accent: #FF4081;
             
-            /* Светлая тема */
             --light-bg: #f8fafc;
             --light-card: #ffffff;
             --light-border: #e2e8f0;
             --light-text: #334155;
             --light-text-secondary: #64748b;
             
-            /* Темно-синяя тема (ЕЩЕ ТЕМНЕЕ) */
             --dark-bg: #0a1525;
             --dark-card: #1a2536;
             --dark-border: #2d3748;
@@ -1543,6 +1541,10 @@
             <button onclick="testCommand('LIGHT:OFF', this)" class="btn btn-danger" style="width: 200px;">LIGHT:OFF</button>
             <button onclick="testCommand('THRESHOLD:40', this)" class="btn btn-primary" style="width: 200px;">THRESHOLD:40</button>
             <button onclick="testCommand('ALL:AUTO', this)" class="btn btn-secondary" style="width: 200px;">ALL:AUTO</button>
+            <button onclick="testConnection()" class="btn btn-primary" style="width: 200px;">
+                <i class="fas fa-wifi"></i>
+                Тест связи
+            </button>
         </div>
     </div>
     <button class="test-toggle-btn" onclick="toggleTestPanel()">🧪</button>
@@ -2130,7 +2132,7 @@
             </div>
             
             <div class="copyright">
-                <p>© 2026 EcoGrow Control System v4.8. Все права защищены.</p>
+                <p>© 2023 EcoGrow Control System v4.8. Все права защищены.</p>
                 <p style="margin-top: 4px;">Разработано для автоматизации полива растений с удаленным управлением</p>
             </div>
         </div>
@@ -2243,7 +2245,7 @@
             addDebugLog('Подключение к Firebase...', 'info');
             
             initTheme();
-            initCharts();  // Теперь функция определена
+            initCharts();
             initEventListeners();
             initFirebase();
             loadInitialData();
@@ -2499,44 +2501,49 @@
             });
         }
         
-        // Send command to Firebase - ИСПРАВЛЕННАЯ ВЕРСИЯ
-        function sendCommand(command, button = null) {
+        // Send command to Firebase with retry logic
+        function sendCommand(command, button = null, retryCount = 0) {
             if (!systemState.connected) {
                 showNotification('Ошибка', 'Нет подключения к устройству', 'error');
                 addDebugLog('Нет подключения к устройству', 'error');
                 return;
             }
 
-            addDebugLog(`Отправка команды: ${command}`, 'info');
+            addDebugLog(`Отправка команды (попытка ${retryCount + 1}): ${command}`, 'info');
             
-            // Отключаем кнопку на время отправки, если она передана
+            // Store original button state
+            let originalText = '';
             if (button) {
-                const originalText = button.innerHTML;
+                originalText = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
-                
-                setTimeout(() => {
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                }, 2000);
             }
             
             // Отправляем команду в Firebase
             database.ref('commands/ecogrow_main').set({
                 command: command,
                 timestamp: Date.now(),
-                sender: 'web'
+                sender: 'web',
+                retry: retryCount
             })
             .then(() => {
                 addDebugLog(`Команда отправлена в Firebase: ${command}`, 'success');
                 
-                // Ждем ответа от ESP (3 секунды таймаут)
+                // Ждем ответа от ESP (15 секунд таймаут)
                 setTimeout(() => {
-                    addDebugLog('Ответ от ESP не получен в течение 3 секунд', 'warning');
-                    if (button) {
-                        button.disabled = false;
+                    if (retryCount < 2) { // Максимум 3 попытки
+                        addDebugLog(`Повторная отправка команды (${retryCount + 2}/3): ${command}`, 'warning');
+                        sendCommand(command, button, retryCount + 1);
+                    } else {
+                        addDebugLog('Команда не выполнена после 3 попыток', 'error');
+                        showNotification('Ошибка', 'Команда не выполнена. Проверьте подключение ESP-UNO', 'error');
+                        
+                        if (button) {
+                            button.innerHTML = originalText;
+                            button.disabled = false;
+                        }
                     }
-                }, 3000);
+                }, 15000);
             })
             .catch((error) => {
                 console.error('❌ Ошибка отправки команды:', error);
@@ -2544,6 +2551,7 @@
                 showNotification('Ошибка', `Не удалось отправить команду: ${error.message}`, 'error');
                 
                 if (button) {
+                    button.innerHTML = originalText;
                     button.disabled = false;
                 }
             });
@@ -2556,7 +2564,7 @@
                 updateChart(parseInt(this.value));
             });
             
-            // Toggle switches with immediate action - ИСПРАВЛЕННЫЙ КОД
+            // Toggle switches with immediate action
             pumpToggle.addEventListener('change', function() {
                 const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
                 sendCommand(command);
@@ -2593,7 +2601,7 @@
                 updateIntervalSlider.call(this);
             });
             
-            // Buttons - ИСПРАВЛЕННЫЙ КОД с передачей кнопки
+            // Buttons
             document.getElementById('autoModeBtn').addEventListener('click', function() {
                 sendCommand('ALL:AUTO', this);
             });
@@ -3189,6 +3197,19 @@
         function testCommand(cmd, button = null) {
             addDebugLog(`Тестовая команда: ${cmd}`, 'info');
             sendCommand(cmd, button);
+        }
+        
+        // Test connection function
+        function testConnection() {
+            addDebugLog('Тест связи ESP-UNO...', 'info');
+            sendCommand('PING', null);
+            setTimeout(() => {
+                if (systemState.connected) {
+                    showNotification('Связь', 'Связь с ESP активна', 'success');
+                } else {
+                    showNotification('Ошибка', 'Нет связи с ESP', 'error');
+                }
+            }, 3000);
         }
         
         // Toggle debug panel
