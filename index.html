@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoGrow v4.5 - Управление системой полива</title>
+    <title>EcoGrow v4.8 - Управление системой полива</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
@@ -1264,6 +1264,117 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Debug Panel */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 400px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+            border: 1px solid var(--primary);
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #444;
+        }
+
+        .debug-title {
+            font-weight: bold;
+            color: #42A5F5;
+        }
+
+        .debug-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .debug-logs {
+            font-family: monospace;
+            line-height: 1.4;
+        }
+
+        .debug-log-entry {
+            margin-bottom: 5px;
+            padding: 3px;
+            border-left: 3px solid #42A5F5;
+            padding-left: 8px;
+            word-break: break-all;
+        }
+
+        .debug-log-entry.success { border-left-color: #4CAF50; }
+        .debug-log-entry.error { border-left-color: #F44336; }
+        .debug-log-entry.warning { border-left-color: #FF9800; }
+
+        .debug-toggle-btn {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: #FF4081;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .test-panel {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            background: var(--light-card);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            z-index: 9997;
+            border: 1px solid var(--light-border);
+            display: none;
+        }
+
+        .dark-theme .test-panel {
+            background: var(--dark-card);
+            border-color: var(--dark-border);
+        }
+
+        .test-toggle-btn {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            background: #1976D2;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
         /* Mobile Responsiveness */
         @media (max-width: 1200px) {
             .live-data-card, .controls-card, .settings-card,
@@ -1362,6 +1473,21 @@
                 max-width: 100%;
                 width: 100%;
             }
+            
+            .debug-panel {
+                max-width: calc(100% - 20px);
+                max-height: 150px;
+            }
+            
+            .test-panel {
+                right: 10px;
+                top: 80px;
+            }
+            
+            .test-toggle-btn {
+                right: 10px;
+                top: 80px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1393,6 +1519,34 @@
     </style>
 </head>
 <body class="light-theme">
+    <!-- Debug Panel -->
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <div class="debug-title">Отладка системы</div>
+            <button class="debug-close" onclick="toggleDebugPanel()">✕</button>
+        </div>
+        <div class="debug-logs" id="debugLogs">
+            <div class="debug-log-entry">Система запущена...</div>
+        </div>
+    </div>
+    <button class="debug-toggle-btn" onclick="toggleDebugPanel()">🔧</button>
+
+    <!-- Test Panel -->
+    <div class="test-panel" id="testPanel">
+        <h3 style="margin-bottom: 10px; color: var(--primary);">Тестовые команды</h3>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button onclick="testCommand('TEST')" class="btn btn-primary" style="width: 200px;">TEST</button>
+            <button onclick="testCommand('GETDATA')" class="btn btn-primary" style="width: 200px;">GETDATA</button>
+            <button onclick="testCommand('PUMP:ON')" class="btn btn-success" style="width: 200px;">PUMP:ON</button>
+            <button onclick="testCommand('PUMP:OFF')" class="btn btn-danger" style="width: 200px;">PUMP:OFF</button>
+            <button onclick="testCommand('LIGHT:ON')" class="btn btn-success" style="width: 200px;">LIGHT:ON</button>
+            <button onclick="testCommand('LIGHT:OFF')" class="btn btn-danger" style="width: 200px;">LIGHT:OFF</button>
+            <button onclick="testCommand('THRESHOLD:40')" class="btn btn-primary" style="width: 200px;">THRESHOLD:40</button>
+            <button onclick="testCommand('ALL:AUTO')" class="btn btn-secondary" style="width: 200px;">ALL:AUTO</button>
+        </div>
+    </div>
+    <button class="test-toggle-btn" onclick="toggleTestPanel()">🧪</button>
+
     <!-- Header -->
     <header>
         <div class="container">
@@ -1402,7 +1556,7 @@
                         <i class="fas fa-seedling"></i>
                     </div>
                     <div class="logo-text">
-                        <h1>EcoGrow Control <span class="version-badge">v4.5</span></h1>
+                        <h1>EcoGrow Control <span class="version-badge">v4.8</span></h1>
                         <p>Система автоматического полива растений</p>
                     </div>
                 </div>
@@ -1896,13 +2050,13 @@
                     </div>
                     
                     <div style="background: rgba(25,118,210,0.04); padding: 12px; border-radius: var(--radius-md); margin-top: 12px; flex-shrink: 0; overflow: hidden;">
-                        <h4 style="color: var(--primary); margin-bottom: 8px; font-size: 13px;">Что нового в версии 4.5:</h4>
+                        <h4 style="color: var(--primary); margin-bottom: 8px; font-size: 13px;">Что нового в версии 4.8:</h4>
                         <ul style="color: var(--light-text-secondary); font-size: 12px; padding-left: 18px; line-height: 1.5;">
-                            <li>Исправлены конфликты пинов энкодера (10,11)</li>
-                            <li>Добавлен watchdog-таймер для стабильности</li>
-                            <li>Улучшена обработка прерываний энкодера</li>
-                            <li>Оптимизировано меню управления</li>
-                            <li>Исправлены проблемы со спикером</li>
+                            <li>Полностью оптимизировано Serial общение</li>
+                            <li>Исправлены все конфликты пинов</li>
+                            <li>Улучшена стабильность Firebase соединения</li>
+                            <li>Добавлена панель отладки и тестирования</li>
+                            <li>Ускорена обработка команд</li>
                         </ul>
                     </div>
                 </div>
@@ -1976,7 +2130,7 @@
             </div>
             
             <div class="copyright">
-                <p>© 2023 EcoGrow Control System v4.5. Все права защищены.</p>
+                <p>© 2023 EcoGrow Control System v4.8. Все права защищены.</p>
                 <p style="margin-top: 4px;">Разработано для автоматизации полива растений с удаленным управлением</p>
             </div>
         </div>
@@ -1994,11 +2148,11 @@
     </div>
 
     <script>
-        // Firebase Configuration - ИСПРАВЛЕННЫЙ URL
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBX3dP3nUP9CRcZ0Z1KHRFGeR6N6nZx1kM",
             authDomain: "ecogrow-remote-default-rtdb.firebaseapp.com",
-            databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com", // ИСПРАВЛЕНО
+            databaseURL: "https://ecogrow-remote-default-rtdb.firebaseio.com",
             projectId: "ecogrow-remote-default-rtdb",
             storageBucket: "ecogrow-remote-default-rtdb.appspot.com",
             messagingSenderId: "557290315760",
@@ -2050,6 +2204,11 @@
         const errorsList = document.getElementById('errorsList');
         const errorsCount = document.getElementById('errorsCount');
         
+        // Debug elements
+        const debugPanel = document.getElementById('debugPanel');
+        const debugLogs = document.getElementById('debugLogs');
+        const testPanel = document.getElementById('testPanel');
+        
         // Chart variables
         let moistureChart, statsChart;
         let historyData = [];
@@ -2074,12 +2233,15 @@
             errors: []
         };
         
-        // Debug
+        // Debug logs
         let debugLog = [];
-        const MAX_DEBUG_LOGS = 100;
+        const MAX_DEBUG_LOGS = 50;
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            addDebugLog('🚀 Система запущена v4.8', 'info');
+            addDebugLog('Подключение к Firebase...', 'info');
+            
             initTheme();
             initCharts();
             initEventListeners();
@@ -2090,7 +2252,28 @@
             const now = new Date();
             document.getElementById('currentTime').value = 
                 `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            // Check Firebase connection
+            checkFirebaseConnection();
         });
+        
+        // Check Firebase connection
+        async function checkFirebaseConnection() {
+            try {
+                const snapshot = await database.ref('.info/connected').once('value');
+                const connected = snapshot.val();
+                addDebugLog(`Firebase подключение: ${connected ? '✅' : '❌'}`, connected ? 'success' : 'error');
+                
+                if (connected) {
+                    showNotification('Подключено', 'Успешное подключение к Firebase', 'success');
+                } else {
+                    showNotification('Ошибка', 'Нет подключения к Firebase', 'error');
+                }
+            } catch (error) {
+                addDebugLog(`Ошибка Firebase: ${error.message}`, 'error');
+                showNotification('Ошибка', `Firebase: ${error.message}`, 'error');
+            }
+        }
         
         // Initialize theme
         function initTheme() {
@@ -2100,10 +2283,12 @@
                 document.body.classList.remove('light-theme');
                 document.body.classList.add('dark-theme');
                 themeToggle.checked = true;
+                addDebugLog('Темная тема включена', 'info');
             } else {
                 document.body.classList.remove('dark-theme');
                 document.body.classList.add('light-theme');
                 themeToggle.checked = false;
+                addDebugLog('Светлая тема включена', 'info');
             }
             
             themeToggle.addEventListener('change', function() {
@@ -2111,10 +2296,12 @@
                     document.body.classList.remove('light-theme');
                     document.body.classList.add('dark-theme');
                     localStorage.setItem('ecogrow-theme', 'dark');
+                    addDebugLog('Переключено на темную тему', 'info');
                 } else {
                     document.body.classList.remove('dark-theme');
                     document.body.classList.add('light-theme');
                     localStorage.setItem('ecogrow-theme', 'light');
+                    addDebugLog('Переключено на светлую тему', 'info');
                 }
                 
                 // Update charts for new theme
@@ -2127,8 +2314,7 @@
         
         // Initialize Firebase connection
         function initFirebase() {
-            console.log('Initializing Firebase connection...');
-            console.log('Database URL:', firebaseConfig.databaseURL);
+            addDebugLog('Инициализация Firebase...', 'info');
             
             const deviceRef = database.ref('devices/ecogrow_main');
             
@@ -2149,8 +2335,7 @@
                         systemState.light_mode = data.light_mode || "AUT";
                         systemState.time = data.time || "--:--";
                         
-                        console.log(`Получены данные: влажность=${data.moisture}%, насос=${data.pump ? 'ВКЛ' : 'ВЫКЛ'}, свет=${data.light ? 'ВКЛ' : 'ВЫКЛ'}`);
-                        addDebugLog(`Получены данные: влажность=${data.moisture}%, насос=${data.pump ? 'ВКЛ' : 'ВЫКЛ'}, свет=${data.light ? 'ВКЛ' : 'ВЫКЛ'}`);
+                        addDebugLog(`Данные: влажность=${data.moisture}%, насос=${data.pump ? 'ВКЛ' : 'ВЫКЛ'}, свет=${data.light ? 'ВКЛ' : 'ВЫКЛ'}`, 'success');
                         
                         // Add to history
                         addToHistory({
@@ -2173,23 +2358,21 @@
                     connectionText.textContent = 'Подключено к ESP8266';
                     lastUpdate.textContent = `Обновлено: ${new Date().toLocaleTimeString()}`;
                     
-                    // Check for errors (включая проверку влажности < 5%)
+                    // Check for errors
                     checkForErrors();
                     
                 } else {
                     systemState.connected = false;
                     connectionStatus.classList.remove('connected');
                     connectionText.textContent = 'Нет данных от ESP8266';
-                    console.log('Нет данных от Firebase');
-                    addDebugLog('Нет данных от Firebase');
+                    addDebugLog('Нет данных от Firebase', 'warning');
                 }
             }, (error) => {
-                console.error('Firebase error:', error);
+                addDebugLog(`Ошибка Firebase: ${error.message}`, 'error');
                 systemState.connected = false;
                 connectionStatus.classList.remove('connected');
                 connectionText.textContent = 'Ошибка подключения';
                 showNotification('Ошибка', 'Не удалось подключиться к Firebase', 'error');
-                addDebugLog(`Ошибка Firebase: ${error.message}`);
             });
             
             // Also listen for command responses
@@ -2197,10 +2380,8 @@
             commandRef.on('value', (snapshot) => {
                 const response = snapshot.val();
                 if (response) {
-                    console.log(`Ответ от ESP: ${JSON.stringify(response)}`);
-                    addDebugLog(`Ответ от ESP: ${JSON.stringify(response)}`);
+                    addDebugLog(`Ответ от ESP: ${JSON.stringify(response)}`, 'success');
                     
-                    // Если ответ содержит поле response, показываем уведомление
                     if (response.response) {
                         showNotification('Ответ от ESP', response.response, 'success');
                     }
@@ -2209,6 +2390,14 @@
                     setTimeout(() => {
                         database.ref('commands/ecogrow_main_response').set(null);
                     }, 1000);
+                }
+            });
+            
+            // Monitor commands
+            database.ref('commands/ecogrow_main').on('value', (snapshot) => {
+                const command = snapshot.val();
+                if (command) {
+                    addDebugLog(`Команда в Firebase: ${JSON.stringify(command)}`, 'info');
                 }
             });
         }
@@ -2345,6 +2534,8 @@
                     }
                 }
             });
+            
+            addDebugLog('Графики инициализированы', 'success');
         }
         
         // Initialize event listeners
@@ -2358,19 +2549,16 @@
             pumpToggle.addEventListener('change', function() {
                 const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
                 sendCommand(command);
-                showNotification('Насос', this.checked ? 'Включен вручную' : 'Выключен', 'success');
             });
             
             lightToggle.addEventListener('change', function() {
                 const command = this.checked ? 'LIGHT:ON' : 'LIGHT:OFF';
                 sendCommand(command);
-                showNotification('Свет', this.checked ? 'Включен вручную' : 'Выключен', 'success');
             });
             
             sleepToggle.addEventListener('change', function() {
                 const command = this.checked ? 'SLEEP:ON' : 'SLEEP:OFF';
                 sendCommand(command);
-                showNotification('Режим сна', this.checked ? 'Включен' : 'Выключен', 'warning');
             });
             
             // Sliders with immediate action
@@ -2380,7 +2568,6 @@
             
             thresholdSlider.addEventListener('change', function() {
                 sendCommand(`THRESHOLD:${this.value}`);
-                showNotification('Порог', `Установлен на ${this.value}%`, 'info');
             });
             
             durationSlider.addEventListener('input', function() {
@@ -2389,7 +2576,6 @@
             
             durationSlider.addEventListener('change', function() {
                 sendCommand(`PUMPDURATION:${this.value}`);
-                showNotification('Длительность полива', `Установлена на ${this.value} сек`, 'info');
             });
             
             intervalSlider.addEventListener('input', function() {
@@ -2399,7 +2585,6 @@
             // Buttons
             document.getElementById('autoModeBtn').addEventListener('click', function() {
                 sendCommand('ALL:AUTO');
-                showNotification('Авторежим', 'Система переведена в автоматический режим', 'success');
             });
             
             document.getElementById('applySettingsBtn').addEventListener('click', function() {
@@ -2407,7 +2592,6 @@
                 const duration = durationSlider.value;
                 sendCommand(`THRESHOLD:${threshold}`);
                 sendCommand(`PUMPDURATION:${duration}`);
-                showNotification('Настройки', `Порог: ${threshold}%, Длительность: ${duration}с`, 'success');
             });
             
             document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
@@ -2430,6 +2614,8 @@
             updateThresholdSlider.call(thresholdSlider);
             updateDurationSlider.call(durationSlider);
             updateIntervalSlider.call(intervalSlider);
+            
+            addDebugLog('Обработчики событий инициализированы', 'success');
         }
         
         // Update slider visuals
@@ -2458,13 +2644,27 @@
         }
         
         // Add debug log
-        function addDebugLog(message) {
+        function addDebugLog(message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'});
-            debugLog.unshift(`[${timestamp}] ${message}`);
+            const logEntry = {
+                time: timestamp,
+                message: message,
+                type: type
+            };
+            
+            debugLog.unshift(logEntry);
             if (debugLog.length > MAX_DEBUG_LOGS) {
                 debugLog.pop();
             }
-            console.log(message);
+            
+            // Update debug panel
+            if (debugLogs) {
+                debugLogs.innerHTML = debugLog.map(log => 
+                    `<div class="debug-log-entry ${log.type}">[${log.time}] ${log.message}</div>`
+                ).join('');
+            }
+            
+            console.log(`[${timestamp}] ${message}`);
         }
         
         // Add data to history
@@ -2770,11 +2970,11 @@
         function sendCommand(command) {
             if (!systemState.connected) {
                 showNotification('Ошибка', 'Нет подключения к устройству', 'error');
+                addDebugLog('Нет подключения к устройству', 'error');
                 return;
             }
             
-            console.log(`Отправка команды: ${command}`);
-            addDebugLog(`Отправка команды: ${command}`);
+            addDebugLog(`Отправка команды: ${command}`, 'info');
             
             // Disable button temporarily
             const button = event?.target;
@@ -2789,59 +2989,50 @@
                 }, 2000);
             }
             
-            // ВАЖНО: В коде ESP8266 есть функция checkFirebaseCommands(), которая читает команды из Firebase
-            // По пути /commands/ecogrow_main
+            // Send command to Firebase
             database.ref('commands/ecogrow_main').set({
                 command: command,
                 timestamp: Date.now(),
                 sender: 'web'
             })
             .then(() => {
-                console.log(`Команда отправлена в Firebase: ${command}`);
-                addDebugLog(`Команда "${command}" отправлена в Firebase`);
+                addDebugLog(`Команда отправлена в Firebase: ${command}`, 'success');
                 
-                // Ждем ответ от ESP в течение 5 секунд
+                // Wait for response
                 const responseRef = database.ref('commands/ecogrow_main_response');
                 const startTime = Date.now();
-                const timeout = 5000; // 5 секунд
+                const timeout = 5000;
                 
                 const responseListener = responseRef.on('value', (snapshot) => {
                     const response = snapshot.val();
                     if (response && response.response) {
-                        console.log(`Получен ответ от ESP: ${response.response}`);
-                        addDebugLog(`Получен ответ от ESP: ${response.response}`);
+                        addDebugLog(`Получен ответ от ESP: ${response.response}`, 'success');
                         
-                        // Показываем уведомление с ответом
+                        // Show notification
                         showNotification('Команда выполнена', `ESP ответил: ${response.response}`, 'success');
                         
-                        // Удаляем слушатель
+                        // Remove listener
                         responseRef.off('value', responseListener);
                         
-                        // Очищаем ответ через 1 секунду
+                        // Clear response
                         setTimeout(() => {
                             database.ref('commands/ecogrow_main_response').set(null);
                         }, 1000);
                     }
                 });
                 
-                // Таймаут ожидания ответа
+                // Timeout
                 setTimeout(() => {
                     responseRef.off('value', responseListener);
                     if (Date.now() - startTime > timeout) {
                         showNotification('Внимание', 'Нет ответа от устройства в течение 5 секунд', 'warning');
+                        addDebugLog('Таймаут ожидания ответа', 'warning');
                     }
                 }, timeout);
                 
-                // Обновим состояние переключателей в соответствии с командой
-                if (command === 'PUMP:ON') pumpToggle.checked = true;
-                if (command === 'PUMP:OFF') pumpToggle.checked = false;
-                if (command === 'LIGHT:ON') lightToggle.checked = true;
-                if (command === 'LIGHT:OFF') lightToggle.checked = false;
-                
             })
             .catch(error => {
-                console.error('Ошибка отправки команды в Firebase:', error);
-                addDebugLog(`Ошибка отправки команды: ${error.message}`);
+                addDebugLog(`Ошибка отправки команды: ${error.message}`, 'error');
                 showNotification('Ошибка', 'Не удалось отправить команду', 'error');
             });
         }
@@ -2864,6 +3055,7 @@
             sendCommand(`PUMPDURATION:${duration}`);
             
             showNotification('Настройки', 'Все настройки сохранены и отправлены на ESP8266', 'success');
+            addDebugLog('Настройки сохранены', 'success');
         }
         
         // Reset settings
@@ -2883,6 +3075,7 @@
                 
                 sendCommand('RESET_SETTINGS');
                 showNotification('Настройки', 'Настройки сброшены к заводским', 'warning');
+                addDebugLog('Настройки сброшены', 'warning');
             }
         }
         
@@ -2893,6 +3086,7 @@
                 const [hours, minutes] = time.split(':');
                 sendCommand(`SETTIME:${hours}:${minutes}`);
                 showNotification('Время', `Системное время установлено на ${time}`, 'success');
+                addDebugLog(`Время установлено: ${time}`, 'success');
             }
         }
         
@@ -2903,12 +3097,14 @@
             document.getElementById('currentTime').value = time;
             sendCommand(`SETTIME:${time.replace(':', ':')}`);
             showNotification('Время', `Время синхронизировано с браузером: ${time}`, 'success');
+            addDebugLog(`Время синхронизировано: ${time}`, 'success');
         }
         
         // Test Telegram notification
         function testTelegram() {
             sendCommand('TEST_TELEGRAM');
             showNotification('Telegram', 'Тестовое уведомление отправлено на ESP8266', 'success');
+            addDebugLog('Тест Telegram отправлен', 'info');
         }
         
         // Clear Telegram history
@@ -2916,6 +3112,7 @@
             if (confirm('Очистить историю Telegram уведомлений?')) {
                 sendCommand('CLEAR_TELEGRAM');
                 showNotification('Telegram', 'Команда очистки истории отправлена', 'warning');
+                addDebugLog('Очистка Telegram истории', 'warning');
             }
         }
         
@@ -2926,6 +3123,7 @@
                 updateErrorsList();
                 localStorage.removeItem('ecogrow_errors');
                 showNotification('Ошибки', 'История ошибок очищена', 'warning');
+                addDebugLog('История ошибок очищена', 'warning');
             }
         }
         
@@ -2948,6 +3146,7 @@
             a.click();
             
             showNotification('Экспорт', 'Ошибки экспортированы в CSV', 'success');
+            addDebugLog('Ошибки экспортированы', 'success');
         }
         
         // Refresh errors
@@ -2962,7 +3161,6 @@
             notificationTitle.textContent = title;
             notificationMessage.textContent = message;
             
-            // Set icon
             let icon = 'fa-info-circle';
             if (type === 'success') icon = 'fa-check-circle';
             if (type === 'error') icon = 'fa-times-circle';
@@ -2984,6 +3182,7 @@
             if (savedErrors) {
                 systemState.errors = JSON.parse(savedErrors);
                 updateErrorsList();
+                addDebugLog(`Загружено ${systemState.errors.length} ошибок из localStorage`, 'info');
             }
             
             // Load history from localStorage
@@ -2992,12 +3191,14 @@
                 historyData = JSON.parse(savedHistory);
                 updateChart(24);
                 updateStatistics();
+                addDebugLog(`Загружено ${historyData.length} точек данных`, 'info');
             }
             
             // Auto-save every 5 minutes
             setInterval(() => {
                 localStorage.setItem('ecogrow_errors', JSON.stringify(systemState.errors));
                 localStorage.setItem('ecogrow_history', JSON.stringify(historyData.slice(-500)));
+                addDebugLog('Автосохранение данных', 'info');
             }, 300000);
             
             // Update display every second
@@ -3007,6 +3208,24 @@
                     connectionText.textContent = 'Нет связи с ESP8266';
                 }
             }, 1000);
+            
+            addDebugLog('Данные загружены', 'success');
+        }
+        
+        // Test command function
+        function testCommand(cmd) {
+            addDebugLog(`Тестовая команда: ${cmd}`, 'info');
+            sendCommand(cmd);
+        }
+        
+        // Toggle debug panel
+        function toggleDebugPanel() {
+            debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Toggle test panel
+        function toggleTestPanel() {
+            testPanel.style.display = testPanel.style.display === 'none' ? 'block' : 'none';
         }
     </script>
 </body>
