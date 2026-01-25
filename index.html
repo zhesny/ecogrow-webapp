@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoGrow Control Panel v4.5</title>
-    <meta name="description" content="Современная система автоматического полива и контроля микроклимата для растений">
+    <meta name="description" content="Современная система автоматического полива и контроля микроклимата растений">
     <meta name="author" content="Купченя Евгений Андреевич">
     
     <!-- PWA настройки -->
@@ -273,31 +273,22 @@
             gap: 24px;
         }
 
+        /* Компактный дизайн для первой строки */
+        .dashboard-row.first-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        /* Остальные строки */
         .dashboard-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
 
-        /* Для больших экранов - график занимает 2/3 ширины */
-        @media (min-width: 1200px) {
-            .dashboard-row:first-child {
-                grid-template-columns: 1fr 2fr;
-            }
-        }
-
-        /* Карта с расширенным графиком */
-        .card.wide {
-            grid-column: span 2;
-        }
-
-        @media (max-width: 1199px) {
-            .card.wide {
-                grid-column: 1;
-            }
-        }
-
-        /* === CARDS === */
+        /* === КАРТОЧКИ === */
         .card {
             background: var(--bg-card);
             border-radius: var(--radius-lg);
@@ -305,6 +296,9 @@
             box-shadow: var(--shadow-md);
             overflow: hidden;
             transition: all var(--transition-normal);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .card:hover {
@@ -318,6 +312,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .card-title {
@@ -353,14 +348,18 @@
 
         .card-content {
             padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* === MOISTURE CARD === */
+        /* === КАРТОЧКА ВЛАЖНОСТИ === */
         .moisture-display {
             display: flex;
             flex-direction: column;
             align-items: center;
             margin-bottom: 20px;
+            flex: 1;
         }
 
         .moisture-value {
@@ -397,8 +396,15 @@
         .moisture-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            gap: 10px;
             text-align: center;
+            margin-top: auto;
+        }
+
+        .stat-item {
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
         }
 
         .stat-label {
@@ -415,13 +421,14 @@
             color: var(--text-primary);
         }
 
-        /* === CHART CARD === */
+        /* === КАРТОЧКА ГРАФИКА === */
         .chart-controls {
             display: flex;
             gap: 5px;
             background: var(--bg-secondary);
             padding: 4px;
             border-radius: var(--radius-md);
+            margin-bottom: 15px;
         }
 
         .time-btn {
@@ -447,13 +454,13 @@
         }
 
         .chart-wrapper {
-            height: 250px;
-            margin: 15px 0;
+            flex: 1;
+            min-height: 200px;
         }
 
-        /* === CONTROL CARDS === */
+        /* === КОНТРОЛЬНЫЕ КАРТОЧКИ === */
         .control-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .control-label {
@@ -464,7 +471,7 @@
             font-weight: 500;
         }
 
-        /* === SLIDERS === */
+        /* === СЛАЙДЕРЫ === */
         .slider-container {
             display: flex;
             align-items: center;
@@ -531,7 +538,7 @@
             font-size: 0.9rem;
         }
 
-        /* === BUTTONS === */
+        /* === КНОПКИ === */
         .btn {
             padding: 10px 20px;
             border: none;
@@ -576,19 +583,14 @@
             color: var(--bg-primary);
         }
 
-        .btn-lg {
-            padding: 12px 24px;
-            font-size: 1.1rem;
-        }
-
         .action-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
-        /* === TOGGLE SWITCHES === */
+        /* === ПЕРЕКЛЮЧАТЕЛИ === */
         .toggle-switch {
             display: flex;
             align-items: center;
@@ -674,7 +676,7 @@
             font-size: 1rem;
         }
 
-        /* === STATS CARD === */
+        /* === СТАТИСТИКА === */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -710,7 +712,7 @@
             line-height: 1;
         }
 
-        /* === ERRORS CARD === */
+        /* === ОШИБКИ === */
         .errors-list {
             max-height: 200px;
             overflow-y: auto;
@@ -759,7 +761,7 @@
             color: var(--text-secondary);
         }
 
-        /* === TELEGRAM SECTION === */
+        /* === TELEGRAM СЕКЦИЯ === */
         .telegram-section {
             margin-top: 20px;
             padding-top: 20px;
@@ -1017,6 +1019,16 @@
         }
 
         /* === RESPONSIVE DESIGN === */
+        @media (max-width: 1200px) {
+            .dashboard-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .dashboard-row.first-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -1033,7 +1045,8 @@
                 justify-content: center;
             }
             
-            .dashboard-row {
+            .dashboard-row,
+            .dashboard-row.first-row {
                 grid-template-columns: 1fr;
             }
             
@@ -1174,8 +1187,8 @@
 
         <!-- Dashboard -->
         <main class="dashboard">
-            <!-- Row 1: Moisture and Chart -->
-            <div class="dashboard-row">
+            <!-- Row 1: Влажность и График (компактный дизайн) -->
+            <div class="dashboard-row first-row">
                 <!-- Moisture Card -->
                 <div class="card">
                     <div class="card-header">
@@ -1212,8 +1225,8 @@
                     </div>
                 </div>
 
-                <!-- Chart Card (расширенный) -->
-                <div class="card wide">
+                <!-- Chart Card -->
+                <div class="card">
                     <div class="card-header">
                         <div class="card-title">
                             <i class="fas fa-chart-line"></i>
@@ -1233,7 +1246,7 @@
                 </div>
             </div>
 
-            <!-- Row 2: Controls -->
+            <!-- Row 2: Управление -->
             <div class="dashboard-row">
                 <!-- Pump Control -->
                 <div class="card">
@@ -1401,7 +1414,7 @@
                 </div>
             </div>
 
-            <!-- Row 3: Stats and Errors -->
+            <!-- Row 3: Статистика и Ошибки -->
             <div class="dashboard-row">
                 <!-- Statistics -->
                 <div class="card">
@@ -1561,7 +1574,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>© 2024-2026 EcoGrow System | Все права защищены</p>
+                <p>© 2025-2026 EcoGrow System | Все права защищены</p>
             </div>
         </footer>
 
@@ -1678,8 +1691,10 @@
     <!-- Notification Container -->
     <div class="notification-container" id="notificationContainer"></div>
 
+    <!-- JavaScript остается без изменений -->
     <script>
-        // ====== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ======
+        // Весь JavaScript код из предыдущей версии остается без изменений
+        // Он полностью совместим с новой структурой
         let currentTheme = 'dark-blue';
         let espIp = 'ecogrow.local';
         let isConnected = false;
@@ -1691,7 +1706,7 @@
         let deferredPrompt = null;
         let updateLoop = null;
 
-        // ====== PWA УСТАНОВКА ======
+        // PWA Установка
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -1723,14 +1738,14 @@
             console.log('Запущено как PWA');
         }
 
-        // ====== API КЛАСС ======
+        // API Класс
         class EcoGrowAPI {
             constructor(baseUrl) {
                 this.baseUrl = baseUrl;
             }
 
             async fetchWithTimeout(resource, options = {}) {
-                const { timeout = 8000 } = options; // Увеличен таймаут для мобильных
+                const { timeout = 8000 } = options;
                 
                 const controller = new AbortController();
                 const id = setTimeout(() => controller.abort(), timeout);
@@ -1810,7 +1825,7 @@
 
         let api = new EcoGrowAPI(`http://${espIp}`);
 
-        // ====== УТИЛИТЫ ======
+        // Утилиты
         function showNotification(message, type = 'info') {
             const container = document.getElementById('notificationContainer');
             const notification = document.createElement('div');
@@ -1857,7 +1872,7 @@
             update();
         }
 
-        // ====== ТЕМА ======
+        // Тема
         function setTheme(theme) {
             currentTheme = theme;
             document.documentElement.setAttribute('data-theme', theme);
@@ -1878,12 +1893,11 @@
             setTheme(newTheme);
         }
 
-        // ====== ПОДКЛЮЧЕНИЕ ======
+        // Подключение
         async function connectToESP() {
             const ipInput = document.getElementById('espIp');
             let ip = ipInput.value.trim() || 'ecogrow.local';
             
-            // Проверяем, не введен ли уже протокол
             if (!ip.startsWith('http://') && !ip.startsWith('https://')) {
                 espIp = ip;
                 api = new EcoGrowAPI(`http://${espIp}`);
@@ -1911,15 +1925,12 @@
                 showNotification('✅ Успешно подключено к системе', 'success');
                 document.getElementById('connectionModal').classList.remove('active');
                 
-                // Запускаем обновление данных
                 updateData();
                 
-                // Если уже был запущен интервал, очищаем его
                 if (updateLoop) {
                     clearInterval(updateLoop);
                 }
                 
-                // Запускаем новый интервал обновления
                 updateLoop = setInterval(updateData, 5000);
                 
             } catch (error) {
@@ -1928,7 +1939,6 @@
                 statusText.textContent = 'Нет подключения';
                 isConnected = false;
                 
-                // Пытаемся использовать альтернативные адреса
                 if (espIp.includes('ecogrow.local')) {
                     showNotification('Пробую альтернативные адреса...', 'info');
                     setTimeout(() => tryAlternativeIPs(), 1000);
@@ -1938,7 +1948,7 @@
             }
         }
 
-        // ====== ПОИСК АЛЬТЕРНАТИВНЫХ IP ======
+        // Поиск альтернативных IP
         async function tryAlternativeIPs() {
             const commonIPs = [
                 '192.168.1.100',
@@ -1952,7 +1962,6 @@
                     const testApi = new EcoGrowAPI(`http://${ip}`);
                     const info = await testApi.getInfo();
                     
-                    // Если успешно, обновляем поле ввода и подключаемся
                     document.getElementById('espIp').value = ip;
                     espIp = ip;
                     connectToESP();
@@ -1965,7 +1974,7 @@
             showNotification('❌ Устройство не найдено в сети', 'error');
         }
 
-        // ====== ОБНОВЛЕНИЕ ДАННЫХ ======
+        // Обновление данных
         async function updateData() {
             if (!isConnected) return;
             
@@ -1984,7 +1993,6 @@
         }
 
         function updateUI(data) {
-            // Влажность
             const moistureValue = document.getElementById('moistureValue');
             const currentMoisture = data.moisture || 0;
             
@@ -2000,22 +2008,18 @@
             document.getElementById('moistureBarFill').style.width = `${currentMoisture}%`;
             document.getElementById('moistureStatus').textContent = `${currentMoisture}%`;
             
-            // Статистика влажности
             document.getElementById('avgMoisture').textContent = `${data.avg_moisture || '--'}%`;
             document.getElementById('minMoisture').textContent = `${data.min_moisture || '--'}%`;
             document.getElementById('maxMoisture').textContent = `${data.max_moisture || '--'}%`;
             
-            // Насос
             const pumpStatus = document.getElementById('pumpStatus');
             pumpStatus.textContent = data.pump ? 'ВКЛ' : 'ВЫКЛ';
             pumpStatus.className = `card-status ${data.pump ? 'status-on' : 'status-off'}`;
             
-            // Свет
             const lightStatus = document.getElementById('lightStatus');
             lightStatus.textContent = data.light ? 'ВКЛ' : 'ВЫКЛ';
             lightStatus.className = `card-status ${data.light ? 'status-on' : 'status-off'}`;
             
-            // Режим сна
             const sleepActive = data.sleep_enabled && isTimeInRange(
                 new Date(),
                 data.sleep_start,
@@ -2024,19 +2028,15 @@
             document.getElementById('sleepStatus').textContent = sleepActive ? 'Активен' : 'Неактивен';
             document.getElementById('sleepStatus').className = `card-status ${sleepActive ? 'status-on' : 'status-off'}`;
             
-            // Время
             document.getElementById('systemTime').textContent = data.current_time || '--:--';
             
-            // Статистика
             document.getElementById('totalWaterings').textContent = data.total_waterings || 0;
             document.getElementById('totalLightHours').textContent = data.total_light_hours || 0;
             document.getElementById('energyUsed').textContent = data.total_energy || 0;
             
-            // Время работы света сегодня
             const lightHours = (data.light ? 1 : 0);
             document.getElementById('lightToday').textContent = `${lightHours} ч`;
             
-            // Ошибки
             updateErrorsList(data.errors || []);
         }
 
@@ -2084,13 +2084,11 @@
                 return;
             }
             
-            // Ограничиваем количество точек
             const maxPoints = 20;
             if (historyData.length > maxPoints) {
                 historyData = historyData.slice(-maxPoints);
             }
             
-            // Создаем метки времени
             const now = new Date();
             const labels = [];
             for (let i = 0; i < historyData.length; i++) {
@@ -2220,15 +2218,13 @@
             }
         }
 
-        // ====== ОБРАБОТЧИКИ СОБЫТИЙ ======
+        // Обработчики событий
         function setupEventListeners() {
-            // Подключение
             document.getElementById('connectBtn').addEventListener('click', connectToESP);
             document.getElementById('espIp').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') connectToESP();
             });
             
-            // Кнопки закрытия модальных окон
             document.getElementById('closeConnectionModal').addEventListener('click', () => {
                 document.getElementById('connectionModal').classList.remove('active');
             });
@@ -2241,7 +2237,6 @@
                 document.getElementById('guideModal').classList.remove('active');
             });
             
-            // Насос
             document.getElementById('pumpOnBtn').addEventListener('click', async () => {
                 try {
                     await api.controlPump('on');
@@ -2262,7 +2257,6 @@
                 }
             });
             
-            // Свет
             document.getElementById('lightOnBtn').addEventListener('click', async () => {
                 try {
                     await api.controlLight('on');
@@ -2283,7 +2277,6 @@
                 }
             });
             
-            // Синхронизация времени
             document.getElementById('syncTimeBtn').addEventListener('click', async () => {
                 try {
                     await api.syncTime();
@@ -2294,7 +2287,6 @@
                 }
             });
             
-            // Очистка ошибок
             document.getElementById('clearErrorsBtn').addEventListener('click', async () => {
                 try {
                     await api.clearErrors();
@@ -2305,7 +2297,6 @@
                 }
             });
             
-            // Слайдер порога влажности
             const thresholdSlider = document.getElementById('moistureThreshold');
             const thresholdValue = document.getElementById('thresholdValue');
             
@@ -2323,7 +2314,6 @@
                 }
             });
             
-            // Настройки полива
             document.getElementById('wateringDelay').addEventListener('change', async (e) => {
                 try {
                     await api.updateSettings({ watering_delay: parseInt(e.target.value) });
@@ -2342,7 +2332,6 @@
                 }
             });
             
-            // Расписание света
             document.getElementById('lightOnTime').addEventListener('change', async (e) => {
                 try {
                     await api.updateSettings({ lamp_start: e.target.value });
@@ -2361,7 +2350,6 @@
                 }
             });
             
-            // Режим сна
             document.getElementById('sleepStartTime').addEventListener('change', async (e) => {
                 try {
                     await api.updateSettings({ sleep_start: e.target.value });
@@ -2380,7 +2368,6 @@
                 }
             });
             
-            // Переключатели
             document.getElementById('lightScheduleToggle').addEventListener('change', async (e) => {
                 try {
                     await api.updateSettings({ lamp_enabled: e.target.checked });
@@ -2399,7 +2386,6 @@
                 }
             });
             
-            // Тема
             document.getElementById('themeToggle').addEventListener('click', toggleTheme);
             
             document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -2410,12 +2396,10 @@
                 });
             });
             
-            // Кнопки настроек
             document.getElementById('settingsBtn').addEventListener('click', () => {
                 document.getElementById('settingsModal').classList.add('active');
             });
             
-            // Кнопки графика
             document.querySelectorAll('.time-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
@@ -2423,7 +2407,6 @@
                 });
             });
             
-            // Ссылки
             document.getElementById('docsLink').addEventListener('click', (e) => {
                 e.preventDefault();
                 window.open('https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit', '_blank');
@@ -2434,7 +2417,6 @@
                 document.getElementById('guideModal').classList.add('active');
             });
             
-            // Сброс статистики
             document.getElementById('resetStatsBtn').addEventListener('click', () => {
                 Swal.fire({
                     title: 'Сбросить статистику?',
@@ -2452,7 +2434,6 @@
                 });
             });
             
-            // Закрытие модальных окон по клику на фон
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
@@ -2462,20 +2443,17 @@
             });
         }
 
-        // ====== ИНИЦИАЛИЗАЦИЯ ======
+        // Инициализация
         async function init() {
-            // Загрузка темы
             const savedTheme = localStorage.getItem('ecogrow_theme') || 'dark-blue';
             setTheme(savedTheme);
             
-            // Загрузка сохраненного IP
             const savedIp = localStorage.getItem('ecogrow_ip');
             if (savedIp) {
                 document.getElementById('espIp').value = savedIp;
                 espIp = savedIp;
                 api = new EcoGrowAPI(`http://${espIp}`);
                 
-                // Пробуем автоматически подключиться
                 setTimeout(() => {
                     if (navigator.onLine) {
                         connectToESP();
@@ -2483,16 +2461,13 @@
                 }, 1000);
             }
             
-            // Инициализация интерфейса
             setupEventListeners();
             initChart();
             
-            // Скрытие загрузочного экрана
             setTimeout(() => {
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('mainContainer').style.display = 'block';
                 
-                // Если не подключены, показываем модальное окно
                 if (!isConnected) {
                     setTimeout(() => {
                         document.getElementById('connectionModal').classList.add('active');
@@ -2500,7 +2475,6 @@
                 }
             }, 1500);
             
-            // Обновление времени в заголовке
             setInterval(() => {
                 const now = new Date();
                 const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
@@ -2512,7 +2486,6 @@
         // Запуск приложения
         document.addEventListener('DOMContentLoaded', init);
         
-        // Обработка онлайн/офлайн статуса
         window.addEventListener('online', () => {
             showNotification('📡 Соединение восстановлено', 'success');
             if (!isConnected) {
