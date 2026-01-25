@@ -12,36 +12,36 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --primary: #2196F3;
-            --primary-light: #64B5F6;
+            --primary: #1976D2;
+            --primary-light: #42A5F5;
             --primary-dark: #1565C0;
-            --secondary: #4CAF50;
-            --secondary-light: #81C784;
-            --secondary-dark: #388E3C;
+            --secondary: #388E3C;
+            --secondary-light: #66BB6A;
+            --secondary-dark: #2E7D32;
             --accent: #FF4081;
             
             /* Светлая тема */
-            --light-bg: #f5f7fa;
+            --light-bg: #f8fafc;
             --light-card: #ffffff;
-            --light-border: #e0e0e0;
-            --light-text: #333333;
-            --light-text-secondary: #666666;
+            --light-border: #e2e8f0;
+            --light-text: #334155;
+            --light-text-secondary: #64748b;
             
-            /* Темно-синяя тема */
-            --dark-bg: #0a1929;
-            --dark-card: #132f4c;
-            --dark-border: #1e4976;
-            --dark-text: #e3f2fd;
-            --dark-text-secondary: #90caf9;
+            /* Темно-синяя тема (ЕЩЕ ТЕМНЕЕ) */
+            --dark-bg: #0a1525;
+            --dark-card: #1a2536;
+            --dark-border: #2d3748;
+            --dark-text: #e2e8f0;
+            --dark-text-secondary: #94a3b8;
             
-            --success: #4CAF50;
-            --warning: #FF9800;
-            --danger: #F44336;
-            --info: #2196F3;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-            --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
@@ -78,16 +78,17 @@
         header {
             background: var(--light-card);
             box-shadow: var(--shadow-md);
-            padding: 20px 0;
+            padding: 18px 0;
             position: sticky;
             top: 0;
             z-index: 1000;
             transition: var(--transition);
+            border-bottom: 1px solid var(--light-border);
         }
 
         .dark-theme header {
             background: var(--dark-card);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             border-bottom: 1px solid var(--dark-border);
         }
 
@@ -105,31 +106,32 @@
         }
 
         .logo-icon {
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             color: white;
             box-shadow: var(--shadow-md);
         }
 
         .logo-text h1 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            line-height: 1.2;
         }
 
         .logo-text p {
             color: var(--light-text-secondary);
-            font-size: 14px;
+            font-size: 13px;
             margin-top: 2px;
         }
 
@@ -142,9 +144,9 @@
             color: white;
             padding: 2px 8px;
             border-radius: 12px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            margin-left: 8px;
+            margin-left: 6px;
         }
 
         .header-controls {
@@ -162,7 +164,7 @@
         }
 
         .theme-toggle-label {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--light-text-secondary);
         }
 
@@ -173,8 +175,8 @@
         .theme-toggle {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 30px;
+            width: 56px;
+            height: 28px;
         }
 
         .theme-toggle input {
@@ -190,7 +192,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background-color: #64748b;
             border-radius: 34px;
             transition: var(--transition);
         }
@@ -198,14 +200,14 @@
         .theme-toggle-slider:before {
             position: absolute;
             content: "";
-            height: 22px;
-            width: 22px;
+            height: 20px;
+            width: 20px;
             left: 4px;
             bottom: 4px;
             background-color: white;
             border-radius: 50%;
             transition: var(--transition);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         input:checked + .theme-toggle-slider {
@@ -213,7 +215,7 @@
         }
 
         input:checked + .theme-toggle-slider:before {
-            transform: translateX(30px);
+            transform: translateX(28px);
         }
 
         /* Connection Status */
@@ -222,21 +224,21 @@
             align-items: center;
             gap: 10px;
             padding: 8px 16px;
-            background: rgba(33, 150, 243, 0.1);
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(33, 150, 243, 0.2);
-            min-width: 200px;
+            background: rgba(25, 118, 210, 0.08);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(25, 118, 210, 0.2);
+            min-width: 180px;
             flex-shrink: 0;
         }
 
         .dark-theme .connection-status {
-            background: rgba(100, 181, 246, 0.15);
-            border-color: rgba(100, 181, 246, 0.3);
+            background: rgba(66, 165, 245, 0.1);
+            border-color: rgba(66, 165, 245, 0.3);
         }
 
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background-color: var(--danger);
             position: relative;
@@ -248,18 +250,18 @@
         }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
         .status-text {
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .status-time {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--light-text-secondary);
             margin-top: 2px;
         }
@@ -270,17 +272,17 @@
 
         /* Main Layout */
         .dashboard {
-            padding: 30px 0;
+            padding: 25px 0;
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
+            gap: 18px;
         }
 
         /* Cards */
         .card {
             background: var(--light-card);
             border-radius: var(--radius-lg);
-            padding: 24px;
+            padding: 20px;
             box-shadow: var(--shadow-md);
             transition: var(--transition);
             border: 1px solid var(--light-border);
@@ -293,7 +295,7 @@
         .dark-theme .card {
             background: var(--dark-card);
             border-color: var(--dark-border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
 
         .card::before {
@@ -309,19 +311,21 @@
         .card-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            align-items: flex-start;
+            margin-bottom: 18px;
             flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .card-title {
             font-family: 'Montserrat', sans-serif;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 10px;
-            white-space: nowrap;
+            line-height: 1.3;
         }
 
         .card-title i {
@@ -343,24 +347,25 @@
         .data-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 18px;
         }
 
         .data-item {
-            background: rgba(33, 150, 243, 0.05);
+            background: rgba(25, 118, 210, 0.04);
             border-radius: var(--radius-md);
-            padding: 15px;
+            padding: 14px;
             text-align: center;
             transition: var(--transition);
-            min-height: 100px;
+            min-height: 92px;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            overflow: hidden;
         }
 
         .dark-theme .data-item {
-            background: rgba(100, 181, 246, 0.1);
+            background: rgba(66, 165, 245, 0.08);
         }
 
         .data-item:hover {
@@ -369,11 +374,14 @@
         }
 
         .data-value {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 700;
-            margin: 5px 0;
+            margin: 4px 0;
             color: var(--primary);
             line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .dark-theme .data-value {
@@ -382,10 +390,13 @@
 
         .data-label {
             color: var(--light-text-secondary);
-            font-size: 13px;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .dark-theme .data-label {
@@ -393,7 +404,7 @@
         }
 
         .data-unit {
-            font-size: 16px;
+            font-size: 14px;
             color: var(--light-text-secondary);
         }
 
@@ -406,8 +417,11 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
-            margin-top: 8px;
-            font-size: 12px;
+            margin-top: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .data-status .good { color: var(--success); }
@@ -420,11 +434,11 @@
         }
 
         .chart-container {
-            height: 300px;
-            margin-top: 20px;
+            height: 280px;
+            margin-top: 18px;
             position: relative;
             flex: 1;
-            min-height: 250px;
+            min-height: 220px;
         }
 
         /* Controls Card */
@@ -433,8 +447,8 @@
         }
 
         .control-section {
-            margin-bottom: 25px;
-            padding-bottom: 25px;
+            margin-bottom: 22px;
+            padding-bottom: 22px;
             border-bottom: 1px solid var(--light-border);
         }
 
@@ -449,9 +463,9 @@
         }
 
         .control-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 14px;
             color: var(--primary);
             display: flex;
             align-items: center;
@@ -463,8 +477,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
-            min-height: 60px;
+            padding: 11px 0;
+            min-height: 56px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .toggle-label {
@@ -477,25 +493,26 @@
         }
 
         .toggle-icon {
-            width: 36px;
-            height: 36px;
-            background: rgba(33, 150, 243, 0.1);
+            width: 34px;
+            height: 34px;
+            background: rgba(25, 118, 210, 0.08);
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             color: var(--primary);
             flex-shrink: 0;
         }
 
         .dark-theme .toggle-icon {
-            background: rgba(100, 181, 246, 0.2);
+            background: rgba(66, 165, 245, 0.12);
         }
 
         .toggle-text {
             flex: 1;
             min-width: 0;
+            overflow: hidden;
         }
 
         .toggle-text > div:first-child {
@@ -507,10 +524,11 @@
         }
 
         .toggle-text > div:last-child {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--light-text-secondary);
             white-space: normal;
             line-height: 1.3;
+            overflow: hidden;
         }
 
         .dark-theme .toggle-text > div:last-child {
@@ -520,8 +538,8 @@
         .switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 30px;
+            width: 56px;
+            height: 28px;
             flex-shrink: 0;
         }
 
@@ -538,7 +556,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background-color: #cbd5e1;
             border-radius: 34px;
             transition: var(--transition);
         }
@@ -546,14 +564,14 @@
         .switch-slider:before {
             position: absolute;
             content: "";
-            height: 22px;
-            width: 22px;
+            height: 20px;
+            width: 20px;
             left: 4px;
             bottom: 4px;
             background-color: white;
             border-radius: 50%;
             transition: var(--transition);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         input:checked + .switch-slider {
@@ -561,13 +579,13 @@
         }
 
         input:checked + .switch-slider:before {
-            transform: translateX(30px);
+            transform: translateX(28px);
         }
 
         /* Slider */
         .slider-group {
-            margin: 20px 0;
-            min-height: 70px;
+            margin: 18px 0;
+            min-height: 65px;
         }
 
         .slider-header {
@@ -575,18 +593,19 @@
             justify-content: space-between;
             margin-bottom: 10px;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 4px;
         }
 
         .slider-value {
             font-weight: 600;
             color: var(--primary);
             white-space: nowrap;
+            font-size: 14px;
         }
 
         .slider-container {
             position: relative;
-            height: 40px;
+            height: 36px;
             width: 100%;
         }
 
@@ -595,21 +614,21 @@
             top: 50%;
             left: 0;
             right: 0;
-            height: 6px;
-            background: rgba(0,0,0,0.1);
+            height: 5px;
+            background: rgba(0,0,0,0.08);
             border-radius: 3px;
             transform: translateY(-50%);
         }
 
         .dark-theme .slider-track {
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.12);
         }
 
         .slider-fill {
             position: absolute;
             top: 50%;
             left: 0;
-            height: 6px;
+            height: 5px;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
             border-radius: 3px;
             transform: translateY(-50%);
@@ -633,8 +652,8 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: white;
             border: 2px solid var(--primary);
             border-radius: 50%;
@@ -646,12 +665,12 @@
 
         /* Buttons */
         .btn {
-            padding: 12px 24px;
+            padding: 11px 20px;
             border-radius: var(--radius-md);
             border: none;
             font-family: 'Montserrat', sans-serif;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
@@ -659,9 +678,10 @@
             justify-content: center;
             gap: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
             white-space: nowrap;
-            min-height: 44px;
+            min-height: 40px;
+            overflow: hidden;
         }
 
         .btn:disabled {
@@ -680,24 +700,24 @@
         }
 
         .btn-secondary {
-            background: rgba(33, 150, 243, 0.1);
+            background: rgba(25, 118, 210, 0.08);
             color: var(--primary);
-            border: 1px solid rgba(33, 150, 243, 0.3);
+            border: 1px solid rgba(25, 118, 210, 0.2);
         }
 
         .dark-theme .btn-secondary {
-            background: rgba(100, 181, 246, 0.15);
-            border-color: rgba(100, 181, 246, 0.4);
+            background: rgba(66, 165, 245, 0.12);
+            border-color: rgba(66, 165, 245, 0.3);
             color: var(--primary-light);
         }
 
         .btn-secondary:hover:not(:disabled) {
-            background: rgba(33, 150, 243, 0.2);
+            background: rgba(25, 118, 210, 0.12);
             transform: translateY(-2px);
         }
 
         .dark-theme .btn-secondary:hover:not(:disabled) {
-            background: rgba(100, 181, 246, 0.25);
+            background: rgba(66, 165, 245, 0.2);
         }
 
         .btn-success {
@@ -711,7 +731,7 @@
         }
 
         .btn-danger {
-            background: linear-gradient(90deg, var(--danger), #D32F2F);
+            background: linear-gradient(90deg, var(--danger), #DC2626);
             color: white;
         }
 
@@ -723,8 +743,8 @@
         .btn-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 18px;
         }
 
         /* Settings Card */
@@ -735,8 +755,8 @@
         .time-picker {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
+            gap: 12px;
+            margin: 12px 0;
         }
 
         .time-input-group {
@@ -745,9 +765,9 @@
 
         .time-input-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             color: var(--light-text-secondary);
-            font-size: 13px;
+            font-size: 12px;
             white-space: nowrap;
         }
 
@@ -759,20 +779,21 @@
         input[type="number"],
         select {
             width: 100%;
-            padding: 10px;
+            padding: 9px;
             border: 1px solid var(--light-border);
             border-radius: var(--radius-sm);
             background: var(--light-card);
             color: var(--light-text);
-            font-size: 14px;
+            font-size: 13px;
             transition: var(--transition);
-            min-height: 40px;
+            min-height: 36px;
+            overflow: hidden;
         }
 
         .dark-theme input[type="time"],
         .dark-theme input[type="number"],
         .dark-theme select {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             border-color: var(--dark-border);
             color: var(--dark-text);
         }
@@ -790,64 +811,67 @@
 
         .telegram-content {
             text-align: center;
-            padding: 20px 0;
+            padding: 18px 0;
             display: flex;
             flex-direction: column;
             height: 100%;
+            overflow: hidden;
         }
 
         .telegram-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 16px;
             background: linear-gradient(135deg, #0088cc, #34aadc);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
+            font-size: 32px;
             color: white;
             box-shadow: var(--shadow-lg);
             flex-shrink: 0;
         }
 
         .telegram-details {
-            background: rgba(0, 136, 204, 0.1);
+            background: rgba(0, 136, 204, 0.08);
             border-radius: var(--radius-md);
-            padding: 15px;
-            margin: 20px 0;
-            border-left: 4px solid #0088cc;
+            padding: 14px;
+            margin: 16px 0;
+            border-left: 3px solid #0088cc;
             flex: 1;
             overflow: hidden;
         }
 
         .dark-theme .telegram-details {
-            background: rgba(0, 136, 204, 0.15);
+            background: rgba(0, 136, 204, 0.12);
         }
 
         .telegram-details p {
-            margin: 8px 0;
+            margin: 7px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 4px;
+            overflow: hidden;
         }
 
         .telegram-code {
-            background: rgba(0, 0, 0, 0.1);
-            padding: 6px 10px;
-            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.08);
+            padding: 5px 9px;
+            border-radius: 5px;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 11px;
             color: #0088cc;
             word-break: break-all;
             max-width: calc(100% - 50px);
             flex: 1;
+            overflow: hidden;
         }
 
         .dark-theme .telegram-code {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
         }
 
         /* Errors Card */
@@ -856,52 +880,54 @@
         }
 
         .errors-list {
-            max-height: 300px;
+            max-height: 280px;
             overflow-y: auto;
-            margin: 15px 0;
+            margin: 12px 0;
             flex: 1;
         }
 
         .error-item {
-            background: rgba(244, 67, 54, 0.1);
+            background: rgba(239, 68, 68, 0.08);
             border-radius: var(--radius-sm);
-            padding: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--danger);
+            padding: 11px;
+            margin-bottom: 9px;
+            border-left: 3px solid var(--danger);
             word-wrap: break-word;
+            overflow: hidden;
         }
 
         .dark-theme .error-item {
-            background: rgba(244, 67, 54, 0.15);
+            background: rgba(239, 68, 68, 0.12);
         }
 
         .error-item.warning {
-            background: rgba(255, 152, 0, 0.1);
+            background: rgba(245, 158, 11, 0.08);
             border-left-color: var(--warning);
         }
 
         .dark-theme .error-item.warning {
-            background: rgba(255, 152, 0, 0.15);
+            background: rgba(245, 158, 11, 0.12);
         }
 
         .error-item.info {
-            background: rgba(33, 150, 243, 0.1);
+            background: rgba(59, 130, 246, 0.08);
             border-left-color: var(--info);
         }
 
         .dark-theme .error-item.info {
-            background: rgba(33, 150, 243, 0.15);
+            background: rgba(59, 130, 246, 0.12);
         }
 
         .error-header {
             display: flex;
             align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 5px;
+            gap: 9px;
+            margin-bottom: 4px;
+            overflow: hidden;
         }
 
         .error-icon {
-            font-size: 16px;
+            font-size: 15px;
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -912,15 +938,16 @@
 
         .error-message {
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.4;
             word-break: break-word;
+            overflow: hidden;
         }
 
         .error-time {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--light-text-secondary);
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
         .dark-theme .error-time {
@@ -935,24 +962,25 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 18px;
         }
 
         .stat-item {
-            background: rgba(33, 150, 243, 0.05);
+            background: rgba(25, 118, 210, 0.04);
             border-radius: var(--radius-md);
-            padding: 15px;
+            padding: 14px;
             text-align: center;
             transition: var(--transition);
-            min-height: 90px;
+            min-height: 84px;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            overflow: hidden;
         }
 
         .dark-theme .stat-item {
-            background: rgba(100, 181, 246, 0.1);
+            background: rgba(66, 165, 245, 0.08);
         }
 
         .stat-item:hover {
@@ -961,9 +989,9 @@
         }
 
         .stat-value {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
-            margin: 5px 0;
+            margin: 4px 0;
             color: var(--primary);
             line-height: 1.2;
         }
@@ -974,9 +1002,9 @@
 
         .stat-label {
             color: var(--light-text-secondary);
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }
 
         .dark-theme .stat-label {
@@ -991,47 +1019,51 @@
         .developer-card {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(33, 150, 243, 0.05);
+            gap: 14px;
+            margin-bottom: 18px;
+            padding: 14px;
+            background: rgba(25, 118, 210, 0.04);
             border-radius: var(--radius-md);
             flex-wrap: wrap;
+            overflow: hidden;
         }
 
         .dark-theme .developer-card {
-            background: rgba(100, 181, 246, 0.1);
+            background: rgba(66, 165, 245, 0.08);
         }
 
         .developer-avatar {
-            width: 60px;
-            height: 60px;
+            width: 56px;
+            height: 56px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             color: white;
             flex-shrink: 0;
         }
 
         .developer-info {
             flex: 1;
-            min-width: 200px;
+            min-width: 180px;
+            overflow: hidden;
         }
 
         .developer-info h4 {
-            font-size: 16px;
-            margin-bottom: 4px;
+            font-size: 15px;
+            margin-bottom: 3px;
             word-break: break-word;
+            line-height: 1.3;
         }
 
         .developer-info p {
             color: var(--light-text-secondary);
-            font-size: 13px;
+            font-size: 12px;
             margin-bottom: 2px;
             line-height: 1.4;
+            overflow: hidden;
         }
 
         .dark-theme .developer-info p {
@@ -1040,16 +1072,16 @@
 
         .social-links {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 9px;
+            margin-top: 9px;
             flex-wrap: wrap;
         }
 
         .social-link {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
-            background: rgba(33, 150, 243, 0.1);
+            background: rgba(25, 118, 210, 0.08);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1060,7 +1092,7 @@
         }
 
         .dark-theme .social-link {
-            background: rgba(100, 181, 246, 0.15);
+            background: rgba(66, 165, 245, 0.12);
             color: var(--primary-light);
         }
 
@@ -1074,8 +1106,8 @@
         footer {
             background: var(--light-card);
             border-top: 1px solid var(--light-border);
-            padding: 40px 0 30px;
-            margin-top: 40px;
+            padding: 35px 0 25px;
+            margin-top: 35px;
         }
 
         .dark-theme footer {
@@ -1086,14 +1118,14 @@
         .footer-content {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
+            gap: 25px;
         }
 
         .footer-section h3 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             color: var(--primary);
         }
 
@@ -1102,7 +1134,7 @@
         }
 
         .footer-links li {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .footer-links a {
@@ -1110,10 +1142,11 @@
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
+            gap: 7px;
+            font-size: 13px;
             transition: var(--transition);
             word-break: break-word;
+            line-height: 1.3;
         }
 
         .dark-theme .footer-links a {
@@ -1127,11 +1160,11 @@
 
         .copyright {
             text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
+            margin-top: 25px;
+            padding-top: 18px;
             border-top: 1px solid var(--light-border);
             color: var(--light-text-secondary);
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.5;
         }
 
@@ -1143,26 +1176,27 @@
         /* Notification */
         .notification {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 18px;
+            right: 18px;
             background: var(--light-card);
             border-radius: var(--radius-md);
-            padding: 16px 20px;
+            padding: 14px 18px;
             box-shadow: var(--shadow-lg);
-            border-left: 4px solid var(--primary);
+            border-left: 3px solid var(--primary);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             z-index: 10000;
             transform: translateX(150%);
             transition: transform 0.3s ease;
-            max-width: 350px;
-            width: calc(100% - 40px);
+            max-width: 320px;
+            width: calc(100% - 36px);
+            overflow: hidden;
         }
 
         .dark-theme .notification {
             background: var(--dark-card);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
         .notification.show {
@@ -1170,7 +1204,7 @@
         }
 
         .notification-icon {
-            font-size: 20px;
+            font-size: 18px;
             color: var(--primary);
             flex-shrink: 0;
         }
@@ -1178,18 +1212,19 @@
         .notification-content {
             flex: 1;
             min-width: 0;
+            overflow: hidden;
         }
 
         .notification-title {
             font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
+            font-size: 13px;
+            margin-bottom: 3px;
             word-break: break-word;
         }
 
         .notification-message {
             color: var(--light-text-secondary);
-            font-size: 13px;
+            font-size: 12px;
             line-height: 1.4;
             word-break: break-word;
         }
@@ -1217,9 +1252,9 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(33, 150, 243, 0.3);
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(25, 118, 210, 0.3);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -1267,7 +1302,7 @@
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
-                gap: 15px;
+                gap: 12px;
             }
             
             .connection-status {
@@ -1289,24 +1324,24 @@
             
             .footer-content {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 18px;
             }
             
             .container {
-                padding: 0 15px;
+                padding: 0 12px;
             }
             
             .card {
-                padding: 20px;
+                padding: 16px;
             }
             
             .btn {
-                padding: 10px 16px;
-                font-size: 13px;
+                padding: 9px 14px;
+                font-size: 12px;
             }
             
             .chart-container {
-                height: 250px;
+                height: 220px;
             }
             
             .toggle-item {
@@ -1314,13 +1349,13 @@
             }
             
             .switch {
-                margin-top: 10px;
+                margin-top: 8px;
             }
             
             .telegram-details p {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 5px;
+                gap: 4px;
             }
             
             .telegram-code {
@@ -1331,19 +1366,19 @@
 
         @media (max-width: 480px) {
             .logo-text h1 {
-                font-size: 20px;
+                font-size: 18px;
             }
             
             .data-value {
-                font-size: 30px;
+                font-size: 28px;
             }
             
             .stat-value {
-                font-size: 24px;
+                font-size: 22px;
             }
             
             .card-title {
-                font-size: 16px;
+                font-size: 15px;
             }
             
             .developer-card {
@@ -1403,7 +1438,7 @@
                         <i class="fas fa-tachometer-alt"></i>
                         <span>Текущие показатели</span>
                     </div>
-                    <div class="system-mode" id="systemMode" style="background: rgba(33,150,243,0.1); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap;">АВТО</div>
+                    <div class="system-mode" id="systemMode" style="background: rgba(25,118,210,0.08); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;">АВТО</div>
                 </div>
                 <div class="card-body">
                     <div class="data-grid">
@@ -1444,12 +1479,12 @@
                         </div>
                     </div>
                     
-                    <div style="margin-top: 15px; padding: 12px; background: rgba(33,150,243,0.05); border-radius: var(--radius-md); flex-shrink: 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
-                            <span style="font-size: 14px; color: var(--light-text-secondary);">Время системы:</span>
-                            <span style="font-size: 18px; font-weight: 600; color: var(--primary);" id="systemTime">--:--</span>
+                    <div style="margin-top: 12px; padding: 10px; background: rgba(25,118,210,0.04); border-radius: var(--radius-md); flex-shrink: 0; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
+                            <span style="font-size: 13px; color: var(--light-text-secondary);">Время системы:</span>
+                            <span style="font-size: 16px; font-weight: 600; color: var(--primary);" id="systemTime">--:--</span>
                         </div>
-                        <div style="font-size: 12px; color: var(--light-text-secondary); margin-top: 5px;" id="systemDate">--.--.----</div>
+                        <div style="font-size: 11px; color: var(--light-text-secondary); margin-top: 4px;" id="systemDate">--.--.----</div>
                     </div>
                 </div>
             </div>
@@ -1462,7 +1497,7 @@
                         <span>График влажности</span>
                     </div>
                     <div class="chart-controls">
-                        <select id="chartRange" style="padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--light-border); background: var(--light-card); color: var(--light-text); font-size: 14px;">
+                        <select id="chartRange" style="padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--light-border); background: var(--light-card); color: var(--light-text); font-size: 13px;">
                             <option value="1">1 час</option>
                             <option value="6">6 часов</option>
                             <option value="24" selected>24 часа</option>
@@ -1474,7 +1509,7 @@
                     <div class="chart-container">
                         <canvas id="moistureChart"></canvas>
                     </div>
-                    <div class="data-grid" style="margin-top: 20px; flex-shrink: 0;">
+                    <div class="data-grid" style="margin-top: 18px; flex-shrink: 0;">
                         <div class="data-item">
                             <div class="data-label">Средняя</div>
                             <div class="data-value" id="avgMoisture">--%</div>
@@ -1560,7 +1595,7 @@
                                 <input type="range" min="10" max="90" value="50" id="thresholdSlider">
                                 <div class="slider-thumb" id="thresholdThumb"></div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--light-text-secondary); margin-top: 5px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--light-text-secondary); margin-top: 4px;">
                                 <span>Сухо (10%)</span>
                                 <span>Влажно (90%)</span>
                             </div>
@@ -1577,7 +1612,7 @@
                                 <input type="range" min="1" max="60" value="10" id="durationSlider">
                                 <div class="slider-thumb" id="durationThumb"></div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--light-text-secondary); margin-top: 5px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--light-text-secondary); margin-top: 4px;">
                                 <span>Коротко (1с)</span>
                                 <span>Долго (60с)</span>
                             </div>
@@ -1723,24 +1758,24 @@
                             <i class="fab fa-telegram"></i>
                         </div>
                         
-                        <h3 style="margin-bottom: 15px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@EcoGrow_assis_Bot</h3>
+                        <h3 style="margin-bottom: 12px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px;">@EcoGrow_assis_Bot</h3>
                         
                         <div class="telegram-details">
                             <p>
-                                <span style="font-weight: 600; white-space: nowrap;">Токен:</span>
+                                <span style="font-weight: 600; white-space: nowrap; font-size: 12px;">Токен:</span>
                                 <span class="telegram-code">8365221747:AAEskXtc6T-IhEik718wJJ9x-vz_TOh26tw</span>
                             </p>
                             <p>
-                                <span style="font-weight: 600; white-space: nowrap;">Chat ID:</span>
+                                <span style="font-weight: 600; white-space: nowrap; font-size: 12px;">Chat ID:</span>
                                 <span class="telegram-code">6712996693</span>
                             </p>
                             <p>
-                                <span style="font-weight: 600; white-space: nowrap;">Назначение:</span>
-                                <span style="flex: 1; min-width: 0;">Мониторинг и уведомления об ошибках</span>
+                                <span style="font-weight: 600; white-space: nowrap; font-size: 12px;">Назначение:</span>
+                                <span style="flex: 1; min-width: 0; font-size: 12px;">Мониторинг и уведомления об ошибках</span>
                             </p>
                         </div>
                         
-                        <p style="color: var(--light-text-secondary); font-size: 14px; margin: 15px 0; line-height: 1.5;">
+                        <p style="color: var(--light-text-secondary); font-size: 13px; margin: 12px 0; line-height: 1.5;">
                             Бот отправляет уведомления о критических ошибках системы, 
                             изменениях состояния и низком уровне влажности
                         </p>
@@ -1766,9 +1801,9 @@
                         <i class="fas fa-exclamation-triangle"></i>
                         <span>История ошибок системы</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <span style="font-size: 12px; color: var(--light-text-secondary); white-space: nowrap;" id="errorsCount">0 ошибок</span>
-                        <button class="btn btn-danger" id="clearErrorsBtn" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="font-size: 11px; color: var(--light-text-secondary); white-space: nowrap;" id="errorsCount">0 ошибок</span>
+                        <button class="btn btn-danger" id="clearErrorsBtn" style="padding: 5px 10px; font-size: 11px; white-space: nowrap;">
                             <i class="fas fa-broom"></i>
                             Очистить
                         </button>
@@ -1799,7 +1834,7 @@
                         <i class="fas fa-chart-bar"></i>
                         <span>Статистика работы</span>
                     </div>
-                    <div style="font-size: 12px; color: var(--light-text-secondary); white-space: nowrap;">За последние 7 дней</div>
+                    <div style="font-size: 11px; color: var(--light-text-secondary); white-space: nowrap;">За последние 7 дней</div>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
@@ -1848,7 +1883,7 @@
                         </div>
                     </div>
                     
-                    <div class="btn-group" style="margin: 20px 0;">
+                    <div class="btn-group" style="margin: 18px 0;">
                         <a href="https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit?usp=sharing&ouid=102749689555588678032&rtpof=true&sd=true" 
                            target="_blank" class="btn btn-primary">
                             <i class="fas fa-file-alt"></i>
@@ -1860,9 +1895,9 @@
                         </a>
                     </div>
                     
-                    <div style="background: rgba(33,150,243,0.05); padding: 15px; border-radius: var(--radius-md); margin-top: 15px; flex-shrink: 0;">
-                        <h4 style="color: var(--primary); margin-bottom: 10px; font-size: 14px;">Что нового в версии 4.5:</h4>
-                        <ul style="color: var(--light-text-secondary); font-size: 13px; padding-left: 20px; line-height: 1.5;">
+                    <div style="background: rgba(25,118,210,0.04); padding: 12px; border-radius: var(--radius-md); margin-top: 12px; flex-shrink: 0; overflow: hidden;">
+                        <h4 style="color: var(--primary); margin-bottom: 8px; font-size: 13px;">Что нового в версии 4.5:</h4>
+                        <ul style="color: var(--light-text-secondary); font-size: 12px; padding-left: 18px; line-height: 1.5;">
                             <li>Исправлены конфликты пинов энкодера (10,11)</li>
                             <li>Добавлен watchdog-таймер для стабильности</li>
                             <li>Улучшена обработка прерываний энкодера</li>
@@ -1942,7 +1977,7 @@
             
             <div class="copyright">
                 <p>© 2023 EcoGrow Control System v4.5. Все права защищены.</p>
-                <p style="margin-top: 5px;">Разработано для автоматизации полива растений с удаленным управлением</p>
+                <p style="margin-top: 4px;">Разработано для автоматизации полива растений с удаленным управлением</p>
             </div>
         </div>
     </footer>
@@ -1959,7 +1994,7 @@
     </div>
 
     <script>
-        // Firebase Configuration
+        // Firebase Configuration - ПРОВЕРЬТЕ ВАШИ ДАННЫЕ FIREBASE!
         const firebaseConfig = {
             apiKey: "AIzaSyBX3dP3nUP9CRcZ0Z1KHRFGeR6N6nZx1kM",
             authDomain: "ecogrow-remote-default-rtdb.firebaseapp.com",
@@ -2039,6 +2074,10 @@
             errors: []
         };
         
+        // Debug
+        let debugLog = [];
+        const MAX_DEBUG_LOGS = 100;
+        
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
@@ -2107,6 +2146,8 @@
                         systemState.light_mode = data.light_mode || "AUT";
                         systemState.time = data.time || "--:--";
                         
+                        addDebugLog(`Получены данные: влажность=${data.moisture}%, насос=${data.pump ? 'ВКЛ' : 'ВЫКЛ'}, свет=${data.light ? 'ВКЛ' : 'ВЫКЛ'}`);
+                        
                         // Add to history
                         addToHistory({
                             timestamp: Date.now(),
@@ -2136,6 +2177,7 @@
                     connectionStatus.classList.remove('connected');
                     connectionText.textContent = 'Нет данных от ESP8266';
                     showNotification('Внимание', 'Нет данных от устройства ESP8266', 'warning');
+                    addDebugLog('Нет данных от Firebase');
                 }
             }, (error) => {
                 console.error('Firebase error:', error);
@@ -2143,6 +2185,20 @@
                 connectionStatus.classList.remove('connected');
                 connectionText.textContent = 'Ошибка подключения';
                 showNotification('Ошибка', 'Не удалось подключиться к Firebase', 'error');
+                addDebugLog(`Ошибка Firebase: ${error.message}`);
+            });
+            
+            // Also listen for command responses
+            const commandRef = database.ref('commands/ecogrow_main_response');
+            commandRef.on('value', (snapshot) => {
+                const response = snapshot.val();
+                if (response) {
+                    addDebugLog(`Ответ от ESP: ${response}`);
+                    // Clear response after reading
+                    setTimeout(() => {
+                        database.ref('commands/ecogrow_main_response').set(null);
+                    }, 1000);
+                }
             });
         }
         
@@ -2157,16 +2213,16 @@
                     datasets: [{
                         label: 'Влажность почвы (%)',
                         data: [],
-                        borderColor: '#2196F3',
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        borderColor: '#1976D2',
+                        backgroundColor: 'rgba(25, 118, 210, 0.08)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: '#2196F3',
+                        pointBackgroundColor: '#1976D2',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 1,
                         pointRadius: 3,
-                        pointHoverRadius: 6
+                        pointHoverRadius: 5
                     }]
                 },
                 options: {
@@ -2177,7 +2233,7 @@
                             labels: {
                                 color: getComputedStyle(document.body).getPropertyValue('--light-text'),
                                 font: {
-                                    size: 12
+                                    size: 11
                                 }
                             }
                         },
@@ -2185,9 +2241,9 @@
                             backgroundColor: getComputedStyle(document.body).getPropertyValue('--light-card'),
                             titleColor: getComputedStyle(document.body).getPropertyValue('--light-text'),
                             bodyColor: getComputedStyle(document.body).getPropertyValue('--light-text-secondary'),
-                            borderColor: '#2196F3',
+                            borderColor: '#1976D2',
                             borderWidth: 1,
-                            cornerRadius: 6
+                            cornerRadius: 5
                         }
                     },
                     scales: {
@@ -2198,7 +2254,7 @@
                             ticks: {
                                 color: getComputedStyle(document.body).getPropertyValue('--light-text-secondary'),
                                 font: {
-                                    size: 11
+                                    size: 10
                                 },
                                 maxRotation: 45,
                                 minRotation: 45
@@ -2213,7 +2269,7 @@
                             ticks: {
                                 color: getComputedStyle(document.body).getPropertyValue('--light-text-secondary'),
                                 font: {
-                                    size: 11
+                                    size: 10
                                 }
                             }
                         }
@@ -2231,15 +2287,15 @@
                         {
                             label: 'Поливы',
                             data: [0, 0, 0, 0, 0, 0, 0],
-                            backgroundColor: 'rgba(33, 150, 243, 0.7)',
-                            borderColor: '#2196F3',
+                            backgroundColor: 'rgba(25, 118, 210, 0.7)',
+                            borderColor: '#1976D2',
                             borderWidth: 1
                         },
                         {
                             label: 'Активность света (ч)',
                             data: [0, 0, 0, 0, 0, 0, 0],
-                            backgroundColor: 'rgba(76, 175, 80, 0.7)',
-                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(56, 142, 60, 0.7)',
+                            borderColor: '#388E3C',
                             borderWidth: 1
                         }
                     ]
@@ -2252,7 +2308,7 @@
                             labels: {
                                 color: getComputedStyle(document.body).getPropertyValue('--light-text'),
                                 font: {
-                                    size: 11
+                                    size: 10
                                 }
                             }
                         }
@@ -2309,12 +2365,18 @@
             // Sliders with immediate action
             thresholdSlider.addEventListener('input', function() {
                 updateThresholdSlider.call(this);
+            });
+            
+            thresholdSlider.addEventListener('change', function() {
                 sendCommand(`THRESHOLD:${this.value}`);
                 showNotification('Порог', `Установлен на ${this.value}%`, 'info');
             });
             
             durationSlider.addEventListener('input', function() {
                 updateDurationSlider.call(this);
+            });
+            
+            durationSlider.addEventListener('change', function() {
                 sendCommand(`PUMPDURATION:${this.value}`);
                 showNotification('Длительность полива', `Установлена на ${this.value} сек`, 'info');
             });
@@ -2382,6 +2444,16 @@
             intervalSliderValue.textContent = `${value} мин`;
             intervalFill.style.width = `${percent}%`;
             intervalThumb.style.left = `${percent}%`;
+        }
+        
+        // Add debug log
+        function addDebugLog(message) {
+            const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+            debugLog.unshift(`[${timestamp}] ${message}`);
+            if (debugLog.length > MAX_DEBUG_LOGS) {
+                debugLog.pop();
+            }
+            console.log(message);
         }
         
         // Add data to history
@@ -2518,7 +2590,7 @@
         // Update display with current state
         function updateDisplay() {
             // Update values
-            moistureValue.textContent = systemState.moisture !== null ? systemState.moisture : '--';
+            moistureValue.textContent = systemState.moisture !== null ? systemState.moisture.toFixed(1) : '--';
             thresholdValue.textContent = systemState.threshold;
             systemTime.textContent = systemState.time;
             
@@ -2532,14 +2604,14 @@
             
             // Update pump status
             pumpState.textContent = systemState.pump ? 'ВКЛ' : 'ВЫКЛ';
-            pumpState.style.color = systemState.pump ? '#4CAF50' : '#F44336';
+            pumpState.style.color = systemState.pump ? '#10B981' : '#EF4444';
             pumpIndicator.className = systemState.pump ? 'fas fa-circle good' : 'fas fa-circle danger';
             pumpMode.textContent = systemState.pump_mode === 'MAN' ? 'РУЧНОЙ' : 'АВТО';
             pumpStatusText.textContent = systemState.pump_mode === 'MAN' ? 'Ручной режим' : 'Автоматический режим';
             
             // Update light status
             lightState.textContent = systemState.light ? 'ВКЛ' : 'ВЫКЛ';
-            lightState.style.color = systemState.light ? '#4CAF50' : '#F44336';
+            lightState.style.color = systemState.light ? '#10B981' : '#EF4444';
             lightIndicator.className = systemState.light ? 'fas fa-circle good' : 'fas fa-circle danger';
             lightMode.textContent = systemState.light_mode === 'MAN' ? 'РУЧНОЙ' : 'АВТО';
             lightStatusText.textContent = systemState.light_mode === 'MAN' ? 'Ручной режим' : 'Автоматический режим';
@@ -2568,12 +2640,12 @@
             // Update system mode
             if (systemState.pump_mode === 'AUT' && systemState.light_mode === 'AUT') {
                 systemMode.textContent = 'АВТО';
-                systemMode.style.background = 'rgba(76, 175, 80, 0.1)';
-                systemMode.style.color = '#4CAF50';
+                systemMode.style.background = 'rgba(16, 185, 129, 0.08)';
+                systemMode.style.color = '#10B981';
             } else {
                 systemMode.textContent = 'РУЧНОЙ';
-                systemMode.style.background = 'rgba(33, 150, 243, 0.1)';
-                systemMode.style.color = '#2196F3';
+                systemMode.style.background = 'rgba(25, 118, 210, 0.08)';
+                systemMode.style.color = '#1976D2';
             }
             
             // Update toggle switches to match current state
@@ -2594,14 +2666,14 @@
             if (systemState.moisture !== null) {
                 // Проверка влажности ниже 5% - КРИТИЧЕСКАЯ ОШИБКА
                 if (systemState.moisture < 5) {
-                    addError('danger', `КРИТИЧЕСКАЯ ОШИБКА: Влажность ниже 5% (${systemState.moisture}%)`);
-                    showNotification('КРИТИЧЕСКАЯ ОШИБКА!', `Влажность критически низкая: ${systemState.moisture}%`, 'error');
+                    addError('danger', `КРИТИЧЕСКАЯ ОШИБКА: Влажность ниже 5% (${systemState.moisture.toFixed(1)}%)`);
+                    showNotification('КРИТИЧЕСКАЯ ОШИБКА!', `Влажность критически низкая: ${systemState.moisture.toFixed(1)}%`, 'error');
                 }
                 // Проверка низкой влажности
                 else if (systemState.moisture < (systemState.threshold - 15)) {
-                    addError('warning', `Очень низкая влажность: ${systemState.moisture}%`);
+                    addError('warning', `Очень низкая влажность: ${systemState.moisture.toFixed(1)}%`);
                 } else if (systemState.moisture < systemState.threshold) {
-                    addError('info', `Низкая влажность: ${systemState.moisture}%`);
+                    addError('info', `Низкая влажность: ${systemState.moisture.toFixed(1)}%`);
                 }
                 
                 // Проверка проблем с подключением
@@ -2649,10 +2721,10 @@
             
             if (systemState.errors.length === 0) {
                 errorsList.innerHTML = `
-                    <div style="text-align: center; padding: 30px 20px; color: var(--light-text-secondary);">
-                        <i class="fas fa-check-circle" style="font-size: 36px; margin-bottom: 15px; color: #4CAF50;"></i>
-                        <h3 style="font-size: 16px; margin-bottom: 8px;">Ошибок не обнаружено</h3>
-                        <p style="font-size: 13px;">Система работает стабильно</p>
+                    <div style="text-align: center; padding: 25px 18px; color: var(--light-text-secondary);">
+                        <i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: #10B981;"></i>
+                        <h3 style="font-size: 14px; margin-bottom: 6px;">Ошибок не обнаружено</h3>
+                        <p style="font-size: 12px;">Система работает стабильно</p>
                     </div>
                 `;
                 return;
@@ -2683,12 +2755,14 @@
             });
         }
         
-        // Send command to Firebase (ESP8266 будет читать команды отсюда)
+        // Send command to Firebase
         function sendCommand(command) {
             if (!systemState.connected) {
                 showNotification('Ошибка', 'Нет подключения к устройству', 'error');
                 return;
             }
+            
+            addDebugLog(`Отправка команды: ${command}`);
             
             // Disable button temporarily
             const button = event?.target;
@@ -2703,17 +2777,28 @@
                 }, 2000);
             }
             
-            // Отправляем команду в Firebase (ESP8266 будет читать из /commands/ecogrow_main)
+            // ВАЖНО: В коде ESP8266 есть функция checkFirebaseCommands(), которая читает команды из Firebase
+            // По пути /commands/ecogrow_main
             database.ref('commands/ecogrow_main').set({
                 command: command,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                sender: 'web'
             })
             .then(() => {
                 console.log(`Команда отправлена в Firebase: ${command}`);
+                addDebugLog(`Команда "${command}" отправлена в Firebase`);
                 showNotification('Команда отправлена', `Команда "${command}" отправлена на ESP8266`, 'success');
+                
+                // Обновим состояние переключателей в соответствии с командой
+                if (command === 'PUMP:ON') pumpToggle.checked = true;
+                if (command === 'PUMP:OFF') pumpToggle.checked = false;
+                if (command === 'LIGHT:ON') lightToggle.checked = true;
+                if (command === 'LIGHT:OFF') lightToggle.checked = false;
+                
             })
             .catch(error => {
                 console.error('Ошибка отправки команды в Firebase:', error);
+                addDebugLog(`Ошибка отправки команды: ${error.message}`);
                 showNotification('Ошибка', 'Не удалось отправить команду', 'error');
             });
         }
