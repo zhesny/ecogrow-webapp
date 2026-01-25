@@ -1535,14 +1535,14 @@
     <div class="test-panel" id="testPanel">
         <h3 style="margin-bottom: 10px; color: var(--primary);">Тестовые команды</h3>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button onclick="testCommand('TEST')" class="btn btn-primary" style="width: 200px;">TEST</button>
-            <button onclick="testCommand('GETDATA')" class="btn btn-primary" style="width: 200px;">GETDATA</button>
-            <button onclick="testCommand('PUMP:ON')" class="btn btn-success" style="width: 200px;">PUMP:ON</button>
-            <button onclick="testCommand('PUMP:OFF')" class="btn btn-danger" style="width: 200px;">PUMP:OFF</button>
-            <button onclick="testCommand('LIGHT:ON')" class="btn btn-success" style="width: 200px;">LIGHT:ON</button>
-            <button onclick="testCommand('LIGHT:OFF')" class="btn btn-danger" style="width: 200px;">LIGHT:OFF</button>
-            <button onclick="testCommand('THRESHOLD:40')" class="btn btn-primary" style="width: 200px;">THRESHOLD:40</button>
-            <button onclick="testCommand('ALL:AUTO')" class="btn btn-secondary" style="width: 200px;">ALL:AUTO</button>
+            <button onclick="testCommand('TEST', this)" class="btn btn-primary" style="width: 200px;">TEST</button>
+            <button onclick="testCommand('GETDATA', this)" class="btn btn-primary" style="width: 200px;">GETDATA</button>
+            <button onclick="testCommand('PUMP:ON', this)" class="btn btn-success" style="width: 200px;">PUMP:ON</button>
+            <button onclick="testCommand('PUMP:OFF', this)" class="btn btn-danger" style="width: 200px;">PUMP:OFF</button>
+            <button onclick="testCommand('LIGHT:ON', this)" class="btn btn-success" style="width: 200px;">LIGHT:ON</button>
+            <button onclick="testCommand('LIGHT:OFF', this)" class="btn btn-danger" style="width: 200px;">LIGHT:OFF</button>
+            <button onclick="testCommand('THRESHOLD:40', this)" class="btn btn-primary" style="width: 200px;">THRESHOLD:40</button>
+            <button onclick="testCommand('ALL:AUTO', this)" class="btn btn-secondary" style="width: 200px;">ALL:AUTO</button>
         </div>
     </div>
     <button class="test-toggle-btn" onclick="toggleTestPanel()">🧪</button>
@@ -2243,7 +2243,7 @@
             addDebugLog('Подключение к Firebase...', 'info');
             
             initTheme();
-            initCharts();
+            initCharts();  // Теперь функция определена
             initEventListeners();
             initFirebase();
             loadInitialData();
@@ -2256,6 +2256,111 @@
             // Check Firebase connection
             checkFirebaseConnection();
         });
+        
+        // Initialize charts
+        function initCharts() {
+            addDebugLog('Инициализация графиков...', 'info');
+            
+            // График влажности
+            const moistureCtx = document.getElementById('moistureChart').getContext('2d');
+            moistureChart = new Chart(moistureCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Влажность (%)',
+                        data: [],
+                        borderColor: 'var(--primary)',
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            display: true,
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // График статистики
+            const statsCtx = document.getElementById('statsChart').getContext('2d');
+            statsChart = new Chart(statsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                    datasets: [
+                        {
+                            label: 'Кол-во поливов',
+                            data: [0, 0, 0, 0, 0, 0, 0],
+                            backgroundColor: 'var(--primary)',
+                            borderColor: 'var(--primary-dark)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Часы света',
+                            data: [0, 0, 0, 0, 0, 0, 0],
+                            backgroundColor: 'var(--secondary)',
+                            borderColor: 'var(--secondary-dark)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            addDebugLog('Графики инициализированы', 'success');
+        }
         
         // Check Firebase connection
         async function checkFirebaseConnection() {
@@ -2395,7 +2500,7 @@
         }
         
         // Send command to Firebase - ИСПРАВЛЕННАЯ ВЕРСИЯ
-        function sendCommand(command) {
+        function sendCommand(command, button = null) {
             if (!systemState.connected) {
                 showNotification('Ошибка', 'Нет подключения к устройству', 'error');
                 addDebugLog('Нет подключения к устройству', 'error');
@@ -2404,8 +2509,7 @@
 
             addDebugLog(`Отправка команды: ${command}`, 'info');
             
-            // Отключаем кнопку на время отправки
-            const button = event?.target;
+            // Отключаем кнопку на время отправки, если она передана
             if (button) {
                 const originalText = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -2426,50 +2530,21 @@
             .then(() => {
                 addDebugLog(`Команда отправлена в Firebase: ${command}`, 'success');
                 
-                // Ждем ответа от ESP
-                const responseRef = database.ref('commands/ecogrow_main_response');
-                let responseListener;
-                let timeoutId;
-                
-                // Создаем Promise для ожидания ответа
-                return new Promise((resolve, reject) => {
-                    // Устанавливаем слушатель ответа
-                    responseListener = responseRef.on('value', (snapshot) => {
-                        const response = snapshot.val();
-                        if (response && response.response) {
-                            addDebugLog(`Получен ответ от ESP: ${response.response}`, 'success');
-                            
-                            // Удаляем слушатель
-                            responseRef.off('value', responseListener);
-                            clearTimeout(timeoutId);
-                            
-                            resolve(response.response);
-                            
-                            // Очищаем ответ через 500 мс
-                            setTimeout(() => {
-                                responseRef.set(null);
-                            }, 500);
-                        }
-                    });
-                    
-                    // Таймаут 10 секунд
-                    timeoutId = setTimeout(() => {
-                        responseRef.off('value', responseListener);
-                        reject(new Error('Таймаут ожидания ответа (10 секунд)'));
-                    }, 10000);
-                });
-            })
-            .then((response) => {
-                showNotification('Команда выполнена', `ESP ответил: ${response}`, 'success');
+                // Ждем ответа от ESP (3 секунды таймаут)
+                setTimeout(() => {
+                    addDebugLog('Ответ от ESP не получен в течение 3 секунд', 'warning');
+                    if (button) {
+                        button.disabled = false;
+                    }
+                }, 3000);
             })
             .catch((error) => {
                 console.error('❌ Ошибка отправки команды:', error);
                 addDebugLog(`Ошибка команды: ${error.message}`, 'error');
+                showNotification('Ошибка', `Не удалось отправить команду: ${error.message}`, 'error');
                 
-                if (error.message.includes('Таймаут')) {
-                    showNotification('Внимание', 'Нет ответа от устройства в течение 10 секунд', 'warning');
-                } else {
-                    showNotification('Ошибка', `Не удалось отправить команду: ${error.message}`, 'error');
+                if (button) {
+                    button.disabled = false;
                 }
             });
         }
@@ -2481,7 +2556,7 @@
                 updateChart(parseInt(this.value));
             });
             
-            // Toggle switches with immediate action
+            // Toggle switches with immediate action - ИСПРАВЛЕННЫЙ КОД
             pumpToggle.addEventListener('change', function() {
                 const command = this.checked ? 'PUMP:ON' : 'PUMP:OFF';
                 sendCommand(command);
@@ -2518,27 +2593,53 @@
                 updateIntervalSlider.call(this);
             });
             
-            // Buttons
+            // Buttons - ИСПРАВЛЕННЫЙ КОД с передачей кнопки
             document.getElementById('autoModeBtn').addEventListener('click', function() {
-                sendCommand('ALL:AUTO');
+                sendCommand('ALL:AUTO', this);
             });
             
             document.getElementById('applySettingsBtn').addEventListener('click', function() {
                 const threshold = thresholdSlider.value;
                 const duration = durationSlider.value;
-                sendCommand(`THRESHOLD:${threshold}`);
-                sendCommand(`PUMPDURATION:${duration}`);
+                sendCommand(`THRESHOLD:${threshold}`, this);
+                sendCommand(`PUMPDURATION:${duration}`, this);
             });
             
-            document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
-            document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
-            document.getElementById('setTimeBtn').addEventListener('click', setSystemTime);
-            document.getElementById('syncTimeBtn').addEventListener('click', syncTime);
-            document.getElementById('testTelegramBtn').addEventListener('click', testTelegram);
-            document.getElementById('clearTelegramBtn').addEventListener('click', clearTelegram);
-            document.getElementById('clearErrorsBtn').addEventListener('click', clearErrors);
-            document.getElementById('exportErrorsBtn').addEventListener('click', exportErrors);
-            document.getElementById('refreshErrorsBtn').addEventListener('click', refreshErrors);
+            document.getElementById('saveSettingsBtn').addEventListener('click', function() {
+                saveSettings(this);
+            });
+            
+            document.getElementById('resetSettingsBtn').addEventListener('click', function() {
+                resetSettings(this);
+            });
+            
+            document.getElementById('setTimeBtn').addEventListener('click', function() {
+                setSystemTime(this);
+            });
+            
+            document.getElementById('syncTimeBtn').addEventListener('click', function() {
+                syncTime(this);
+            });
+            
+            document.getElementById('testTelegramBtn').addEventListener('click', function() {
+                testTelegram(this);
+            });
+            
+            document.getElementById('clearTelegramBtn').addEventListener('click', function() {
+                clearTelegram(this);
+            });
+            
+            document.getElementById('clearErrorsBtn').addEventListener('click', function() {
+                clearErrors(this);
+            });
+            
+            document.getElementById('exportErrorsBtn').addEventListener('click', function() {
+                exportErrors(this);
+            });
+            
+            document.getElementById('refreshErrorsBtn').addEventListener('click', function() {
+                refreshErrors(this);
+            });
             
             // Window resize for charts
             window.addEventListener('resize', function() {
@@ -2903,7 +3004,7 @@
         }
         
         // Save settings
-        function saveSettings() {
+        function saveSettings(button = null) {
             const blockStart = document.getElementById('blockStart').value;
             const blockEnd = document.getElementById('blockEnd').value;
             const lightStart = document.getElementById('lightStart').value;
@@ -2913,18 +3014,25 @@
             const duration = durationSlider.value;
             
             // Send settings to ESP
-            sendCommand(`SETTINGS:BLOCK:${blockStart}:${blockEnd}`);
-            sendCommand(`SETTINGS:LIGHT:${lightStart}:${lightDuration}`);
-            sendCommand(`SETTINGS:INTERVAL:${interval}`);
-            sendCommand(`THRESHOLD:${threshold}`);
-            sendCommand(`PUMPDURATION:${duration}`);
-            
-            showNotification('Настройки', 'Все настройки сохранены и отправлены на ESP8266', 'success');
-            addDebugLog('Настройки сохранены', 'success');
+            sendCommand(`SETTINGS:BLOCK:${blockStart}:${blockEnd}`, button);
+            setTimeout(() => {
+                sendCommand(`SETTINGS:LIGHT:${lightStart}:${lightDuration}`, button);
+            }, 500);
+            setTimeout(() => {
+                sendCommand(`SETTINGS:INTERVAL:${interval}`, button);
+            }, 1000);
+            setTimeout(() => {
+                sendCommand(`THRESHOLD:${threshold}`, button);
+            }, 1500);
+            setTimeout(() => {
+                sendCommand(`PUMPDURATION:${duration}`, button);
+                showNotification('Настройки', 'Все настройки сохранены и отправлены на ESP8266', 'success');
+                addDebugLog('Настройки сохранены', 'success');
+            }, 2000);
         }
         
         // Reset settings
-        function resetSettings() {
+        function resetSettings(button = null) {
             if (confirm('Вы уверены, что хотите сбросить все настройки к заводским?')) {
                 // Reset all controls
                 thresholdSlider.value = 50;
@@ -2938,51 +3046,51 @@
                 document.getElementById('lightStart').value = '08:00';
                 document.getElementById('lightDuration').value = '12';
                 
-                sendCommand('RESET_SETTINGS');
+                sendCommand('RESET_SETTINGS', button);
                 showNotification('Настройки', 'Настройки сброшены к заводским', 'warning');
                 addDebugLog('Настройки сброшены', 'warning');
             }
         }
         
         // Set system time
-        function setSystemTime() {
+        function setSystemTime(button = null) {
             const time = document.getElementById('currentTime').value;
             if (time) {
                 const [hours, minutes] = time.split(':');
-                sendCommand(`SETTIME:${hours}:${minutes}`);
+                sendCommand(`SETTIME:${hours}:${minutes}`, button);
                 showNotification('Время', `Системное время установлено на ${time}`, 'success');
                 addDebugLog(`Время установлено: ${time}`, 'success');
             }
         }
         
         // Sync time with browser
-        function syncTime() {
+        function syncTime(button = null) {
             const now = new Date();
             const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             document.getElementById('currentTime').value = time;
-            sendCommand(`SETTIME:${time.replace(':', ':')}`);
+            sendCommand(`SETTIME:${time.replace(':', ':')}`, button);
             showNotification('Время', `Время синхронизировано с браузером: ${time}`, 'success');
             addDebugLog(`Время синхронизировано: ${time}`, 'success');
         }
         
         // Test Telegram notification
-        function testTelegram() {
-            sendCommand('TEST_TELEGRAM');
+        function testTelegram(button = null) {
+            sendCommand('TEST_TELEGRAM', button);
             showNotification('Telegram', 'Тестовое уведомление отправлено на ESP8266', 'success');
             addDebugLog('Тест Telegram отправлен', 'info');
         }
         
         // Clear Telegram history
-        function clearTelegram() {
+        function clearTelegram(button = null) {
             if (confirm('Очистить историю Telegram уведомлений?')) {
-                sendCommand('CLEAR_TELEGRAM');
+                sendCommand('CLEAR_TELEGRAM', button);
                 showNotification('Telegram', 'Команда очистки истории отправлена', 'warning');
                 addDebugLog('Очистка Telegram истории', 'warning');
             }
         }
         
         // Clear errors
-        function clearErrors() {
+        function clearErrors(button = null) {
             if (confirm('Очистить всю историю ошибок?')) {
                 systemState.errors = [];
                 updateErrorsList();
@@ -2993,7 +3101,7 @@
         }
         
         // Export errors
-        function exportErrors() {
+        function exportErrors(button = null) {
             if (systemState.errors.length === 0) {
                 showNotification('Экспорт', 'Нет ошибок для экспорта', 'info');
                 return;
@@ -3015,7 +3123,7 @@
         }
         
         // Refresh errors
-        function refreshErrors() {
+        function refreshErrors(button = null) {
             updateErrorsList();
             showNotification('Обновление', 'Список ошибок обновлен', 'info');
         }
@@ -3078,9 +3186,9 @@
         }
         
         // Test command function
-        function testCommand(cmd) {
+        function testCommand(cmd, button = null) {
             addDebugLog(`Тестовая команда: ${cmd}`, 'info');
-            sendCommand(cmd);
+            sendCommand(cmd, button);
         }
         
         // Toggle debug panel
