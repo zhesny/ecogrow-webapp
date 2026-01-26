@@ -41,19 +41,16 @@ class EcoGrowAPI {
         }
     }
     
-    // System Info
     async getInfo(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/info');
     }
     
-    // Get State
     async getState(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/state');
     }
     
-    // Pump Control
     async controlPump(ip, action) {
         this.setBaseUrl(ip);
         return await this.request('/api/pump', {
@@ -62,7 +59,6 @@ class EcoGrowAPI {
         });
     }
     
-    // Light Control
     async controlLight(ip, action) {
         this.setBaseUrl(ip);
         return await this.request('/api/light', {
@@ -71,7 +67,6 @@ class EcoGrowAPI {
         });
     }
     
-    // Update Settings
     async updateSettings(ip, settings) {
         this.setBaseUrl(ip);
         return await this.request('/api/settings', {
@@ -80,7 +75,6 @@ class EcoGrowAPI {
         });
     }
     
-    // Set Time
     async setTime(ip, hours, minutes) {
         this.setBaseUrl(ip);
         return await this.request('/api/time', {
@@ -89,7 +83,6 @@ class EcoGrowAPI {
         });
     }
     
-    // Sync Time
     async syncTime(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/time/sync', {
@@ -97,7 +90,6 @@ class EcoGrowAPI {
         });
     }
     
-    // Clear Errors
     async clearErrors(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/errors/clear', {
@@ -105,7 +97,6 @@ class EcoGrowAPI {
         });
     }
     
-    // NEW: Reset Statistics
     async resetStats(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/stats/reset', {
@@ -113,7 +104,6 @@ class EcoGrowAPI {
         });
     }
     
-    // NEW: Test connection quickly
     async testConnection(ip) {
         this.setBaseUrl(ip);
         try {
