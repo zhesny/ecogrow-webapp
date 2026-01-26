@@ -1,7 +1,7 @@
 class EcoGrowAPI {
     constructor() {
         this.baseUrl = '';
-        this.timeout = 8000; // Увеличен для мобильных
+        this.timeout = 10000;
     }
     
     async request(endpoint, options = {}) {
@@ -89,7 +89,7 @@ class EcoGrowAPI {
         });
     }
     
-    // Sync Time (новый метод)
+    // Sync Time
     async syncTime(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/time/sync', {
@@ -103,27 +103,5 @@ class EcoGrowAPI {
         return await this.request('/api/errors/clear', {
             method: 'POST'
         });
-    }
-    
-    // Get Weather Data (external API)
-    async getWeather(lat, lon, apiKey) {
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=ru`;
-        const response = await fetch(url);
-        return await response.json();
-    }
-    
-    // Send Telegram Notification
-    async sendTelegramNotification(botToken, chatId, message) {
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: message,
-                parse_mode: 'HTML'
-            })
-        });
-        return await response.json();
     }
 }
