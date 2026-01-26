@@ -17,14 +17,9 @@ class EcoGrowApp {
             version: '4.5.1',
             demoMode: false,
             autoUpdateInterval: null,
-            timeUpdateInterval: null
+            timeUpdateInterval: null,
+            manualRefreshBtn: null
         };
-        
-        // Проверяем, находимся ли мы на GitHub Pages
-        if (window.location.hostname.includes('github.io')) {
-            console.log('GitHub Pages режим: автоматически включаем демо-режим');
-            this.enableDemoMode();
-        }
         
         this.init();
     }
@@ -36,13 +31,8 @@ class EcoGrowApp {
         // Show loading screen
         this.showLoading();
         
-        // Try to auto-connect только если не на GitHub Pages
-        if (!window.location.hostname.includes('github.io')) {
-            await this.tryAutoConnect();
-        } else {
-            // На GitHub Pages сразу показываем главный интерфейс
-            setTimeout(() => this.hideLoading(), 1000);
-        }
+        // Try to auto-connect
+        await this.tryAutoConnect();
         
         // Initialize charts
         this.charts.init();
@@ -55,11 +45,41 @@ class EcoGrowApp {
         
         // Start update loops
         this.startUpdateLoop();
+        
+        // Initialize manual refresh button
+        this.initManualRefreshButton();
+    }
+    
+    initManualRefreshButton() {
+        const statusElement = document.getElementById('connectionStatus');
+        if (statusElement) {
+            // Create refresh button
+            const refreshBtn = document.createElement('button');
+            refreshBtn.className = 'refresh-btn';
+            refreshBtn.id = 'manualRefreshBtn';
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            refreshBtn.title = 'Обновить данные вручную';
+            
+            // Insert after connection status
+            statusElement.parentNode.insertBefore(refreshBtn, statusElement.nextSibling);
+            
+            // Add click handler
+            refreshBtn.addEventListener('click', async () => {
+                refreshBtn.classList.add('refreshing');
+                await this.updateData();
+                setTimeout(() => {
+                    refreshBtn.classList.remove('refreshing');
+                }, 1000);
+            });
+            
+            this.state.manualRefreshBtn = refreshBtn;
+        }
     }
     
     showLoading() {
         const loadingScreen = document.getElementById('loadingScreen');
         if (loadingScreen) {
+            loadingScreen.style.display = 'flex';
             loadingScreen.style.opacity = '1';
             loadingScreen.style.pointerEvents = 'all';
         }
@@ -90,9 +110,15 @@ class EcoGrowApp {
         
         // Try mDNS first
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            
             const response = await fetch('http://ecogrow.local/api/info', { 
-                signal: AbortSignal.timeout(2000) 
+                signal: controller.signal 
             });
+            
+            clearTimeout(timeoutId);
+            
             if (response.ok) {
                 this.state.espIp = 'ecogrow.local';
                 await this.connectToESP();
@@ -266,12 +292,37 @@ class EcoGrowApp {
             // Update notifications if needed
             this.checkNotifications(data);
             
+            // Show last update time
+            this.updateLastUpdateTime();
+            
         } catch (error) {
             console.error('Update failed:', error);
             if (!this.state.demoMode) {
                 this.state.connected = false;
                 this.updateConnectionStatus();
                 this.notifications.show('❌ Потеряно соединение с системой', 'error');
+            }
+        }
+    }
+    
+    updateLastUpdateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        // Update in connection status
+        const statusElement = document.getElementById('connectionStatus');
+        if (statusElement && this.state.connected) {
+            const span = statusElement.querySelector('span');
+            if (span) {
+                if (this.state.demoMode) {
+                    span.textContent = `Демо-режим • ${timeString}`;
+                } else {
+                    span.textContent = `Подключено • ${timeString}`;
+                }
             }
         }
     }
@@ -615,6 +666,27 @@ class EcoGrowApp {
             });
         }
         
+        // Reset statistics button
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        if (resetStatsBtn) {
+            resetStatsBtn.addEventListener('click', async () => {
+                if (confirm('Вы уверены, что хотите сбросить всю статистику?')) {
+                    try {
+                        if (this.state.demoMode) {
+                            await this.demoApi.resetStats();
+                            this.notifications.show('✅ Статистика сброшена', 'success');
+                        } else {
+                            // Для реальной системы нужно добавить API метод
+                            this.notifications.show('⚠️ Сброс статистики для реальной системы пока не поддерживается', 'warning');
+                        }
+                        await this.updateData();
+                    } catch (error) {
+                        this.notifications.show('❌ Ошибка сброса статистики', 'error');
+                    }
+                }
+            });
+        }
+        
         // Sync time button
         const syncTimeBtn = document.getElementById('syncTimeBtn');
         if (syncTimeBtn) {
@@ -651,13 +723,21 @@ class EcoGrowApp {
             });
         }
         
-        // Settings button - ИСПРАВЛЕНО
+        // Settings button
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
         if (settingsBtn && settingsModal) {
             settingsBtn.addEventListener('click', () => {
-                console.log('Settings button clicked');
                 settingsModal.classList.add('active');
+            });
+        }
+        
+        // Widgets guide button
+        const widgetsGuideBtn = document.getElementById('widgetsGuideBtn');
+        const widgetsModal = document.getElementById('widgetsModal');
+        if (widgetsGuideBtn && widgetsModal) {
+            widgetsGuideBtn.addEventListener('click', () => {
+                widgetsModal.classList.add('active');
             });
         }
         
@@ -680,11 +760,10 @@ class EcoGrowApp {
             });
         });
         
-        // Theme buttons - ИСПРАВЛЕНО
+        // Theme buttons
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const theme = e.target.dataset.theme;
-                console.log('Setting theme to:', theme);
                 this.theme.setTheme(theme);
                 
                 // Update active button
@@ -781,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ecoGrowApp = new EcoGrowApp();
 });
 
-// Add service worker for PWA (только для HTTPS и не на GitHub Pages)
+// Add service worker for PWA
 if ('serviceWorker' in navigator && window.location.protocol === 'https:' && 
     !window.location.hostname.includes('github.io')) {
     window.addEventListener('load', () => {
@@ -793,8 +872,6 @@ if ('serviceWorker' in navigator && window.location.protocol === 'https:' &&
                 console.log('ServiceWorker registration failed:', error);
             });
     });
-} else {
-    console.log('GitHub Pages: Service Worker не регистрируется');
 }
 
 // Keyboard shortcuts
@@ -819,5 +896,11 @@ document.addEventListener('keydown', (e) => {
         } else {
             window.ecoGrowApp.showConnectionModal();
         }
+    }
+    
+    // Ctrl+R to manual refresh
+    if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        window.ecoGrowApp?.updateData();
     }
 });
