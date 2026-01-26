@@ -70,17 +70,6 @@ class EcoGrowApp {
     }
     
     async tryAutoConnect() {
-        // Проверяем, находимся ли мы на GitHub Pages (HTTPS)
-        const isGitHubPages = window.location.hostname.includes('github.io') || 
-                              window.location.protocol === 'https:';
-        
-        // На GitHub Pages используем только демо-режим
-        if (isGitHubPages) {
-            console.log('GitHub Pages режим: автоматически включаем демо-режим');
-            await this.enableDemoMode();
-            return;
-        }
-        
         // Check if demo mode was previously enabled
         const savedDemoMode = localStorage.getItem('ecogrow_demo_mode') === 'true';
         if (savedDemoMode) {
@@ -88,7 +77,7 @@ class EcoGrowApp {
             return;
         }
         
-        // Try mDNS first (только для локальной сети)
+        // Try mDNS first
         try {
             const response = await fetch('http://ecogrow.local/api/info', { 
                 signal: AbortSignal.timeout(2000) 
@@ -121,16 +110,6 @@ class EcoGrowApp {
     
     async connectToESP() {
         if (!this.state.espIp) return;
-        
-        // Проверяем, не на GitHub ли мы
-        const isGitHubPages = window.location.hostname.includes('github.io') || 
-                              window.location.protocol === 'https:';
-        
-        if (isGitHubPages) {
-            this.notifications.show('❌ На GitHub Pages доступен только демо-режим', 'error');
-            await this.enableDemoMode();
-            return;
-        }
         
         try {
             // Disable demo mode first
@@ -354,6 +333,7 @@ class EcoGrowApp {
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
+            // Animate number changes
             if (typeof value === 'number' && !isNaN(parseFloat(element.textContent))) {
                 this.animateValue(element, parseFloat(element.textContent), value, 500);
             } else {
@@ -792,23 +772,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ecoGrowApp = new EcoGrowApp();
 });
 
-// Add service worker for PWA (только если не на GitHub Pages для простоты)
+// Add service worker for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Проверяем, не находимся ли мы на GitHub Pages
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        
-        if (!isGitHubPages) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(registration => {
-                    console.log('ServiceWorker registered:', registration);
-                })
-                .catch(error => {
-                    console.log('ServiceWorker registration failed:', error);
-                });
-        } else {
-            console.log('GitHub Pages: Service Worker не регистрируется');
-        }
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('ServiceWorker registered:', registration);
+            })
+            .catch(error => {
+                console.log('ServiceWorker registration failed:', error);
+            });
     });
 }
 
