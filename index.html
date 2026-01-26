@@ -10,7 +10,7 @@
     <!-- PWA настройки -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a192f">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <!-- Favicon -->
@@ -21,6 +21,9 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         /* === CSS RESET === */
@@ -76,7 +79,7 @@
             --transition-slow: 350ms ease;
         }
 
-        /* Светлая тема */
+        /* Светлая тема - исправленный зеленый */
         [data-theme="light"] {
             --bg-primary: #f8fafc;
             --bg-secondary: #f1f5f9;
@@ -90,7 +93,6 @@
             --accent-blue: #3b82f6;
             --accent-red: #ef4444;
             --accent-orange: #f59e0b;
-            --accent-purple: #8b5cf6;
             
             --text-primary: #1a202c;
             --text-secondary: #4a5568;
@@ -112,7 +114,6 @@
             --bg-tertiary: #2a5740;
             --bg-card: #1e3a2e;
             --accent-primary: #00ff9d;
-            --accent-secondary: #00d9ff;
             --accent-green: #00ff9d;
         }
 
@@ -123,8 +124,14 @@
             --bg-tertiary: #3d2a7f;
             --bg-card: #2a1b5f;
             --accent-primary: #b388ff;
-            --accent-secondary: #9c4dff;
             --accent-green: #b388ff;
+        }
+
+        /* Темно-синяя (основная) */
+        [data-theme="dark-blue"] {
+            --bg-primary: #0a192f;
+            --bg-secondary: #112240;
+            --accent-primary: #00ff9d;
         }
 
         /* Оранжевая тема */
@@ -134,7 +141,6 @@
             --bg-tertiary: #5a3c1a;
             --bg-card: #452a14;
             --accent-primary: #ff9d00;
-            --accent-secondary: #ff7b00;
             --accent-green: #ff9d00;
         }
 
@@ -145,7 +151,6 @@
             --bg-tertiary: #5d1a57;
             --bg-card: #4a1445;
             --accent-primary: #ff6b9d;
-            --accent-secondary: #ff4d8d;
             --accent-green: #ff6b9d;
         }
 
@@ -158,10 +163,9 @@
             --text-primary: #052e16;
             --text-secondary: #166534;
             --accent-primary: #16a34a;
-            --accent-secondary: #0d9488;
+            --accent-green: #16a34a;
             --accent-red: #dc2626;
             --accent-orange: #ea580c;
-            --accent-green: #16a34a;
         }
 
         /* Светло-голубая тема */
@@ -173,10 +177,9 @@
             --text-primary: #0c4a6e;
             --text-secondary: #0369a1;
             --accent-primary: #0ea5e9;
-            --accent-secondary: #0284c7;
+            --accent-green: #0ea5e9;
             --accent-red: #dc2626;
             --accent-orange: #f97316;
-            --accent-green: #0ea5e9;
         }
 
         /* === BASE STYLES === */
@@ -201,8 +204,6 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            opacity: 1;
-            transition: opacity 0.5s ease;
         }
 
         .loader {
@@ -305,7 +306,7 @@
         }
 
         .status-dot.connected {
-            background: var(--accent-primary);
+            background: var(--accent-green);
             animation: pulse 2s infinite;
         }
 
@@ -337,10 +338,6 @@
             background: var(--bg-tertiary);
             color: var(--text-primary);
             transform: translateY(-2px);
-        }
-
-        .header-btn.refreshing {
-            animation: spin 1s linear infinite;
         }
 
         /* === DASHBOARD === */
@@ -635,7 +632,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background: var(--gradient-button);
             color: var(--bg-primary);
         }
 
@@ -1191,92 +1188,6 @@
             z-index: 999;
             box-shadow: var(--shadow-md);
             display: none;
-            animation: pulse 2s infinite;
-        }
-
-        /* === ВИДЖЕТЫ === */
-        .widgets-instruction {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(var(--accent-primary-rgb, 0, 255, 157), 0.05);
-            border-radius: var(--radius-md);
-        }
-
-        .instruction-step {
-            display: flex;
-            margin-bottom: 10px;
-            align-items: flex-start;
-        }
-
-        .step-number {
-            width: 24px;
-            height: 24px;
-            background: var(--accent-primary);
-            color: var(--bg-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-
-        .step-content {
-            flex: 1;
-        }
-
-        .step-title {
-            font-weight: 600;
-            margin-bottom: 2px;
-            color: var(--text-primary);
-        }
-
-        .step-description {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .qr-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .qr-code {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto;
-            background: white;
-            padding: 10px;
-            border-radius: var(--radius-md);
-        }
-
-        .qr-note {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-top: 10px;
-        }
-
-        /* === КНОПКА ВЫХОДА ИЗ ДЕМО-РЕЖИМА === */
-        .exit-demo-btn {
-            margin-left: 10px;
-            padding: 6px 12px;
-            background: linear-gradient(135deg, #ff4757, #ff2e43);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            gap: 5px;
-            transition: all var(--transition-fast);
-        }
-        
-        .exit-demo-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
         }
 
         /* === RESPONSIVE DESIGN === */
@@ -1352,11 +1263,6 @@
                 font-size: 0.8rem;
                 padding: 6px 12px;
             }
-            
-            .exit-demo-btn {
-                margin-top: 10px;
-                margin-left: 0;
-            }
         }
 
         /* Для очень маленьких экранов */
@@ -1423,9 +1329,6 @@
     <!-- Бейдж демо-режима -->
     <div class="demo-badge" id="demoBadge">
         <i class="fas fa-flask"></i> Демо-режим
-        <button class="exit-demo-btn" id="exitDemoBtn">
-            <i class="fas fa-sign-out-alt"></i> Выйти
-        </button>
     </div>
 
     <!-- Кнопка установки PWA -->
@@ -1466,6 +1369,9 @@
                 </button>
                 <button class="header-btn" id="settingsBtn" title="Настройки">
                     <i class="fas fa-cog"></i>
+                </button>
+                <button class="header-btn" id="demoModeBtn" title="Демо-режим">
+                    <i class="fas fa-flask"></i>
                 </button>
             </div>
         </header>
@@ -1630,7 +1536,7 @@
                         </div>
                         
                         <div class="action-buttons mt-20">
-                            <button class="btn btn-primary" id="lightOnBtn">
+                            <button class="btn btn-warning" id="lightOnBtn">
                                 <i class="fas fa-power-off"></i>
                                 Включить свет
                             </button>
@@ -1844,10 +1750,6 @@
                             <i class="fas fa-question-circle"></i>
                             Краткая инструкция
                         </a>
-                        <a href="#" class="footer-link guide-link" id="widgetsGuideBtn" style="display: none;">
-                            <i class="fas fa-mobile-alt"></i>
-                            Виджеты для смартфона
-                        </a>
                     </div>
                 </div>
                 
@@ -1878,7 +1780,7 @@
                     <div class="control-group">
                         <label class="control-label">IP адрес ESP8266</label>
                         <div class="d-flex gap-10">
-                            <input type="text" id="ipAddress" placeholder="ecogrow.local" value="ecogrow.local" class="w-100">
+                            <input type="text" id="espIp" placeholder="ecogrow.local" value="ecogrow.local" class="w-100">
                             <button class="btn btn-success" id="connectBtn">
                                 <i class="fas fa-plug"></i>
                                 Подключить
@@ -1904,10 +1806,6 @@
                         <button class="btn btn-purple" id="startDemoMode">
                             <i class="fas fa-flask"></i>
                             Запустить демо-режим
-                        </button>
-                        <button class="btn btn-danger" id="stopDemoMode" style="display: none;">
-                            <i class="fas fa-stop"></i>
-                            Остановить демо-режим
                         </button>
                         <p class="mt-10" style="color: var(--text-secondary); font-size: 0.85rem;">
                             Демо-режим позволяет ознакомиться с интерфейсом без подключения к реальной системе
@@ -1999,70 +1897,6 @@
                             <h4>6. Демо-режим</h4>
                             <p>Используйте демо-режим для ознакомления с интерфейсом без подключения к системе</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Widgets Modal -->
-        <div class="modal" id="widgetsModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2><i class="fas fa-mobile-alt"></i> Виджеты для iOS/Android</h2>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
-                        Добавьте виджеты EcoGrow на главный экран вашего смартфона для быстрого доступа к данным.
-                    </p>
-                    
-                    <div class="widgets-instruction">
-                        <h4 style="color: var(--accent-primary); margin-bottom: 15px;">
-                            <i class="fas fa-graduation-cap"></i> Инструкция по установке
-                        </h4>
-                        
-                        <div class="instruction-step">
-                            <div class="step-number">1</div>
-                            <div class="step-content">
-                                <div class="step-title">Установите PWA приложение</div>
-                                <div class="step-description">
-                                    Нажмите "Установить приложение" в браузере на вашем смартфоне
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="instruction-step">
-                            <div class="step-number">2</div>
-                            <div class="step-content">
-                                <div class="step-title">Добавьте виджеты</div>
-                                <div class="step-description">
-                                    iOS: Долгое нажатие на главном экране → "+" → EcoGrow<br>
-                                    Android: Долгое нажатие на главном экране → Виджеты → EcoGrow
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="instruction-step">
-                            <div class="step-number">3</div>
-                            <div class="step-content">
-                                <div class="step-title">Настройте виджеты</div>
-                                <div class="step-description">
-                                    Выберите нужные данные для отображения (влажность, насос, свет)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="qr-container">
-                        <div class="qr-code" id="qrCode">
-                            <!-- QR код будет сгенерирован JavaScript -->
-                            <div style="width: 200px; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md);">
-                                <i class="fas fa-qrcode" style="font-size: 3rem; color: #ccc;"></i>
-                            </div>
-                        </div>
-                        <p class="qr-note">
-                            Отсканируйте QR-код для быстрой установки PWA приложения
-                        </p>
                     </div>
                 </div>
             </div>
