@@ -5,8 +5,35 @@ class NotificationManager {
             this.createContainer();
         }
         
-        this.notificationSound = new Audio('assets/sounds/notification.mp3');
-        this.notificationSound.volume = 0.3;
+        // Создаем простой звук для уведомлений (без файла)
+        this.notificationSound = new Audio();
+        
+        // Если хотите добавить звук, можно использовать data URL
+        // Создаем простой beep звук
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.value = 0.1;
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (error) {
+            console.log('Web Audio API не доступен для звука:', error);
+        }
+        
+        this.userInteracted = false;
+        
+        // Отмечаем взаимодействие пользователя
+        document.addEventListener('click', () => {
+            this.userInteracted = true;
+        }, { once: true });
     }
     
     createContainer() {
@@ -20,8 +47,8 @@ class NotificationManager {
         const notification = this.createNotification(message, type);
         this.container.appendChild(notification);
         
-        // Play sound if enabled
-        if (localStorage.getItem('notifications_sound') !== 'false') {
+        // Play sound only if user has interacted
+        if (this.userInteracted && localStorage.getItem('notifications_sound') !== 'false') {
             this.playNotificationSound();
         }
         
@@ -30,9 +57,9 @@ class NotificationManager {
             this.removeNotification(notification);
         }, duration);
         
-        // Send to Telegram if critical
+        // Send to Telegram if critical (опционально)
         if (type === 'error') {
-            this.sendTelegramNotification(message);
+            // this.sendTelegramNotification(message);
         }
         
         return notification;
@@ -103,10 +130,22 @@ class NotificationManager {
     
     playNotificationSound() {
         try {
-            this.notificationSound.currentTime = 0;
-            this.notificationSound.play();
+            // Создаем простой beep звук через Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
         } catch (error) {
-            console.log('Could not play notification sound:', error);
+            console.log('Не удалось воспроизвести звук уведомления:', error);
         }
     }
     
