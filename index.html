@@ -1909,5 +1909,115 @@
     <script src="notifications.js"></script>
     <script src="config.js"></script>
     <script src="app.js"></script>
+
+<!-- Widgets Guide Modal -->
+<div class="modal" id="widgetsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-mobile-alt"></i> Виджеты для iOS/Android</h2>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Добавьте виджеты EcoGrow на главный экран вашего смартфона для быстрого доступа к данным.
+            </p>
+            
+            <div class="widgets-grid">
+                <div class="widget-card">
+                    <div class="widget-icon">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <div class="widget-title">Влажность</div>
+                    <div class="widget-description">
+                        Показывает текущую влажность почвы
+                    </div>
+                    <div class="widget-platforms">
+                        <span class="platform-badge badge-ios">iOS</span>
+                        <span class="platform-badge badge-android">Android</span>
+                    </div>
+                </div>
+                
+                <div class="widget-card">
+                    <div class="widget-icon">
+                        <i class="fas fa-water"></i>
+                    </div>
+                    <div class="widget-title">Насос</div>
+                    <div class="widget-description">
+                        Быстрое управление поливом
+                    </div>
+                    <div class="widget-platforms">
+                        <span class="platform-badge badge-ios">iOS</span>
+                        <span class="platform-badge badge-android">Android</span>
+                    </div>
+                </div>
+                
+                <div class="widget-card">
+                    <div class="widget-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="widget-title">Свет</div>
+                    <div class="widget-description">
+                        Управление фитолампой
+                    </div>
+                    <div class="widget-platforms">
+                        <span class="platform-badge badge-ios">iOS</span>
+                        <span class="platform-badge badge-android">Android</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget-instructions">
+                <h4 style="color: var(--accent-primary); margin-bottom: 15px;">
+                    <i class="fas fa-graduation-cap"></i> Инструкция по установке
+                </h4>
+                
+                <div class="instruction-step">
+                    <div class="step-number">1</div>
+                    <div class="step-text">
+                        <strong>Для iOS:</strong><br>
+                        Используйте приложение <strong>Scriptable</strong> для создания виджетов или 
+                        добавьте веб-виджет через Safari.
+                    </div>
+                </div>
+                
+                <div class="instruction-step">
+                    <div class="step-number">2</div>
+                    <div class="step-text">
+                        <strong>Для Android:</strong><br>
+                        Используйте приложение <strong>KWGT</strong> или добавьте виджет PWA на главный экран.
+                    </div>
+                </div>
+                
+                <div class="instruction-step">
+                    <div class="step-number">3</div>
+                    <div class="step-text">
+                        <strong>Виджет PWA (универсальный):</strong><br>
+                        Установите приложение EcoGrow через браузер и используйте стандартные виджеты веб-приложений.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget-qr">
+                <div id="qrCodeContainer"></div>
+                <p style="color: var(--text-secondary); margin-top: 10px; font-size: 0.9rem;">
+                    Отсканируйте QR-код для быстрой установки PWA
+                </p>
+            </div>
+            
+            <div class="widget-links">
+                <a href="https://apps.apple.com/ru/app/scriptable/id1405459188" 
+                   class="widget-link" target="_blank">
+                    <i class="fab fa-app-store-ios"></i>
+                    <span>Scriptable для iOS</span>
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=org.kustom.widget" 
+                   class="widget-link" target="_blank">
+                    <i class="fab fa-google-play"></i>
+                    <span>KWGT для Android</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
