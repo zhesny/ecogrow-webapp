@@ -1,65 +1,60 @@
 class ThemeManager {
     constructor() {
-        this.currentTheme = 'dark';
+        this.currentTheme = 'dark-blue';
         this.themes = {
-            dark: {
-                name: 'Темная',
+            'dark-blue': {
+                name: 'Темно-синяя',
                 icon: 'fa-moon',
-                colors: {
-                    '--primary-dark': '#0a192f',
-                    '--secondary-dark': '#112240',
-                    '--tertiary-dark': '#1e3a5f',
-                    '--card-dark': '#172a45',
-                    '--text-primary': '#e6f1ff',
-                    '--text-secondary': '#a8b2d1'
-                }
+                isDark: true
             },
-            light: {
+            'light': {
                 name: 'Светлая',
                 icon: 'fa-sun',
-                colors: {
-                    '--primary-dark': '#f8fafc',
-                    '--secondary-dark': '#f1f5f9',
-                    '--tertiary-dark': '#e2e8f0',
-                    '--card-dark': '#ffffff',
-                    '--text-primary': '#1e293b',
-                    '--text-secondary': '#475569'
-                }
+                isDark: false
             },
-            green: {
+            'green': {
                 name: 'Зеленая',
                 icon: 'fa-leaf',
-                colors: {
-                    '--primary-dark': '#0f2c1a',
-                    '--secondary-dark': '#1a3d29',
-                    '--tertiary-dark': '#2a5740',
-                    '--card-dark': '#1e3a2e',
-                    '--text-primary': '#e8f5e9',
-                    '--text-secondary': '#c8e6c9'
-                }
+                isDark: true
             },
-            purple: {
+            'purple': {
                 name: 'Фиолетовая',
                 icon: 'fa-magic',
-                colors: {
-                    '--primary-dark': '#1a103f',
-                    '--secondary-dark': '#2a1b5f',
-                    '--tertiary-dark': '#3d2a7f',
-                    '--card-dark': '#2a1b5f',
-                    '--text-primary': '#f3e5f5',
-                    '--text-secondary': '#e1bee7'
-                }
+                isDark: true
+            },
+            'orange': {
+                name: 'Оранжевая',
+                icon: 'fa-fire',
+                isDark: true
+            },
+            'pink': {
+                name: 'Розовая',
+                icon: 'fa-heart',
+                isDark: true
+            },
+            'light-green': {
+                name: 'Светло-зеленая',
+                icon: 'fa-spa',
+                isDark: false
+            },
+            'light-blue': {
+                name: 'Светло-голубая',
+                icon: 'fa-cloud-sun',
+                isDark: false
             }
         };
+        
+        this.init();
     }
     
     init() {
         // Load saved theme
-        const savedTheme = localStorage.getItem('ecogrow_theme') || 'dark';
+        const savedTheme = localStorage.getItem('ecogrow_theme') || 'dark-blue';
         this.setTheme(savedTheme);
         
         // Initialize theme toggle button
         this.initToggleButton();
+        this.initThemeButtons();
     }
     
     setTheme(themeName) {
@@ -68,17 +63,14 @@ class ThemeManager {
         this.currentTheme = themeName;
         document.documentElement.setAttribute('data-theme', themeName);
         
-        // Apply custom colors
-        const theme = this.themes[themeName];
-        Object.entries(theme.colors).forEach(([property, value]) => {
-            document.documentElement.style.setProperty(property, value);
-        });
-        
         // Save to localStorage
         localStorage.setItem('ecogrow_theme', themeName);
         
         // Update toggle button
         this.updateToggleButton();
+        
+        // Update active theme buttons
+        this.updateThemeButtons();
         
         // Dispatch theme change event
         window.dispatchEvent(new CustomEvent('themechange', { 
@@ -101,15 +93,34 @@ class ThemeManager {
         this.updateToggleButton();
     }
     
+    initThemeButtons() {
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const theme = e.target.dataset.theme;
+                this.setTheme(theme);
+            });
+        });
+    }
+    
     updateToggleButton() {
         const button = document.getElementById('themeToggle');
         if (!button) return;
         
         const theme = this.themes[this.currentTheme];
-        button.innerHTML = `
-            <i class="fas ${theme.icon}"></i>
-            <span>${theme.name}</span>
-        `;
+        const icon = theme.isDark ? 'fa-moon' : 'fa-sun';
+        
+        button.innerHTML = `<i class="fas ${icon}"></i>`;
+        button.title = `Тема: ${theme.name}`;
+    }
+    
+    updateThemeButtons() {
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            if (btn.dataset.theme === this.currentTheme) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     }
     
     // Add smooth theme transition
