@@ -24,11 +24,22 @@ class EcoGrowApp {
     async init() {
         this.theme.init();
         this.showLoading();
-        await this.tryAutoConnect();
+        
+        // ПРОВЕРЯЕМ, ЧТО МЫ НА GITHUB PAGES (HTTPS)
+        if (window.location.hostname === 'zhesny.github.io') {
+            console.log('Запущено на GitHub Pages, включаем демо-режим');
+            setTimeout(() => {
+                this.startDemoMode();
+                this.hideLoading();
+            }, 1500);
+        } else {
+            await this.tryAutoConnect();
+            this.hideLoading();
+        }
+        
         this.charts.init();
         this.startUpdateLoop();
         this.setupEventListeners();
-        setTimeout(() => this.hideLoading(), 1500);
         this.initPWA();
         this.initNetworkListeners();
     }
@@ -240,6 +251,10 @@ class EcoGrowApp {
             )
         };
         
+        // Инициализируем начальные значения для min/max
+        this.state.currentData.min_moisture = this.state.currentData.moisture;
+        this.state.currentData.max_moisture = this.state.currentData.moisture;
+        
         this.updateConnectionStatus();
         this.updateUI(this.state.currentData);
         this.charts.updateMoistureChart(this.state.currentData.moisture_history);
@@ -284,15 +299,25 @@ class EcoGrowApp {
             const now = new Date();
             const hour = now.getHours();
             
+            // Автоматическое управление светом по времени
             if (hour >= 8 && hour < 20) {
                 this.state.currentData.light = true;
             } else {
                 this.state.currentData.light = false;
             }
             
+            // Генерируем реалистичные данные влажности
             this.state.currentData.moisture = Math.max(20, Math.min(80, 
                 60 + Math.sin(Date.now() / 60000) * 10 + Math.random() * 5
             ));
+            
+            // Обновляем min/max
+            if (this.state.currentData.moisture < this.state.currentData.min_moisture) {
+                this.state.currentData.min_moisture = this.state.currentData.moisture;
+            }
+            if (this.state.currentData.moisture > this.state.currentData.max_moisture) {
+                this.state.currentData.max_moisture = this.state.currentData.moisture;
+            }
             
             this.state.currentData.current_time = now.toLocaleTimeString('ru-RU', { 
                 hour: '2-digit', 
@@ -684,36 +709,6 @@ class EcoGrowApp {
             });
         }
         
-        // ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ДЛЯ СБРОСА СТАТИСТИКИ
-        const resetStatsBtn = document.getElementById('resetStatsBtn');
-        if (resetStatsBtn) {
-            resetStatsBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    // Сброс в демо-режиме
-                    this.state.currentData.total_waterings = 0;
-                    this.state.currentData.total_light_hours = 0;
-                    this.state.currentData.total_energy = 0;
-                    // Также сбросить минимум и максимум влажности
-                    this.state.currentData.min_moisture = this.state.currentData.moisture;
-                    this.state.currentData.max_moisture = this.state.currentData.moisture;
-                    
-                    // Обновляем интерфейс
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show('✅ Статистика сброшена (демо)', 'success');
-                } else if (this.state.connected) {
-                    try {
-                        await this.api.resetStats(this.state.espIp);
-                        this.notifications.show('✅ Статистика сброшена', 'success');
-                        // Обновляем данные через 500 мс, чтобы сервер успел обработать
-                        setTimeout(() => this.updateData(), 500);
-                    } catch (error) {
-                        console.error('Ошибка сброса статистики:', error);
-                        this.notifications.show('❌ Ошибка сброса статистики', 'error');
-                    }
-                }
-            });
-        }
-        
         const clearErrorsBtn = document.getElementById('clearErrorsBtn');
         if (clearErrorsBtn) {
             clearErrorsBtn.addEventListener('click', async () => {
@@ -729,6 +724,45 @@ class EcoGrowApp {
                     } catch (error) {
                         this.notifications.show('❌ Ошибка очистки ошибок', 'error');
                     }
+                }
+            });
+        }
+        
+        // ИСПРАВЛЕННЫЙ И ПРОСТОЙ ОБРАБОТЧИК ДЛЯ СБРОСА СТАТИСТИКИ
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        if (resetStatsBtn) {
+            resetStatsBtn.addEventListener('click', () => {
+                console.log('Сброс статистики нажата');
+                
+                if (this.state.demoMode) {
+                    // ПРОСТОЙ СБРОС В ДЕМО-РЕЖИМЕ
+                    this.state.currentData.total_waterings = 0;
+                    this.state.currentData.total_light_hours = 0;
+                    this.state.currentData.total_energy = 0;
+                    // Сброс min/max
+                    this.state.currentData.min_moisture = this.state.currentData.moisture;
+                    this.state.currentData.max_moisture = this.state.currentData.moisture;
+                    
+                    // Сразу обновляем интерфейс
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show('✅ Статистика сброшена (демо)', 'success');
+                    console.log('Статистика сброшена в демо-режиме');
+                } else if (this.state.connected) {
+                    // Для реального устройства используем API
+                    console.log('Попытка сброса статистики через API');
+                    this.api.resetStats(this.state.espIp)
+                        .then(() => {
+                            this.notifications.show('✅ Статистика сброшена', 'success');
+                            console.log('Статистика сброшена через API');
+                            // Обновляем данные через 500мс
+                            setTimeout(() => this.updateData(), 500);
+                        })
+                        .catch((error) => {
+                            console.error('Ошибка сброса статистики:', error);
+                            this.notifications.show('❌ Ошибка сброса статистики. Проверьте подключение.', 'error');
+                        });
+                } else {
+                    this.notifications.show('❌ Нет подключения к системе', 'error');
                 }
             });
         }
