@@ -1,6 +1,7 @@
 class ConfigManager {
     constructor() {
         this.config = {
+            version: '4.5.1',
             api: {
                 endpoints: {
                     state: '/api/state',
@@ -38,13 +39,17 @@ class ConfigManager {
                 }
             },
             theme: {
-                default: 'dark',
-                available: ['dark', 'light', 'green', 'purple'],
+                default: 'dark-blue',
+                available: ['dark-blue', 'light', 'green', 'purple', 'orange', 'pink', 'light-green', 'light-blue'],
                 autoSwitch: false,
                 switchTime: {
                     light: '08:00',
                     dark: '20:00'
                 }
+            },
+            demo: {
+                enabled: false,
+                autoStart: false
             },
             plantDatabase: {
                 plants: [
