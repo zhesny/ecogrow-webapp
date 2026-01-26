@@ -36,6 +36,11 @@ class ChartsManager {
         gradient.addColorStop(0, 'rgba(0, 255, 157, 0.3)');
         gradient.addColorStop(1, 'rgba(0, 255, 157, 0.05)');
         
+        // ПОЛНОСТЬЮ УБИРАЕМ ТОЧКИ
+        Chart.defaults.elements.point.radius = 0;
+        Chart.defaults.elements.point.hoverRadius = 0;
+        Chart.defaults.elements.point.hitRadius = 0;
+        
         this.moistureChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -48,9 +53,14 @@ class ChartsManager {
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
+                    // Убираем точки полностью
                     pointRadius: 0,
                     pointHoverRadius: 0,
-                    pointHitRadius: 0
+                    pointHitRadius: 0,
+                    pointStyle: false,
+                    pointBackgroundColor: 'transparent',
+                    pointBorderColor: 'transparent',
+                    pointBorderWidth: 0
                 }]
             },
             options: {
@@ -121,9 +131,10 @@ class ChartsManager {
                         borderWidth: 3
                     },
                     point: {
-                        radius: 0,
+                        radius: 0, // Полностью убираем точки
                         hoverRadius: 0,
-                        hitRadius: 0
+                        hitRadius: 0,
+                        pointStyle: false
                     }
                 }
             }
