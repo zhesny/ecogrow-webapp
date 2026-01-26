@@ -1,4 +1,3 @@
-// Main Application Logic
 class EcoGrowApp {
     constructor() {
         this.api = new EcoGrowAPI();
@@ -23,36 +22,18 @@ class EcoGrowApp {
     }
     
     async init() {
-        // Initialize theme
         this.theme.init();
-        
-        // Show loading screen
         this.showLoading();
-        
-        // Try to auto-connect
         await this.tryAutoConnect();
-        
-        // Initialize charts
         this.charts.init();
-        
-        // Start update loop
         this.startUpdateLoop();
-        
-        // Set up event listeners
         this.setupEventListeners();
-        
-        // Hide loading screen
         setTimeout(() => this.hideLoading(), 1500);
-        
-        // Initialize PWA
         this.initPWA();
-        
-        // Initialize network status listeners
         this.initNetworkListeners();
     }
     
     initPWA() {
-        // PWA installation
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
@@ -64,14 +45,12 @@ class EcoGrowApp {
             }
         });
 
-        // Check if running as PWA
         if (window.matchMedia('(display-mode: standalone)').matches) {
             console.log('Запущено как PWA');
         }
     }
     
     initNetworkListeners() {
-        // Detect network changes
         if (navigator.connection) {
             navigator.connection.addEventListener('change', () => {
                 this.handleNetworkChange();
@@ -125,7 +104,6 @@ class EcoGrowApp {
     }
     
     async tryAutoConnect() {
-        // Try saved IP first
         const savedIp = localStorage.getItem('ecogrow_ip');
         if (savedIp) {
             this.state.espIp = savedIp;
@@ -133,7 +111,6 @@ class EcoGrowApp {
             return;
         }
         
-        // Try common local IPs
         const commonIPs = [
             'ecogrow.local',
             '192.168.1.100',
@@ -155,7 +132,6 @@ class EcoGrowApp {
             }
         }
         
-        // Show connection modal
         this.showConnectionModal();
     }
     
@@ -183,13 +159,6 @@ class EcoGrowApp {
         try {
             this.showLoading();
             
-            // Normalize IP address
-            let normalizedIp = this.state.espIp;
-            if (!normalizedIp.includes('://')) {
-                normalizedIp = `http://${normalizedIp}`;
-            }
-            
-            // Test connection
             this.state.demoMode = false;
             const isConnected = await this.api.testConnection(this.state.espIp);
             
@@ -197,30 +166,19 @@ class EcoGrowApp {
                 throw new Error('Устройство недоступно');
             }
             
-            // Get device info
             const info = await this.api.getInfo(this.state.espIp);
             
-            // Save to localStorage
             localStorage.setItem('ecogrow_ip', this.state.espIp);
-            
-            // Reset retry count on successful connection
             this.state.connectionRetryCount = 0;
-            
-            // Update connection status
             this.state.connected = true;
             this.updateConnectionStatus();
             
-            // Hide demo banner
             const demoBanner = document.getElementById('demoBanner');
             if (demoBanner) demoBanner.style.display = 'none';
             
-            // Get initial data
             await this.updateData();
-            
-            // Close modal if open
             this.hideConnectionModal();
             
-            // Show success notification
             this.notifications.show(`✅ Успешно подключено к ${info.hostname || this.state.espIp}!`, 'success');
             
         } catch (error) {
@@ -228,11 +186,8 @@ class EcoGrowApp {
             
             this.state.connected = false;
             this.updateConnectionStatus();
-            
-            // Clear stale data immediately
             this.clearStaleData();
             
-            // Check if we should retry
             this.state.connectionRetryCount++;
             
             if (this.state.connectionRetryCount < this.state.maxRetries) {
@@ -252,12 +207,13 @@ class EcoGrowApp {
         this.state.connected = true;
         this.state.espIp = 'demo-mode';
         
-        // Generate demo data
+        const randomOffset = Math.random() * 10;
+        
         this.state.currentData = {
-            moisture: 65,
-            avg_moisture: 62,
-            min_moisture: 58,
-            max_moisture: 70,
+            moisture: Math.round(50 + Math.sin(Date.now() / 60000) * 15 + randomOffset),
+            avg_moisture: Math.round(55 + randomOffset),
+            min_moisture: Math.round(40 + randomOffset),
+            max_moisture: Math.round(70 + randomOffset),
             pump: false,
             light: false,
             moisture_threshold: 50,
@@ -275,18 +231,19 @@ class EcoGrowApp {
             lamp_enabled: true,
             lamp_start: "08:00",
             lamp_end: "20:00",
-            total_waterings: 124,
-            total_light_hours: 356,
-            total_energy: 17800,
+            total_waterings: Math.round(124 + Math.random() * 20),
+            total_light_hours: Math.round(356 + Math.random() * 50),
+            total_energy: Math.round(17800 + Math.random() * 1000),
             errors: [],
-            moisture_history: Array.from({length: 20}, (_, i) => 60 + Math.sin(i * 0.5) * 10 + Math.random() * 5)
+            moisture_history: Array.from({length: 20}, (_, i) => 
+                60 + Math.sin((i + randomOffset) * 0.5) * 10 + Math.random() * 5
+            )
         };
         
         this.updateConnectionStatus();
         this.updateUI(this.state.currentData);
         this.charts.updateMoistureChart(this.state.currentData.moisture_history);
         
-        // Show demo banner
         document.getElementById('demoBanner').style.display = 'flex';
         
         this.notifications.show('🔧 Запущен демо-режим', 'info');
@@ -324,29 +281,24 @@ class EcoGrowApp {
         if (!this.state.connected) return;
         
         if (this.state.demoMode) {
-            // Update demo data
             const now = new Date();
             const hour = now.getHours();
             
-            // Simulate day/night cycle
             if (hour >= 8 && hour < 20) {
                 this.state.currentData.light = true;
             } else {
                 this.state.currentData.light = false;
             }
             
-            // Simulate moisture changes
             this.state.currentData.moisture = Math.max(20, Math.min(80, 
                 60 + Math.sin(Date.now() / 60000) * 10 + Math.random() * 5
             ));
             
-            // Update time
             this.state.currentData.current_time = now.toLocaleTimeString('ru-RU', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
             
-            // Update history data
             this.state.currentData.moisture_history.push(this.state.currentData.moisture);
             if (this.state.currentData.moisture_history.length > 20) {
                 this.state.currentData.moisture_history.shift();
@@ -358,25 +310,18 @@ class EcoGrowApp {
         }
         
         try {
-            // Quick connection test before full request
             const isConnected = await this.api.testConnection(this.state.espIp);
             if (!isConnected) {
                 throw new Error('Устройство недоступно');
             }
             
-            // Get current state
             const data = await this.api.getState(this.state.espIp);
             this.state.currentData = data;
             this.state.lastUpdate = new Date();
-            this.state.connectionRetryCount = 0; // Reset retry count on successful update
+            this.state.connectionRetryCount = 0;
             
-            // Update UI
             this.updateUI(data);
-            
-            // Update charts
             this.charts.updateMoistureChart(data.moisture_history);
-            
-            // Update notifications if needed
             this.checkNotifications(data);
             
         } catch (error) {
@@ -390,7 +335,6 @@ class EcoGrowApp {
                 this.clearStaleData();
                 this.notifications.show('❌ Потеряно соединение с устройством', 'error');
                 
-                // Ask user if they want to switch to demo mode
                 setTimeout(() => {
                     if (!this.state.connected && !this.state.demoMode) {
                         if (confirm('Не удается подключиться к устройству. Хотите перейти в демо-режим?')) {
@@ -405,12 +349,11 @@ class EcoGrowApp {
     }
     
     clearStaleData() {
-        // Clear all displayed data
         const staleElements = [
             'moistureValue', 'avgMoisture', 'minMoisture', 'maxMoisture',
             'pumpStatus', 'lightStatus', 'currentTime', 'systemTime',
             'totalWaterings', 'totalLightHours', 'energyUsed',
-            'moistureStatus', 'thresholdValue'
+            'moistureStatus', 'thresholdValue', 'lightToday'
         ];
         
         staleElements.forEach(id => {
@@ -419,49 +362,44 @@ class EcoGrowApp {
                 if (id === 'moistureStatus') {
                     element.textContent = '--%';
                 } else if (id === 'thresholdValue') {
-                    element.textContent = '--%';
+                    element.textContent = '50%';
                 } else if (id === 'pumpStatus' || id === 'lightStatus') {
                     element.textContent = '--';
                     element.className = 'card-status';
+                } else if (id === 'lightToday') {
+                    element.textContent = '0 ч';
                 } else {
                     element.textContent = '--';
                 }
             }
         });
         
-        // Clear moisture bar
+        const thresholdSlider = document.getElementById('moistureThreshold');
+        if (thresholdSlider) thresholdSlider.value = 50;
+        
         const moistureBarFill = document.getElementById('moistureBarFill');
-        if (moistureBarFill) {
-            moistureBarFill.style.width = '0%';
+        if (moistureBarFill) moistureBarFill.style.width = '0%';
+        
+        if (this.charts) {
+            this.charts.clearChart();
         }
         
-        // Clear chart
-        if (this.charts.moistureChart) {
-            this.charts.moistureChart.data.labels = ['Нет данных'];
-            this.charts.moistureChart.data.datasets[0].data = [0];
-            this.charts.moistureChart.update();
-        }
-        
-        // Clear errors list
         this.updateErrorsList([]);
     }
     
     updateUI(data) {
         if (!data) return;
         
-        // Update moisture values
         this.updateElement('moistureValue', Math.round(data.moisture));
         this.updateElement('avgMoisture', Math.round(data.avg_moisture || data.moisture) + '%');
         this.updateElement('minMoisture', Math.round(data.min_moisture || data.moisture) + '%');
         this.updateElement('maxMoisture', Math.round(data.max_moisture || data.moisture) + '%');
         
-        // Update moisture bar
         const moistureBarFill = document.getElementById('moistureBarFill');
         if (moistureBarFill) {
             moistureBarFill.style.width = `${data.moisture}%`;
         }
         
-        // Update moisture status
         const statusElement = document.getElementById('moistureStatus');
         if (statusElement) {
             let icon = 'fa-leaf';
@@ -472,21 +410,18 @@ class EcoGrowApp {
             statusElement.innerHTML = `<i class="fas ${icon}"></i> ${Math.round(data.moisture)}%`;
         }
         
-        // Update pump status
         this.updateElement('pumpStatus', data.pump ? 'ВКЛ' : 'ВЫКЛ');
         const pumpStatusElement = document.getElementById('pumpStatus');
         if (pumpStatusElement) {
             pumpStatusElement.className = `card-status ${data.pump ? 'status-on' : 'status-off'}`;
         }
         
-        // Update light status
         this.updateElement('lightStatus', data.light ? 'ВКЛ' : 'ВЫКЛ');
         const lightStatusElement = document.getElementById('lightStatus');
         if (lightStatusElement) {
             lightStatusElement.className = `card-status ${data.light ? 'status-on' : 'status-off'}`;
         }
         
-        // Update threshold from system data
         const thresholdSlider = document.getElementById('moistureThreshold');
         const thresholdValue = document.getElementById('thresholdValue');
         if (thresholdSlider && thresholdValue && data.moisture_threshold) {
@@ -494,23 +429,19 @@ class EcoGrowApp {
             thresholdValue.textContent = data.moisture_threshold + '%';
         }
         
-        // Update current time
         this.updateElement('currentTime', data.current_time);
         this.updateElement('systemTime', data.current_time);
         
-        // Update statistics
         this.updateElement('totalWaterings', data.total_waterings || 0);
         this.updateElement('totalLightHours', data.total_light_hours || 0);
         this.updateElement('energyUsed', data.total_energy || '0');
         
-        // Update errors list
         this.updateErrorsList(data.errors || []);
     }
     
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
-            // Animate number changes
             if (typeof value === 'number' && !isNaN(parseFloat(element.textContent))) {
                 this.animateValue(element, parseFloat(element.textContent), value, 500);
             } else {
@@ -573,7 +504,6 @@ class EcoGrowApp {
     }
     
     checkNotifications(data) {
-        // Check for low moisture
         if (data.moisture < 20) {
             this.notifications.show(
                 `⚠️ Низкая влажность: ${data.moisture}%`, 
@@ -581,7 +511,6 @@ class EcoGrowApp {
             );
         }
         
-        // Check for sensor error
         if (data.moisture === 0) {
             this.notifications.show(
                 '❌ Ошибка датчика влажности!', 
@@ -589,7 +518,6 @@ class EcoGrowApp {
             );
         }
         
-        // Check for pump running
         if (data.pump) {
             this.notifications.show(
                 '💧 Насос работает...', 
@@ -599,7 +527,6 @@ class EcoGrowApp {
     }
     
     setupEventListeners() {
-        // Connect button
         const connectBtn = document.getElementById('connectBtn');
         if (connectBtn) {
             connectBtn.addEventListener('click', () => {
@@ -611,7 +538,6 @@ class EcoGrowApp {
             });
         }
         
-        // Demo button
         const demoBtn = document.getElementById('demoBtn');
         if (demoBtn) {
             demoBtn.addEventListener('click', () => {
@@ -619,7 +545,6 @@ class EcoGrowApp {
             });
         }
         
-        // Theme toggle
         const themeToggle = document.getElementById('themeToggle');
         if (themeToggle) {
             themeToggle.addEventListener('click', () => {
@@ -627,7 +552,6 @@ class EcoGrowApp {
             });
         }
         
-        // Settings button
         const settingsBtn = document.getElementById('settingsBtn');
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => {
@@ -635,7 +559,6 @@ class EcoGrowApp {
             });
         }
         
-        // Pump controls
         const pumpOnBtn = document.getElementById('pumpOnBtn');
         const pumpOffBtn = document.getElementById('pumpOffBtn');
         
@@ -679,7 +602,6 @@ class EcoGrowApp {
             });
         }
         
-        // Light controls - FIXED BUTTON STYLE
         const lightOnBtn = document.getElementById('lightOnBtn');
         const lightOffBtn = document.getElementById('lightOffBtn');
         
@@ -719,7 +641,6 @@ class EcoGrowApp {
             });
         }
         
-        // Sync time button
         const syncTimeBtn = document.getElementById('syncTimeBtn');
         if (syncTimeBtn) {
             syncTimeBtn.addEventListener('click', async () => {
@@ -737,7 +658,6 @@ class EcoGrowApp {
             });
         }
         
-        // Settings sliders
         const thresholdSlider = document.getElementById('moistureThreshold');
         const thresholdValue = document.getElementById('thresholdValue');
         
@@ -764,7 +684,6 @@ class EcoGrowApp {
             });
         }
         
-        // Clear errors button
         const clearErrorsBtn = document.getElementById('clearErrorsBtn');
         if (clearErrorsBtn) {
             clearErrorsBtn.addEventListener('click', async () => {
@@ -784,7 +703,6 @@ class EcoGrowApp {
             });
         }
         
-        // NEW: Reset statistics button
         const resetStatsBtn = document.getElementById('resetStatsBtn');
         if (resetStatsBtn) {
             resetStatsBtn.addEventListener('click', async () => {
@@ -806,7 +724,6 @@ class EcoGrowApp {
             });
         }
         
-        // Documentation link
         const docsLink = document.getElementById('docsLink');
         if (docsLink) {
             docsLink.addEventListener('click', (e) => {
@@ -815,7 +732,6 @@ class EcoGrowApp {
             });
         }
         
-        // Quick guide button
         const quickGuideBtn = document.getElementById('quickGuideBtn');
         const quickGuideModal = document.getElementById('quickGuideModal');
         if (quickGuideBtn && quickGuideModal) {
@@ -824,14 +740,12 @@ class EcoGrowApp {
             });
         }
         
-        // Modal close buttons
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', () => {
                 btn.closest('.modal').classList.remove('active');
             });
         });
         
-        // Close modal on outside click
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
@@ -840,7 +754,6 @@ class EcoGrowApp {
             });
         });
         
-        // Theme selector
         const themeSelector = document.getElementById('themeSelector');
         if (themeSelector) {
             themeSelector.addEventListener('change', (e) => {
@@ -849,7 +762,6 @@ class EcoGrowApp {
             });
         }
         
-        // Update interval
         const updateIntervalInput = document.getElementById('updateInterval');
         if (updateIntervalInput) {
             updateIntervalInput.addEventListener('change', (e) => {
@@ -863,14 +775,12 @@ class EcoGrowApp {
     }
     
     startUpdateLoop() {
-        // Update data periodically
         setInterval(() => {
             if (this.state.connected) {
                 this.updateData();
             }
         }, this.state.updateInterval);
         
-        // Update time every minute
         setInterval(() => {
             if (this.state.demoMode && this.state.currentData) {
                 const now = new Date();
@@ -884,12 +794,10 @@ class EcoGrowApp {
     }
 }
 
-// Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.ecoGrowApp = new EcoGrowApp();
 });
 
-// Add service worker for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -902,7 +810,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Online/offline detection
 window.addEventListener('online', () => {
     if (window.ecoGrowApp && !window.ecoGrowApp.state.demoMode) {
         window.ecoGrowApp.notifications.show('📡 Соединение восстановлено', 'success');
