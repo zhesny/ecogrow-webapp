@@ -9,7 +9,7 @@ class DemoAPI {
             moisture: 65,
             pump: false,
             light: false,
-            moisture_threshold: 50, // <-- ВАЖНО: теперь здесь есть moisture_threshold
+            moisture_threshold: 50,
             watering_delay: 30,
             watering_duration: 10,
             lamp_enabled: true,
@@ -96,19 +96,31 @@ class DemoAPI {
         const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
         this.moistureHistory = this.moistureHistory.filter(h => h.timestamp > twentyFourHoursAgo);
         
-        // Генерируем историю для графика
+        // Генерируем историю для графика (последние 80 точек)
         const history = [];
         const interval = 5 * 60 * 1000; // 5 минут
-        let currentTime = Date.now() - (24 * 60 * 60 * 1000);
         
-        while (currentTime <= Date.now()) {
+        // Создаем временные метки для последних 24 часов
+        const endTime = Date.now();
+        const startTime = endTime - (24 * 60 * 60 * 1000);
+        
+        for (let t = startTime; t <= endTime; t += interval) {
             // Находим ближайшую точку данных
             const nearest = this.moistureHistory.reduce((prev, curr) => {
-                return Math.abs(curr.timestamp - currentTime) < Math.abs(prev.timestamp - currentTime) ? curr : prev;
+                return Math.abs(curr.timestamp - t) < Math.abs(prev.timestamp - t) ? curr : prev;
             });
-            history.push(nearest.value);
-            currentTime += interval;
+            
+            if (nearest && Math.abs(nearest.timestamp - t) < (30 * 60 * 1000)) { // В пределах 30 минут
+                history.push(nearest.value);
+            } else {
+                // Если нет данных поблизости, используем случайное значение
+                const base = 60 + Math.sin(t * 0.000001) * 15;
+                history.push(Math.max(10, Math.min(90, base + Math.random() * 5)));
+            }
         }
+        
+        // Ограничиваем до 80 точек (24 часа с интервалом 18 минут)
+        const limitedHistory = history.slice(-80);
         
         // Автоматически включаем/выключаем свет по расписанию
         const currentTimeStr = now.toTimeString().substring(0, 5);
@@ -129,8 +141,8 @@ class DemoAPI {
         
         return {
             moisture: Math.round(this.demoData.moisture),
-            moisture_history: history.slice(-80), // Последние 80 точек (24 часа)
-            moisture_threshold: this.demoData.moisture_threshold, // <-- ВАЖНОЕ ИСПРАВЛЕНИЕ
+            moisture_history: limitedHistory,
+            moisture_threshold: this.demoData.moisture_threshold,
             watering_delay: this.demoData.watering_delay,
             watering_duration: this.demoData.watering_duration,
             manual_pump_time: 10,
@@ -164,5 +176,101 @@ class DemoAPI {
         };
     }
     
-    // ... остальные методы остаются без изменений ...
+    setBaseUrl(ip) {
+        // Ничего не делаем в демо-режиме
+    }
+    
+    // System Info
+    async getInfo(ip) {
+        this.setBaseUrl(ip);
+        return await this.request('/api/info');
+    }
+    
+    // Get State
+    async getState(ip) {
+        this.setBaseUrl(ip);
+        return await this.request('/api/state');
+    }
+    
+    // Pump Control
+    async controlPump(ip, action) {
+        this.demoData.pump = action === 'on';
+        if (action === 'on') {
+            this.demoData.total_waterings++;
+        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { status: 'ok' };
+    }
+    
+    // Light Control
+    async controlLight(ip, action) {
+        this.demoData.light = action === 'on';
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { status: 'ok' };
+    }
+    
+    // Update Settings
+    async updateSettings(ip, settings) {
+        Object.assign(this.demoData, settings);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { status: 'ok' };
+    }
+    
+    // Set Time
+    async setTime(ip, hours, minutes) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { status: 'ok' };
+    }
+    
+    // Sync Time
+    async syncTime(ip) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { 
+            status: 'ok',
+            time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+        };
+    }
+    
+    // Clear Errors
+    async clearErrors(ip) {
+        this.demoData.errors = [];
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { status: 'ok' };
+    }
+    
+    // Reset Statistics
+    resetStats() {
+        this.demoData.total_waterings = 0;
+        this.demoData.total_light_hours = 0;
+        this.demoData.total_energy = 0;
+        this.moistureHistory = [];
+        this.generateInitialHistory();
+        console.log('Demo stats reset');
+    }
+    
+    // Get Weather Data (external API) - демо версия
+    async getWeather(lat, lon, apiKey) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return {
+            weather: [{
+                description: 'ясно',
+                icon: '01d'
+            }],
+            main: {
+                temp: 22,
+                humidity: 65,
+                pressure: 1013
+            },
+            wind: {
+                speed: 3
+            }
+        };
+    }
+    
+    // Send Telegram Notification - демо версия
+    async sendTelegramNotification(botToken, chatId, message) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        console.log('Demo Telegram notification:', message);
+        return { ok: true };
+    }
 }
