@@ -1257,6 +1257,28 @@
             margin-top: 10px;
         }
 
+        /* === КНОПКА ВЫХОДА ИЗ ДЕМО-РЕЖИМА === */
+        .exit-demo-btn {
+            margin-left: 10px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #ff4757, #ff2e43);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 5px;
+            transition: all var(--transition-fast);
+        }
+        
+        .exit-demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
         /* === RESPONSIVE DESIGN === */
         @media (max-width: 1200px) {
             .dashboard-row {
@@ -1330,6 +1352,11 @@
                 font-size: 0.8rem;
                 padding: 6px 12px;
             }
+            
+            .exit-demo-btn {
+                margin-top: 10px;
+                margin-left: 0;
+            }
         }
 
         /* Для очень маленьких экранов */
@@ -1396,6 +1423,9 @@
     <!-- Бейдж демо-режима -->
     <div class="demo-badge" id="demoBadge">
         <i class="fas fa-flask"></i> Демо-режим
+        <button class="exit-demo-btn" id="exitDemoBtn">
+            <i class="fas fa-sign-out-alt"></i> Выйти
+        </button>
     </div>
 
     <!-- Кнопка установки PWA -->
@@ -1874,6 +1904,10 @@
                         <button class="btn btn-purple" id="startDemoMode">
                             <i class="fas fa-flask"></i>
                             Запустить демо-режим
+                        </button>
+                        <button class="btn btn-danger" id="stopDemoMode" style="display: none;">
+                            <i class="fas fa-stop"></i>
+                            Остановить демо-режим
                         </button>
                         <p class="mt-10" style="color: var(--text-secondary); font-size: 0.85rem;">
                             Демо-режим позволяет ознакомиться с интерфейсом без подключения к реальной системе
