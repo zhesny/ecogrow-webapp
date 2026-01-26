@@ -10,6 +10,7 @@ class ChartsManager {
             24: 24 * 60 * 60 * 1000
         };
         this.chartInitialized = false;
+        this.demoMode = false;
     }
     
     init() {
@@ -54,13 +55,28 @@ class ChartsManager {
         gradient.addColorStop(0, `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.3)`);
         gradient.addColorStop(1, `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.05)`);
         
+        // Создаем демо-данные для графика
+        const demoLabels = [];
+        const demoData = [];
+        const now = Date.now();
+        
+        // Генерируем 12 точек за последний час для демо
+        for (let i = 0; i < 12; i++) {
+            const time = new Date(now - (60 - i * 5) * 60 * 1000);
+            demoLabels.push(time.toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            }));
+            demoData.push(60 + Math.sin(i * 0.5) * 10 + Math.random() * 5);
+        }
+        
         this.moistureChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [],
+                labels: demoLabels,
                 datasets: [{
                     label: 'Влажность (%)',
-                    data: [],
+                    data: demoData,
                     borderColor: accentColor,
                     backgroundColor: gradient,
                     borderWidth: 3,
@@ -95,7 +111,7 @@ class ChartsManager {
                         cornerRadius: 8,
                         callbacks: {
                             label: (context) => {
-                                return `Влажность: ${context.parsed.y}%`;
+                                return `Влажность: ${context.parsed.y.toFixed(1)}%`;
                             }
                         }
                     }
@@ -128,7 +144,7 @@ class ChartsManager {
                                 if (values.length > 10 && index % Math.floor(values.length / 5) !== 0) {
                                     return '';
                                 }
-                                return this.getTimeLabel(values[index]);
+                                return values[index];
                             }
                         }
                     }
@@ -157,21 +173,16 @@ class ChartsManager {
         return { r, g, b };
     }
     
-    getTimeLabel(value) {
-        const label = this.moistureChart.data.labels[value];
-        if (!label) return '';
-        
-        const timeParts = label.split(':');
-        if (timeParts.length === 2) {
-            return `${timeParts[0]}:${timeParts[1]}`;
-        }
-        return label;
-    }
-    
     setTimeRange(hours) {
         console.log(`Установка диапазона времени: ${hours} часов`);
         this.currentTimeRange = hours;
-        this.updateChartWithTimeRange();
+        
+        // Обновляем демо-данные для выбранного диапазона
+        if (this.demoMode) {
+            this.updateDemoChart();
+        } else {
+            this.updateChartWithTimeRange();
+        }
     }
     
     updateMoistureChart(historyData, currentTime = null) {
@@ -183,20 +194,83 @@ class ChartsManager {
             return;
         }
         
-        const now = new Date();
-        this.historyData.push({
-            timestamp: now.getTime(),
-            value: historyData[historyData.length - 1] || 50,
-            timeString: now.toLocaleTimeString('ru-RU', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            })
-        });
+        // Проверяем, является ли это демо-данными
+        this.demoMode = historyData.length > 0;
         
-        const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
-        this.historyData = this.historyData.filter(data => data.timestamp > twentyFourHoursAgo);
+        if (this.demoMode) {
+            // Для демо-режима используем полученные данные
+            this.historyData = historyData.map((value, index) => {
+                const now = new Date();
+                const timeOffset = (historyData.length - index - 1) * 5 * 60 * 1000; // 5 минут между точками
+                const timestamp = now.getTime() - timeOffset;
+                
+                return {
+                    timestamp: timestamp,
+                    value: value,
+                    timeString: new Date(timestamp).toLocaleTimeString('ru-RU', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    })
+                };
+            });
+        } else {
+            // Для реальных данных добавляем новую точку
+            const now = new Date();
+            this.historyData.push({
+                timestamp: now.getTime(),
+                value: historyData[historyData.length - 1] || 50,
+                timeString: now.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+            });
+            
+            // Ограничиваем историю последними 24 часами
+            const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
+            this.historyData = this.historyData.filter(data => data.timestamp > twentyFourHoursAgo);
+        }
         
         this.updateChartWithTimeRange();
+    }
+    
+    updateDemoChart() {
+        if (!this.moistureChart) return;
+        
+        const now = Date.now();
+        const hours = this.currentTimeRange;
+        const points = hours === 1 ? 12 : hours === 6 ? 18 : 24;
+        const interval = (hours * 60 * 60 * 1000) / points;
+        
+        const labels = [];
+        const data = [];
+        
+        for (let i = 0; i < points; i++) {
+            const time = new Date(now - (points - i - 1) * interval);
+            
+            if (hours === 1) {
+                labels.push(time.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }));
+            } else if (hours === 6) {
+                labels.push(time.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }));
+            } else {
+                labels.push(time.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit' 
+                }));
+            }
+            
+            // Генерируем демо-данные с небольшими колебаниями
+            const base = 60 + Math.sin(i * 0.3) * 15;
+            data.push(Math.max(10, Math.min(90, base + Math.random() * 5)));
+        }
+        
+        this.moistureChart.data.labels = labels;
+        this.moistureChart.data.datasets[0].data = data;
+        this.moistureChart.update('none');
     }
     
     updateChartWithTimeRange() {
