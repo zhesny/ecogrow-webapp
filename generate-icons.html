@@ -10,4 +10,69 @@
 <body>
     <h1>Генератор иконок для EcoGrow</h1>
     <p>Скопируйте этот код в консоль браузера:</p>
-    <textarea id
+    <textarea id="code" rows="20" cols="80" readonly>
+// Создание иконки 192x192
+const canvas192 = document.createElement('canvas');
+canvas192.width = 192;
+canvas192.height = 192;
+const ctx192 = canvas192.getContext('2d');
+
+// Зеленый фон
+ctx192.fillStyle = '#0a192f';
+ctx192.fillRect(0, 0, 192, 192);
+
+// Рисуем листок
+ctx192.fillStyle = '#00ff9d';
+ctx192.beginPath();
+ctx192.arc(96, 96, 70, 0, Math.PI * 2);
+ctx192.fill();
+
+ctx192.fillStyle = '#0a192f';
+ctx192.beginPath();
+ctx192.moveTo(96, 60);
+ctx192.lineTo(130, 120);
+ctx192.lineTo(62, 120);
+ctx192.closePath();
+ctx192.fill();
+
+// Преобразуем в data URL
+const icon192 = canvas192.toDataURL('image/png');
+const link192 = document.createElement('a');
+link192.download = 'icon-192.png';
+link192.href = icon192;
+link192.click();
+
+// Создание иконки 512x512
+const canvas512 = document.createElement('canvas');
+canvas512.width = 512;
+canvas512.height = 512;
+const ctx512 = canvas512.getContext('2d');
+
+ctx512.fillStyle = '#0a192f';
+ctx512.fillRect(0, 0, 512, 512);
+
+ctx512.fillStyle = '#00ff9d';
+ctx512.beginPath();
+ctx512.arc(256, 256, 180, 0, Math.PI * 2);
+ctx512.fill();
+
+ctx512.fillStyle = '#0a192f';
+ctx512.beginPath();
+ctx512.moveTo(256, 150);
+ctx512.lineTo(350, 320);
+ctx512.lineTo(162, 320);
+ctx512.closePath();
+ctx512.fill();
+
+const icon512 = canvas512.toDataURL('image/png');
+const link512 = document.createElement('a');
+link512.download = 'icon-512.png';
+link512.href = icon512;
+link512.click();
+
+console.log('Иконки созданы!');
+    </textarea>
+    
+    <p>Откройте консоль разработчика (F12) и вставьте этот код.</p>
+</body>
+</html>
