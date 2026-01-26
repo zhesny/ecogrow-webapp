@@ -47,8 +47,8 @@ class ChartsManager {
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 2,
-                    pointHoverRadius: 6,
+                    pointRadius: 0, // Убраны точки
+                    pointHoverRadius: 0, // Убраны точки при наведении
                     pointBackgroundColor: '#00ff9d',
                     pointBorderColor: '#0a192f',
                     pointBorderWidth: 2
@@ -151,14 +151,14 @@ class ChartsManager {
             }
         }
         
-        // If not enough data, generate demo data
+        // Если не достаточно данных, генерируем демо данные
         if (filteredTimestamps.length < 5) {
             this.generateDemoDataForTimeRange(timeFilter, now);
             this.updateChartWithTimeRange();
             return;
         }
         
-        // Sample data for display (max 100 points)
+        // Сэмплируем данные для отображения (максимум 100 точек)
         const sampleStep = Math.max(1, Math.floor(filteredTimestamps.length / 100));
         const sampledTimestamps = [];
         const sampledMoisture = [];
@@ -168,7 +168,7 @@ class ChartsManager {
             sampledMoisture.push(filteredMoisture[i]);
         }
         
-        // Format time labels
+        // Форматируем метки времени
         const labels = sampledTimestamps.map(ts => {
             const date = new Date(ts);
             return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -184,22 +184,22 @@ class ChartsManager {
         
         const now = Date.now();
         
-        // Add new data
+        // Добавляем новые данные
         if (Array.isArray(historyData)) {
-            // If array of history data
-            const step = 300000; // 5 minutes between points
+            // Если массив исторических данных
+            const step = 300000; // 5 минут между точками
             historyData.forEach((value, index) => {
                 const timestamp = now - (historyData.length - index - 1) * step;
                 this.chartData.timestamps.push(timestamp);
                 this.chartData.moisture.push(value);
             });
         } else {
-            // If single value
+            // Если одиночное значение
             this.chartData.timestamps.push(now);
             this.chartData.moisture.push(historyData);
         }
         
-        // Limit data size (keep 7 days)
+        // Ограничиваем размер данных (храним 7 дней)
         const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
         while (this.chartData.timestamps.length > 0 && this.chartData.timestamps[0] < weekAgo) {
             this.chartData.timestamps.shift();
@@ -211,7 +211,7 @@ class ChartsManager {
     
     generateDemoDataForTimeRange(startTime, endTime) {
         const duration = endTime - startTime;
-        const pointCount = Math.min(100, Math.floor(duration / (5 * 60 * 1000))); // point every 5 minutes
+        const pointCount = Math.min(100, Math.floor(duration / (5 * 60 * 1000))); // точка каждые 5 минут
         
         if (pointCount < 2) return;
         
