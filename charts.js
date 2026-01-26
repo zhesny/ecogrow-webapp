@@ -3,28 +3,57 @@ class ChartsManager {
         this.moistureChart = null;
         this.statsChart = null;
         this.historyData = [];
-        this.currentTimeRange = 1; // 1 час по умолчанию
+        this.currentTimeRange = 1;
         this.timeRanges = {
-            1: 60 * 60 * 1000,    // 1 час в миллисекундах
-            6: 6 * 60 * 60 * 1000, // 6 часов
-            24: 24 * 60 * 60 * 1000 // 24 часа
+            1: 60 * 60 * 1000,
+            6: 6 * 60 * 60 * 1000,
+            24: 24 * 60 * 60 * 1000
         };
+        this.chartInitialized = false;
     }
     
     init() {
-        this.initMoistureChart();
-        this.initStatsChart();
-        this.initParticles();
-        this.setupTimeButtons();
+        if (!this.chartInitialized) {
+            this.initMoistureChart();
+            this.initStatsChart();
+            this.setupTimeButtons();
+            this.chartInitialized = true;
+        }
+    }
+    
+    recreateCharts() {
+        this.chartInitialized = false;
+        this.init();
     }
     
     initMoistureChart() {
         const ctx = document.getElementById('moistureChart');
         if (!ctx) return;
         
+        // Уничтожаем предыдущий график, если он существует
+        if (this.moistureChart) {
+            this.moistureChart.destroy();
+        }
+        
+        // Получаем цвета для текущей темы
+        const accentColor = getComputedStyle(document.documentElement)
+            .getPropertyValue('--accent-primary').trim() || '#00ff9d';
+        
+        const bgCard = getComputedStyle(document.documentElement)
+            .getPropertyValue('--bg-card').trim() || '#172a45';
+        
+        const textPrimary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--text-primary').trim() || '#e2e8f0';
+        
+        const textSecondary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--text-secondary').trim() || '#a0aec0';
+        
+        // Преобразуем hex в rgb
+        let rgbColor = this.hexToRgb(accentColor) || { r: 0, g: 255, b: 157 };
+        
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.3)');
-        gradient.addColorStop(1, 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.05)');
+        gradient.addColorStop(0, `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.3)`);
+        gradient.addColorStop(1, `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.05)`);
         
         this.moistureChart = new Chart(ctx, {
             type: 'line',
@@ -33,16 +62,17 @@ class ChartsManager {
                 datasets: [{
                     label: 'Влажность (%)',
                     data: [],
-                    borderColor: 'var(--accent-primary)',
+                    borderColor: accentColor,
                     backgroundColor: gradient,
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: 'var(--accent-primary)',
-                    pointBorderColor: 'var(--bg-card)',
-                    pointBorderWidth: 2
+                    // УБРАНЫ ТОЧКИ
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    pointBackgroundColor: 'transparent',
+                    pointBorderColor: 'transparent',
+                    pointBorderWidth: 0
                 }]
             },
             options: {
@@ -59,10 +89,10 @@ class ChartsManager {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
-                        backgroundColor: 'var(--bg-card)',
-                        titleColor: 'var(--accent-primary)',
-                        bodyColor: 'var(--text-primary)',
-                        borderColor: 'var(--accent-primary)',
+                        backgroundColor: bgCard,
+                        titleColor: accentColor,
+                        bodyColor: textPrimary,
+                        borderColor: accentColor,
                         borderWidth: 1,
                         cornerRadius: 8,
                         callbacks: {
@@ -77,11 +107,11 @@ class ChartsManager {
                         beginAtZero: true,
                         max: 100,
                         grid: {
-                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)',
+                            color: `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.1)`,
                             drawBorder: false
                         },
                         ticks: {
-                            color: 'var(--text-secondary)',
+                            color: textSecondary,
                             font: {
                                 size: 11
                             },
@@ -90,14 +120,13 @@ class ChartsManager {
                     },
                     x: {
                         grid: {
-                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)',
+                            color: `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.1)`,
                             drawBorder: false
                         },
                         ticks: {
-                            color: 'var(--text-secondary)',
+                            color: textSecondary,
                             maxRotation: 0,
                             callback: (value, index, values) => {
-                                // Показываем время только для некоторых делений
                                 if (values.length > 10 && index % Math.floor(values.length / 5) !== 0) {
                                     return '';
                                 }
@@ -114,11 +143,26 @@ class ChartsManager {
         });
     }
     
+    hexToRgb(hex) {
+        // Удаляем # если есть
+        hex = hex.replace('#', '');
+        
+        // Преобразуем 3-значный hex в 6-значный
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        
+        return { r, g, b };
+    }
+    
     getTimeLabel(value) {
         const label = this.moistureChart.data.labels[value];
         if (!label) return '';
         
-        // Преобразуем строку времени в более короткий формат
         const timeParts = label.split(':');
         if (timeParts.length === 2) {
             return `${timeParts[0]}:${timeParts[1]}`;
@@ -132,7 +176,6 @@ class ChartsManager {
                 const hours = parseInt(e.target.dataset.hours);
                 this.setTimeRange(hours);
                 
-                // Update active button
                 document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
             });
@@ -153,7 +196,6 @@ class ChartsManager {
             return;
         }
         
-        // Добавляем новые данные в историю
         const now = new Date();
         this.historyData.push({
             timestamp: now.getTime(),
@@ -164,7 +206,6 @@ class ChartsManager {
             })
         });
         
-        // Храним данные за последние 24 часа
         const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
         this.historyData = this.historyData.filter(data => data.timestamp > twentyFourHoursAgo);
         
@@ -178,28 +219,25 @@ class ChartsManager {
         const timeRange = this.timeRanges[this.currentTimeRange];
         const cutoffTime = now - timeRange;
         
-        // Фильтруем данные по выбранному диапазону
         const filteredData = this.historyData.filter(data => data.timestamp >= cutoffTime);
         
         if (filteredData.length === 0) return;
         
-        // Определяем количество точек для отображения
         let maxPoints;
         switch (this.currentTimeRange) {
             case 1:
-                maxPoints = 12; // Каждые 5 минут
+                maxPoints = 12;
                 break;
             case 6:
-                maxPoints = 18; // Каждые 20 минут
+                maxPoints = 18;
                 break;
             case 24:
-                maxPoints = 24; // Каждый час
+                maxPoints = 24;
                 break;
             default:
                 maxPoints = 20;
         }
         
-        // Выбираем точки для отображения
         const step = Math.max(1, Math.floor(filteredData.length / maxPoints));
         const displayData = [];
         const displayLabels = [];
@@ -209,24 +247,20 @@ class ChartsManager {
             
             displayData.push(filteredData[i].value);
             
-            // Форматируем метку времени
             const date = new Date(filteredData[i].timestamp);
             let timeLabel;
             
             if (this.currentTimeRange === 1) {
-                // Для 1 часа показываем минуты
                 timeLabel = date.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
             } else if (this.currentTimeRange === 6) {
-                // Для 6 часов показываем часы и минуты
                 timeLabel = date.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
             } else {
-                // Для 24 часов показываем только часы
                 timeLabel = date.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit' 
                 });
@@ -235,7 +269,6 @@ class ChartsManager {
             displayLabels.push(timeLabel);
         }
         
-        // Обновляем график
         this.moistureChart.data.labels = displayLabels;
         this.moistureChart.data.datasets[0].data = displayData;
         this.moistureChart.update('none');
@@ -245,6 +278,18 @@ class ChartsManager {
         const ctx = document.getElementById('statsChart');
         if (!ctx) return;
         
+        if (this.statsChart) {
+            this.statsChart.destroy();
+        }
+        
+        const accentPrimary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--accent-primary').trim() || '#00ff9d';
+        const accentSecondary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--accent-secondary').trim() || '#00d9ff';
+        
+        const textSecondary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--text-secondary').trim() || '#a0aec0';
+        
         this.statsChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -252,13 +297,13 @@ class ChartsManager {
                 datasets: [{
                     label: 'Поливы',
                     data: [3, 5, 2, 4, 6, 3, 5],
-                    backgroundColor: 'var(--accent-primary)',
+                    backgroundColor: accentPrimary,
                     borderRadius: 6,
                     borderWidth: 0
                 }, {
                     label: 'Часы света',
                     data: [8, 10, 9, 8, 12, 10, 9],
-                    backgroundColor: 'var(--accent-secondary)',
+                    backgroundColor: accentSecondary,
                     borderRadius: 6,
                     borderWidth: 0
                 }]
@@ -269,7 +314,7 @@ class ChartsManager {
                 plugins: {
                     legend: {
                         labels: {
-                            color: 'var(--text-secondary)',
+                            color: textSecondary,
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
@@ -278,10 +323,10 @@ class ChartsManager {
                 scales: {
                     y: {
                         grid: {
-                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)'
+                            color: `rgba(${this.hexToRgb(accentPrimary).r}, ${this.hexToRgb(accentPrimary).g}, ${this.hexToRgb(accentPrimary).b}, 0.1)`
                         },
                         ticks: {
-                            color: 'var(--text-secondary)'
+                            color: textSecondary
                         }
                     },
                     x: {
@@ -289,100 +334,11 @@ class ChartsManager {
                             display: false
                         },
                         ticks: {
-                            color: 'var(--text-secondary)'
+                            color: textSecondary
                         }
                     }
                 }
             }
         });
-    }
-    
-    initParticles() {
-        if (typeof particlesJS !== 'undefined') {
-            particlesJS('particles-js', {
-                particles: {
-                    number: {
-                        value: 80,
-                        density: {
-                            enable: true,
-                            value_area: 800
-                        }
-                    },
-                    color: {
-                        value: "var(--accent-primary)"
-                    },
-                    shape: {
-                        type: "circle"
-                    },
-                    opacity: {
-                        value: 0.3,
-                        random: true,
-                        anim: {
-                            enable: true,
-                            speed: 1,
-                            opacity_min: 0.1,
-                            sync: false
-                        }
-                    },
-                    size: {
-                        value: 3,
-                        random: true,
-                        anim: {
-                            enable: true,
-                            speed: 2,
-                            size_min: 0.1,
-                            sync: false
-                        }
-                    },
-                    line_linked: {
-                        enable: true,
-                        distance: 150,
-                        color: "var(--accent-primary)",
-                        opacity: 0.2,
-                        width: 1
-                    },
-                    move: {
-                        enable: true,
-                        speed: 1,
-                        direction: "none",
-                        random: true,
-                        straight: false,
-                        out_mode: "out",
-                        bounce: false,
-                        attract: {
-                            enable: false,
-                            rotateX: 600,
-                            rotateY: 1200
-                        }
-                    }
-                },
-                interactivity: {
-                    detect_on: "canvas",
-                    events: {
-                        onhover: {
-                            enable: true,
-                            mode: "grab"
-                        },
-                        onclick: {
-                            enable: true,
-                            mode: "push"
-                        },
-                        resize: true
-                    },
-                    modes: {
-                        grab: {
-                            distance: 140,
-                            line_linked: {
-                                opacity: 0.5
-                            }
-                        },
-                        push: {
-                            particles_nb: 4
-                        }
-                    }
-                },
-                retina_detect: true
-            });
-        }
     }
 }
