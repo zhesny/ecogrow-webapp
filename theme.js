@@ -75,6 +75,16 @@ class ThemeManager {
         // Update active theme buttons
         this.updateThemeButtons();
         
+        // Обновляем цвета графика при смене темы
+        setTimeout(() => {
+            if (window.ecoGrowApp && window.ecoGrowApp.charts) {
+                window.ecoGrowApp.charts.recreateCharts();
+                if (window.ecoGrowApp.state.currentData && window.ecoGrowApp.state.currentData.moisture_history) {
+                    window.ecoGrowApp.charts.updateMoistureChart(window.ecoGrowApp.state.currentData.moisture_history);
+                }
+            }
+        }, 100);
+        
         // Dispatch theme change event
         window.dispatchEvent(new CustomEvent('themechange', { 
             detail: { theme: themeName } 
