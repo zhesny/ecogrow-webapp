@@ -116,7 +116,7 @@ class EcoGrowApp {
             '192.168.1.100',
             '192.168.0.187',
             '192.168.4.1',
-            '10.0.0.100'
+            '10.108.130.89'
         ];
         
         for (const ip of commonIPs) {
@@ -684,6 +684,36 @@ class EcoGrowApp {
             });
         }
         
+        // ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ДЛЯ СБРОСА СТАТИСТИКИ
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        if (resetStatsBtn) {
+            resetStatsBtn.addEventListener('click', async () => {
+                if (this.state.demoMode) {
+                    // Сброс в демо-режиме
+                    this.state.currentData.total_waterings = 0;
+                    this.state.currentData.total_light_hours = 0;
+                    this.state.currentData.total_energy = 0;
+                    // Также сбросить минимум и максимум влажности
+                    this.state.currentData.min_moisture = this.state.currentData.moisture;
+                    this.state.currentData.max_moisture = this.state.currentData.moisture;
+                    
+                    // Обновляем интерфейс
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show('✅ Статистика сброшена (демо)', 'success');
+                } else if (this.state.connected) {
+                    try {
+                        await this.api.resetStats(this.state.espIp);
+                        this.notifications.show('✅ Статистика сброшена', 'success');
+                        // Обновляем данные через 500 мс, чтобы сервер успел обработать
+                        setTimeout(() => this.updateData(), 500);
+                    } catch (error) {
+                        console.error('Ошибка сброса статистики:', error);
+                        this.notifications.show('❌ Ошибка сброса статистики', 'error');
+                    }
+                }
+            });
+        }
+        
         const clearErrorsBtn = document.getElementById('clearErrorsBtn');
         if (clearErrorsBtn) {
             clearErrorsBtn.addEventListener('click', async () => {
@@ -698,27 +728,6 @@ class EcoGrowApp {
                         setTimeout(() => this.updateData(), 1000);
                     } catch (error) {
                         this.notifications.show('❌ Ошибка очистки ошибок', 'error');
-                    }
-                }
-            });
-        }
-        
-        const resetStatsBtn = document.getElementById('resetStatsBtn');
-        if (resetStatsBtn) {
-            resetStatsBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    this.state.currentData.total_waterings = 0;
-                    this.state.currentData.total_light_hours = 0;
-                    this.state.currentData.total_energy = 0;
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show('✅ Статистика сброшена (демо)', 'success');
-                } else if (this.state.connected) {
-                    try {
-                        await this.api.resetStats(this.state.espIp);
-                        this.notifications.show('✅ Статистика сброшена', 'success');
-                        setTimeout(() => this.updateData(), 1000);
-                    } catch (error) {
-                        this.notifications.show('❌ Ошибка сброса статистики', 'error');
                     }
                 }
             });
