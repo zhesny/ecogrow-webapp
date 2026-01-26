@@ -24,8 +24,6 @@ class EcoGrowApp {
     }
     
     async init() {
-        console.log('Initializing EcoGrow App v4.5.1');
-        
         // Initialize theme
         this.theme.init();
         
@@ -41,20 +39,18 @@ class EcoGrowApp {
         // Set up event listeners
         this.setupEventListeners();
         
-        console.log('App initialized');
+        // Hide loading screen
+        setTimeout(() => this.hideLoading(), 1500);
+        
+        // Start update loops
+        this.startUpdateLoop();
     }
     
     showLoading() {
         const loadingScreen = document.getElementById('loadingScreen');
-        const mainContainer = document.getElementById('mainContainer');
-        
         if (loadingScreen) {
-            loadingScreen.style.display = 'flex';
             loadingScreen.style.opacity = '1';
             loadingScreen.style.pointerEvents = 'all';
-        }
-        if (mainContainer) {
-            mainContainer.style.display = 'none';
         }
     }
     
@@ -70,57 +66,38 @@ class EcoGrowApp {
                     mainContainer.style.display = 'block';
                 }
             }, 500);
-        } else if (mainContainer) {
-            mainContainer.style.display = 'block';
         }
     }
     
     async tryAutoConnect() {
-        console.log('Trying to auto-connect...');
-        
-        // First check localStorage for saved IP
-        const savedIp = localStorage.getItem('ecogrow_ip');
-        const savedDemo = localStorage.getItem('ecogrow_demo_mode') === 'true';
-        
-        if (savedDemo) {
-            console.log('Found saved demo mode, enabling...');
+        // Check if demo mode was previously enabled
+        const savedDemoMode = localStorage.getItem('ecogrow_demo_mode') === 'true';
+        if (savedDemoMode) {
             await this.enableDemoMode();
             return;
         }
         
-        if (savedIp) {
-            console.log('Found saved IP:', savedIp);
-            this.state.espIp = savedIp;
-            await this.connectToESP();
-            return;
-        }
-        
-        // Try mDNS connection
-        console.log('Trying mDNS connection...');
+        // Try mDNS first
         try {
-            // Use timeout for connection attempt
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
             const response = await fetch('http://ecogrow.local/api/info', { 
-                signal: controller.signal,
-                mode: 'no-cors'
-            }).catch(() => null);
-            
-            clearTimeout(timeoutId);
-            
-            if (response && response.ok) {
+                signal: AbortSignal.timeout(2000) 
+            });
+            if (response.ok) {
                 this.state.espIp = 'ecogrow.local';
                 await this.connectToESP();
                 return;
             }
         } catch (error) {
-            console.log('mDNS connection failed:', error);
+            // Try local storage
+            const savedIp = localStorage.getItem('ecogrow_ip');
+            if (savedIp) {
+                this.state.espIp = savedIp;
+                await this.connectToESP();
+                return;
+            }
         }
         
-        // If nothing works, show connection modal
-        console.log('No connection found, showing modal');
-        this.hideLoading();
+        // Show connection modal
         this.showConnectionModal();
     }
     
@@ -132,16 +109,14 @@ class EcoGrowApp {
     }
     
     async connectToESP() {
-        if (!this.state.espIp) {
-            this.showConnectionModal();
-            return;
-        }
+        if (!this.state.espIp) return;
         
         try {
+            // Disable demo mode first
+            this.disableDemoMode();
+            
             // Test connection
-            console.log('Connecting to:', this.state.espIp);
             const info = await this.api.getInfo(this.state.espIp);
-            console.log('Connection successful:', info);
             
             // Save to localStorage
             localStorage.setItem('ecogrow_ip', this.state.espIp);
@@ -161,25 +136,16 @@ class EcoGrowApp {
             // Show success notification
             this.notifications.show('✅ Успешно подключено к системе!', 'success');
             
-            // Hide loading screen
-            this.hideLoading();
-            
         } catch (error) {
             console.error('Connection failed:', error);
             this.state.connected = false;
             this.updateConnectionStatus();
             this.notifications.show('❌ Не удалось подключиться к системе', 'error');
-            this.hideLoading();
             this.showConnectionModal();
         }
     }
     
     async enableDemoMode() {
-        console.log('Enabling demo mode...');
-        
-        // Show loading screen
-        this.showLoading();
-        
         this.state.connected = true;
         this.state.demoMode = true;
         this.state.espIp = 'demo-mode';
@@ -207,18 +173,9 @@ class EcoGrowApp {
         
         // Start demo update loop
         this.startDemoUpdateLoop();
-        
-        // Hide loading screen
-        setTimeout(() => {
-            this.hideLoading();
-        }, 1000);
-        
-        console.log('Demo mode enabled');
     }
     
     disableDemoMode() {
-        console.log('Disabling demo mode...');
-        
         this.state.demoMode = false;
         this.state.connected = false;
         
@@ -233,11 +190,6 @@ class EcoGrowApp {
         
         // Stop demo update loop
         this.stopDemoUpdateLoop();
-        
-        // Show connection modal
-        this.showConnectionModal();
-        
-        console.log('Demo mode disabled');
     }
     
     hideConnectionModal() {
@@ -270,39 +222,6 @@ class EcoGrowApp {
                 statusElement.classList.remove('connected');
             }
         }
-        
-        // Add manual refresh button if not exists
-        this.addManualRefreshButton();
-    }
-    
-    addManualRefreshButton() {
-        const statusContainer = document.querySelector('.header-controls');
-        if (!statusContainer) return;
-        
-        // Check if button already exists
-        if (document.getElementById('manualRefreshBtn')) return;
-        
-        const refreshBtn = document.createElement('button');
-        refreshBtn.id = 'manualRefreshBtn';
-        refreshBtn.className = 'header-btn';
-        refreshBtn.title = 'Обновить данные';
-        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
-        
-        refreshBtn.addEventListener('click', async () => {
-            refreshBtn.classList.add('refreshing');
-            await this.updateData();
-            setTimeout(() => {
-                refreshBtn.classList.remove('refreshing');
-            }, 1000);
-        });
-        
-        // Add after connection status
-        const statusElement = document.getElementById('connectionStatus');
-        if (statusElement && statusElement.parentNode === statusContainer) {
-            statusContainer.insertBefore(refreshBtn, statusElement.nextSibling);
-        } else {
-            statusContainer.appendChild(refreshBtn);
-        }
     }
     
     async updateData() {
@@ -325,7 +244,7 @@ class EcoGrowApp {
             // Update UI
             this.updateUI(data);
             
-            // Update charts
+            // Update charts with time range support
             if (data.moisture_history && data.moisture_history.length > 0) {
                 this.charts.updateMoistureChart(data.moisture_history, data.current_time);
             }
@@ -333,37 +252,12 @@ class EcoGrowApp {
             // Update notifications if needed
             this.checkNotifications(data);
             
-            // Update last update time
-            this.updateLastUpdateTime();
-            
         } catch (error) {
             console.error('Update failed:', error);
             if (!this.state.demoMode) {
                 this.state.connected = false;
                 this.updateConnectionStatus();
                 this.notifications.show('❌ Потеряно соединение с системой', 'error');
-            }
-        }
-    }
-    
-    updateLastUpdateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('ru-RU', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        
-        // Find and update the time in connection status
-        const statusElement = document.getElementById('connectionStatus');
-        if (statusElement && this.state.connected) {
-            const span = statusElement.querySelector('span');
-            if (span) {
-                if (this.state.demoMode) {
-                    span.textContent = `Демо-режим • ${timeString}`;
-                } else {
-                    span.textContent = `Подключено • ${timeString}`;
-                }
             }
         }
     }
@@ -416,18 +310,21 @@ class EcoGrowApp {
         // Update current time
         this.updateElement('systemTime', data.current_time);
         
-        // Update threshold value from system - ВАЖНОЕ ИСПРАВЛЕНИЕ
-        if (data.moisture_threshold !== undefined) {
+        // Update threshold value from system
+        if (data.moisture_threshold) {
             const thresholdSlider = document.getElementById('moistureThreshold');
             const thresholdValue = document.getElementById('thresholdValue');
             
-            if (thresholdSlider && thresholdSlider.value != data.moisture_threshold) {
+            if (thresholdSlider) {
                 thresholdSlider.value = data.moisture_threshold;
             }
             if (thresholdValue) {
                 thresholdValue.textContent = data.moisture_threshold + '%';
             }
         }
+        
+        // Update next watering timer
+        this.updateNextWateringTimer(data);
         
         // Update errors list
         this.updateErrorsList(data.errors);
@@ -436,6 +333,7 @@ class EcoGrowApp {
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
+            // Animate number changes
             if (typeof value === 'number' && !isNaN(parseFloat(element.textContent))) {
                 this.animateValue(element, parseFloat(element.textContent), value, 500);
             } else {
@@ -456,6 +354,20 @@ class EcoGrowApp {
             }
         };
         window.requestAnimationFrame(step);
+    }
+    
+    updateNextWateringTimer(data) {
+        const timerElement = document.getElementById('nextWateringTimer');
+        if (!timerElement || !data.time_since_watering || !data.watering_delay_ms) return;
+        
+        const timeSinceWatering = data.time_since_watering;
+        const delayMs = data.watering_delay_ms;
+        const timeLeft = Math.max(0, delayMs - timeSinceWatering);
+        
+        const minutes = Math.floor(timeLeft / 60000);
+        const seconds = Math.floor((timeLeft % 60000) / 1000);
+        
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
     
     updateErrorsList(errors) {
@@ -503,6 +415,7 @@ class EcoGrowApp {
     }
     
     checkNotifications(data) {
+        // Check for low moisture
         if (data.moisture < 20) {
             this.notifications.show(
                 `⚠️ Низкая влажность: ${data.moisture}%`, 
@@ -510,6 +423,7 @@ class EcoGrowApp {
             );
         }
         
+        // Check for sensor error
         if (data.moisture === 0) {
             this.notifications.show(
                 '❌ Ошибка датчика влажности!', 
@@ -517,6 +431,7 @@ class EcoGrowApp {
             );
         }
         
+        // Check for pump running
         if (data.pump) {
             this.notifications.show(
                 '💧 Насос работает...', 
@@ -544,8 +459,6 @@ class EcoGrowApp {
     }
     
     setupEventListeners() {
-        console.log('Setting up event listeners');
-        
         // Connect button
         const connectBtn = document.getElementById('connectBtn');
         if (connectBtn) {
@@ -554,6 +467,20 @@ class EcoGrowApp {
                 if (ipInput && ipInput.value) {
                     this.state.espIp = ipInput.value;
                     this.connectToESP();
+                }
+            });
+        }
+        
+        // Demo mode button in header
+        const demoModeBtn = document.getElementById('demoModeBtn');
+        if (demoModeBtn) {
+            demoModeBtn.addEventListener('click', () => {
+                if (this.state.demoMode) {
+                    this.disableDemoMode();
+                    this.notifications.show('✅ Демо-режим отключен', 'success');
+                    this.showConnectionModal();
+                } else {
+                    this.enableDemoMode();
                 }
             });
         }
@@ -692,27 +619,6 @@ class EcoGrowApp {
             });
         }
         
-        // Reset statistics button
-        const resetStatsBtn = document.getElementById('resetStatsBtn');
-        if (resetStatsBtn) {
-            resetStatsBtn.addEventListener('click', async () => {
-                if (confirm('Вы уверены, что хотите сбросить всю статистику?')) {
-                    try {
-                        if (this.state.demoMode) {
-                            this.demoApi.resetStats();
-                            this.notifications.show('✅ Статистика сброшена', 'success');
-                        } else {
-                            // Для реальной системы
-                            this.notifications.show('⚠️ Сброс статистики для реальной системы пока не поддерживается', 'warning');
-                        }
-                        await this.updateData();
-                    } catch (error) {
-                        this.notifications.show('❌ Ошибка сброса статистики', 'error');
-                    }
-                }
-            });
-        }
-        
         // Sync time button
         const syncTimeBtn = document.getElementById('syncTimeBtn');
         if (syncTimeBtn) {
@@ -758,24 +664,10 @@ class EcoGrowApp {
             });
         }
         
-        // Widgets guide button
-        const widgetsGuideBtn = document.getElementById('widgetsGuideBtn');
-        const widgetsModal = document.getElementById('widgetsModal');
-        if (widgetsGuideBtn && widgetsModal) {
-            widgetsGuideBtn.addEventListener('click', () => {
-                widgetsModal.classList.add('active');
-                // Generate QR code when modal opens
-                generateQRCode();
-            });
-        }
-        
         // Modal close buttons
         document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) {
-                    modal.classList.remove('active');
-                }
+            btn.addEventListener('click', () => {
+                btn.closest('.modal').classList.remove('active');
             });
         });
         
@@ -804,14 +696,11 @@ class EcoGrowApp {
             });
         });
         
-        // Time range buttons for chart - ВАЖНОЕ ИСПРАВЛЕНИЕ
+        // Time range buttons for chart
         document.querySelectorAll('.time-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                console.log('Time button clicked:', e.target.dataset.hours);
                 const hours = parseInt(e.target.dataset.hours);
-                if (this.charts) {
-                    this.charts.setTimeRange(hours);
-                }
+                this.charts.setTimeRange(hours);
                 
                 // Update active button
                 document.querySelectorAll('.time-btn').forEach(b => {
@@ -820,8 +709,6 @@ class EcoGrowApp {
                 e.target.classList.add('active');
             });
         });
-        
-        console.log('Event listeners set up');
     }
     
     startUpdateLoop() {
@@ -844,22 +731,19 @@ class EcoGrowApp {
         this.state.timeUpdateInterval = setInterval(() => {
             this.updateCurrentTime();
         }, 60000);
-        
-        console.log('Update loops started');
     }
     
     startDemoUpdateLoop() {
-        // Stop any existing demo loop
-        this.stopDemoUpdateLoop();
+        // Update demo data more frequently for better experience
+        if (this.demoUpdateInterval) {
+            clearInterval(this.demoUpdateInterval);
+        }
         
-        // Update demo data more frequently
         this.demoUpdateInterval = setInterval(() => {
             if (this.state.demoMode) {
                 this.updateData();
             }
         }, 3000);
-        
-        console.log('Demo update loop started');
     }
     
     stopDemoUpdateLoop() {
@@ -883,53 +767,13 @@ class EcoGrowApp {
     }
 }
 
-// Generate QR code for PWA
-function generateQRCode() {
-    const qrContainer = document.getElementById('qrCode');
-    if (!qrContainer) return;
-    
-    const currentUrl = window.location.href;
-    // Используем сервис для генерации QR кода
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
-    
-    qrContainer.innerHTML = `
-        <img src="${qrUrl}" 
-             alt="QR Code для установки PWA" 
-             style="width: 100%; height: 100%; border-radius: var(--radius-md);"
-             onerror="this.onerror=null; this.src='https://via.placeholder.com/200?text=QR+Code';">
-    `;
-}
-
-// Show widgets guide link in footer (only when connected)
-function showWidgetsLink() {
-    const widgetsLink = document.getElementById('widgetsGuideBtn');
-    if (widgetsLink) {
-        widgetsLink.style.display = 'flex';
-    }
-}
-
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app');
     window.ecoGrowApp = new EcoGrowApp();
-    
-    // Show widgets link
-    showWidgetsLink();
-    
-    // Listen for theme changes to update charts
-    window.addEventListener('themechange', () => {
-        if (window.ecoGrowApp && window.ecoGrowApp.charts) {
-            window.ecoGrowApp.charts.recreateCharts();
-            if (window.ecoGrowApp.state.currentData && window.ecoGrowApp.state.currentData.moisture_history) {
-                window.ecoGrowApp.charts.updateMoistureChart(window.ecoGrowApp.state.currentData.moisture_history);
-            }
-        }
-    });
 });
 
-// Service Worker registration
-if ('serviceWorker' in navigator && window.location.protocol === 'https:' && 
-    !window.location.hostname.includes('github.io')) {
+// Add service worker for PWA
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {
@@ -939,8 +783,6 @@ if ('serviceWorker' in navigator && window.location.protocol === 'https:' &&
                 console.log('ServiceWorker registration failed:', error);
             });
     });
-} else {
-    console.log('Service Worker не регистрируется (GitHub Pages или не HTTPS)');
 }
 
 // Keyboard shortcuts
@@ -965,11 +807,5 @@ document.addEventListener('keydown', (e) => {
         } else {
             window.ecoGrowApp.enableDemoMode();
         }
-    }
-    
-    // Ctrl+R to manual refresh
-    if (e.ctrlKey && e.key === 'r') {
-        e.preventDefault();
-        window.ecoGrowApp?.updateData();
     }
 });
