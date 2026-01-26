@@ -58,7 +58,10 @@ class ThemeManager {
     }
     
     setTheme(themeName) {
-        if (!this.themes[themeName]) return;
+        if (!this.themes[themeName]) {
+            console.error(`Тема "${themeName}" не найдена`);
+            themeName = 'dark-blue';
+        }
         
         this.currentTheme = themeName;
         document.documentElement.setAttribute('data-theme', themeName);
@@ -76,6 +79,8 @@ class ThemeManager {
         window.dispatchEvent(new CustomEvent('themechange', { 
             detail: { theme: themeName } 
         }));
+        
+        console.log(`Тема изменена на: ${this.themes[themeName].name}`);
     }
     
     toggle() {
