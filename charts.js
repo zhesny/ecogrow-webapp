@@ -50,10 +50,7 @@ class ChartsManager {
                     fill: true,
                     pointRadius: 0,
                     pointHoverRadius: 0,
-                    pointBackgroundColor: 'transparent',
-                    pointBorderColor: 'transparent',
-                    pointBorderWidth: 0,
-                    pointStyle: false
+                    pointHitRadius: 0
                 }]
             },
             options: {
@@ -119,9 +116,14 @@ class ChartsManager {
                     mode: 'nearest'
                 },
                 elements: {
+                    line: {
+                        tension: 0.4,
+                        borderWidth: 3
+                    },
                     point: {
                         radius: 0,
-                        hoverRadius: 0
+                        hoverRadius: 0,
+                        hitRadius: 0
                     }
                 }
             }
