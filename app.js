@@ -41,23 +41,20 @@ class EcoGrowApp {
         // Set up event listeners
         this.setupEventListeners();
         
-        // Hide loading screen after timeout
-        setTimeout(() => {
-            this.hideLoading();
-        }, 2000);
-        
-        // Start update loops
-        this.startUpdateLoop();
-        
         console.log('App initialized');
     }
     
     showLoading() {
         const loadingScreen = document.getElementById('loadingScreen');
+        const mainContainer = document.getElementById('mainContainer');
+        
         if (loadingScreen) {
             loadingScreen.style.display = 'flex';
             loadingScreen.style.opacity = '1';
             loadingScreen.style.pointerEvents = 'all';
+        }
+        if (mainContainer) {
+            mainContainer.style.display = 'none';
         }
     }
     
@@ -73,6 +70,8 @@ class EcoGrowApp {
                     mainContainer.style.display = 'block';
                 }
             }, 500);
+        } else if (mainContainer) {
+            mainContainer.style.display = 'block';
         }
     }
     
@@ -121,9 +120,8 @@ class EcoGrowApp {
         
         // If nothing works, show connection modal
         console.log('No connection found, showing modal');
-        setTimeout(() => {
-            this.showConnectionModal();
-        }, 1000);
+        this.hideLoading();
+        this.showConnectionModal();
     }
     
     showConnectionModal() {
@@ -163,17 +161,24 @@ class EcoGrowApp {
             // Show success notification
             this.notifications.show('✅ Успешно подключено к системе!', 'success');
             
+            // Hide loading screen
+            this.hideLoading();
+            
         } catch (error) {
             console.error('Connection failed:', error);
             this.state.connected = false;
             this.updateConnectionStatus();
             this.notifications.show('❌ Не удалось подключиться к системе', 'error');
+            this.hideLoading();
             this.showConnectionModal();
         }
     }
     
     async enableDemoMode() {
         console.log('Enabling demo mode...');
+        
+        // Show loading screen
+        this.showLoading();
         
         this.state.connected = true;
         this.state.demoMode = true;
@@ -202,6 +207,11 @@ class EcoGrowApp {
         
         // Start demo update loop
         this.startDemoUpdateLoop();
+        
+        // Hide loading screen
+        setTimeout(() => {
+            this.hideLoading();
+        }, 1000);
         
         console.log('Demo mode enabled');
     }
@@ -406,12 +416,12 @@ class EcoGrowApp {
         // Update current time
         this.updateElement('systemTime', data.current_time);
         
-        // Update threshold value from system
-        if (data.moisture_threshold) {
+        // Update threshold value from system - ВАЖНОЕ ИСПРАВЛЕНИЕ
+        if (data.moisture_threshold !== undefined) {
             const thresholdSlider = document.getElementById('moistureThreshold');
             const thresholdValue = document.getElementById('thresholdValue');
             
-            if (thresholdSlider) {
+            if (thresholdSlider && thresholdSlider.value != data.moisture_threshold) {
                 thresholdSlider.value = data.moisture_threshold;
             }
             if (thresholdValue) {
@@ -791,22 +801,17 @@ class EcoGrowApp {
                 e.target.classList.add('active');
                 
                 this.notifications.show(`✅ Тема изменена: ${this.theme.themes[theme].name}`, 'success');
-                
-                // Recreate charts with new theme colors
-                setTimeout(() => {
-                    this.charts.recreateCharts();
-                    if (this.state.currentData && this.state.currentData.moisture_history) {
-                        this.charts.updateMoistureChart(this.state.currentData.moisture_history);
-                    }
-                }, 100);
             });
         });
         
-        // Time range buttons for chart
+        // Time range buttons for chart - ВАЖНОЕ ИСПРАВЛЕНИЕ
         document.querySelectorAll('.time-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                console.log('Time button clicked:', e.target.dataset.hours);
                 const hours = parseInt(e.target.dataset.hours);
-                this.charts.setTimeRange(hours);
+                if (this.charts) {
+                    this.charts.setTimeRange(hours);
+                }
                 
                 // Update active button
                 document.querySelectorAll('.time-btn').forEach(b => {
