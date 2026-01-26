@@ -131,4 +131,75 @@ class ThemeManager {
                     '--accent-red': '#e11d48',
                     '--text-primary': '#0c4a6e',
                     '--text-secondary': '#0369a1',
-                    '--text-muted
+                    '--text-muted': '#0ea5e9',
+                    '--gradient-primary': 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                    '--gradient-button': 'linear-gradient(135deg, #0d9488 0%, #0284c7 100%)',
+                    '--shadow-glow': '0 0 20px rgba(13, 148, 136, 0.2)'
+                }
+            }
+        };
+    }
+    
+    init() {
+        const savedTheme = localStorage.getItem('ecogrow_theme') || 'dark-blue';
+        this.setTheme(savedTheme);
+        this.initThemeSelector();
+    }
+    
+    setTheme(themeName) {
+        if (!this.themes[themeName]) {
+            themeName = 'dark-blue';
+        }
+        
+        this.currentTheme = themeName;
+        document.documentElement.setAttribute('data-theme', themeName);
+        
+        const theme = this.themes[themeName];
+        Object.entries(theme.colors).forEach(([property, value]) => {
+            document.documentElement.style.setProperty(property, value);
+        });
+        
+        localStorage.setItem('ecogrow_theme', themeName);
+        this.updateThemeToggleButton();
+    }
+    
+    initThemeSelector() {
+        const selector = document.getElementById('themeSelector');
+        if (!selector) return;
+        
+        selector.innerHTML = '';
+        
+        Object.entries(this.themes).forEach(([id, theme]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = theme.name;
+            if (id === this.currentTheme) {
+                option.selected = true;
+            }
+            selector.appendChild(option);
+        });
+    }
+    
+    updateThemeToggleButton() {
+        const button = document.getElementById('themeToggle');
+        if (!button) return;
+        
+        const theme = this.themes[this.currentTheme];
+        button.innerHTML = `<i class="fas ${theme.icon}"></i>`;
+        button.title = `Тема: ${theme.name}`;
+    }
+    
+    toggle() {
+        const themeKeys = Object.keys(this.themes);
+        const currentIndex = themeKeys.indexOf(this.currentTheme);
+        const nextIndex = (currentIndex + 1) % themeKeys.length;
+        this.setTheme(themeKeys[nextIndex]);
+        
+        if (window.ecoGrowApp) {
+            window.ecoGrowApp.notifications.show(
+                `✅ Тема изменена на "${this.themes[themeKeys[nextIndex]].name}"`, 
+                'success'
+            );
+        }
+    }
+}
