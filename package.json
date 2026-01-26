@@ -1,23 +1,15 @@
 {
-  "name": "ecogrow-proxy",
-  "version": "1.0.0",
-  "description": "Cloud proxy server for EcoGrow system",
-  "main": "proxy-server.js",
+  "name": "ecogrow-webapp",
+  "version": "4.5.1",
+  "description": "Веб-приложение для системы умного полива EcoGrow",
+  "main": "index.html",
   "scripts": {
-    "start": "node proxy-server.js",
-    "dev": "nodemon proxy-server.js"
+    "start": "echo 'Откройте index.html в браузере'",
+    "build": "echo 'Сборка не требуется'"
   },
-  "dependencies": {
-    "express": "^4.18.2",
-    "ws": "^8.14.2",
-    "axios": "^1.6.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": ["iot", "smart-garden", "automation", "plant-care"],
+  "author": "Купченя Евгений Андреевич",
+  "license": "MIT"
 }
