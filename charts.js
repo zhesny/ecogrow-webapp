@@ -53,12 +53,12 @@ class ChartsManager {
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: accentColor,
-                    pointBorderColor: getComputedStyle(document.documentElement)
-                        .getPropertyValue('--bg-card').trim() || '#172a45',
-                    pointBorderWidth: 2
+                    // УБРАНЫ ТОЧКИ
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    pointBackgroundColor: 'transparent',
+                    pointBorderColor: 'transparent',
+                    pointBorderWidth: 0
                 }]
             },
             options: {
