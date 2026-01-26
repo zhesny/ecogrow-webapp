@@ -20,6 +20,12 @@ class EcoGrowApp {
             timeUpdateInterval: null
         };
         
+        // Проверяем, находимся ли мы на GitHub Pages
+        if (window.location.hostname.includes('github.io')) {
+            console.log('GitHub Pages режим: автоматически включаем демо-режим');
+            this.enableDemoMode();
+        }
+        
         this.init();
     }
     
@@ -30,8 +36,13 @@ class EcoGrowApp {
         // Show loading screen
         this.showLoading();
         
-        // Try to auto-connect
-        await this.tryAutoConnect();
+        // Try to auto-connect только если не на GitHub Pages
+        if (!window.location.hostname.includes('github.io')) {
+            await this.tryAutoConnect();
+        } else {
+            // На GitHub Pages сразу показываем главный интерфейс
+            setTimeout(() => this.hideLoading(), 1000);
+        }
         
         // Initialize charts
         this.charts.init();
@@ -772,8 +783,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ecoGrowApp = new EcoGrowApp();
 });
 
-// Add service worker for PWA
-if ('serviceWorker' in navigator) {
+// Add service worker for PWA (только для HTTPS и не на GitHub Pages)
+if ('serviceWorker' in navigator && window.location.protocol === 'https:' && 
+    !window.location.hostname.includes('github.io')) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {
@@ -783,6 +795,8 @@ if ('serviceWorker' in navigator) {
                 console.log('ServiceWorker registration failed:', error);
             });
     });
+} else {
+    console.log('GitHub Pages: Service Worker не регистрируется');
 }
 
 // Keyboard shortcuts
