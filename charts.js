@@ -3,12 +3,19 @@ class ChartsManager {
         this.moistureChart = null;
         this.statsChart = null;
         this.historyData = [];
+        this.currentTimeRange = 1; // 1 час по умолчанию
+        this.timeRanges = {
+            1: 60 * 60 * 1000,    // 1 час в миллисекундах
+            6: 6 * 60 * 60 * 1000, // 6 часов
+            24: 24 * 60 * 60 * 1000 // 24 часа
+        };
     }
     
     init() {
         this.initMoistureChart();
         this.initStatsChart();
         this.initParticles();
+        this.setupTimeButtons();
     }
     
     initMoistureChart() {
@@ -16,8 +23,8 @@ class ChartsManager {
         if (!ctx) return;
         
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(100, 255, 218, 0.3)');
-        gradient.addColorStop(1, 'rgba(100, 255, 218, 0.05)');
+        gradient.addColorStop(0, 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.3)');
+        gradient.addColorStop(1, 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.05)');
         
         this.moistureChart = new Chart(ctx, {
             type: 'line',
@@ -26,15 +33,15 @@ class ChartsManager {
                 datasets: [{
                     label: 'Влажность (%)',
                     data: [],
-                    borderColor: '#64ffda',
+                    borderColor: 'var(--accent-primary)',
                     backgroundColor: gradient,
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 0,
+                    pointRadius: 3,
                     pointHoverRadius: 6,
-                    pointBackgroundColor: '#64ffda',
-                    pointBorderColor: '#0a192f',
+                    pointBackgroundColor: 'var(--accent-primary)',
+                    pointBorderColor: 'var(--bg-card)',
                     pointBorderWidth: 2
                 }]
             },
@@ -52,10 +59,10 @@ class ChartsManager {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
-                        backgroundColor: 'rgba(10, 25, 47, 0.9)',
-                        titleColor: '#64ffda',
-                        bodyColor: '#e6f1ff',
-                        borderColor: '#64ffda',
+                        backgroundColor: 'var(--bg-card)',
+                        titleColor: 'var(--accent-primary)',
+                        bodyColor: 'var(--text-primary)',
+                        borderColor: 'var(--accent-primary)',
                         borderWidth: 1,
                         cornerRadius: 8,
                         callbacks: {
@@ -70,11 +77,11 @@ class ChartsManager {
                         beginAtZero: true,
                         max: 100,
                         grid: {
-                            color: 'rgba(100, 255, 218, 0.1)',
+                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)',
                             drawBorder: false
                         },
                         ticks: {
-                            color: '#8892b0',
+                            color: 'var(--text-secondary)',
                             font: {
                                 size: 11
                             },
@@ -83,11 +90,19 @@ class ChartsManager {
                     },
                     x: {
                         grid: {
-                            display: false,
+                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)',
                             drawBorder: false
                         },
                         ticks: {
-                            display: false
+                            color: 'var(--text-secondary)',
+                            maxRotation: 0,
+                            callback: (value, index, values) => {
+                                // Показываем время только для некоторых делений
+                                if (values.length > 10 && index % Math.floor(values.length / 5) !== 0) {
+                                    return '';
+                                }
+                                return this.getTimeLabel(values[index]);
+                            }
                         }
                     }
                 },
@@ -99,27 +114,130 @@ class ChartsManager {
         });
     }
     
-    updateMoistureChart(data) {
-        if (!this.moistureChart || !data) return;
+    getTimeLabel(value) {
+        const label = this.moistureChart.data.labels[value];
+        if (!label) return '';
         
-        // Add new data point
-        const now = new Date();
-        const timeLabel = now.toLocaleTimeString('ru-RU', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        // Преобразуем строку времени в более короткий формат
+        const timeParts = label.split(':');
+        if (timeParts.length === 2) {
+            return `${timeParts[0]}:${timeParts[1]}`;
+        }
+        return label;
+    }
+    
+    setupTimeButtons() {
+        document.querySelectorAll('.time-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const hours = parseInt(e.target.dataset.hours);
+                this.setTimeRange(hours);
+                
+                // Update active button
+                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
         });
-        
-        // Keep only last 20 points
-        if (this.moistureChart.data.labels.length >= 20) {
-            this.moistureChart.data.labels.shift();
-            this.moistureChart.data.datasets[0].data.shift();
+    }
+    
+    setTimeRange(hours) {
+        this.currentTimeRange = hours;
+        this.updateChartWithTimeRange();
+    }
+    
+    updateMoistureChart(historyData, currentTime = null) {
+        if (!this.moistureChart) {
+            this.initMoistureChart();
         }
         
-        // Add new point
-        this.moistureChart.data.labels.push(timeLabel);
-        this.moistureChart.data.datasets[0].data.push(data.moisture);
+        if (!historyData || !Array.isArray(historyData)) {
+            return;
+        }
         
-        // Update chart
+        // Добавляем новые данные в историю
+        const now = new Date();
+        this.historyData.push({
+            timestamp: now.getTime(),
+            value: historyData[historyData.length - 1] || 50,
+            timeString: now.toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            })
+        });
+        
+        // Храним данные за последние 24 часа
+        const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
+        this.historyData = this.historyData.filter(data => data.timestamp > twentyFourHoursAgo);
+        
+        this.updateChartWithTimeRange();
+    }
+    
+    updateChartWithTimeRange() {
+        if (!this.moistureChart || this.historyData.length === 0) return;
+        
+        const now = new Date().getTime();
+        const timeRange = this.timeRanges[this.currentTimeRange];
+        const cutoffTime = now - timeRange;
+        
+        // Фильтруем данные по выбранному диапазону
+        const filteredData = this.historyData.filter(data => data.timestamp >= cutoffTime);
+        
+        if (filteredData.length === 0) return;
+        
+        // Определяем количество точек для отображения
+        let maxPoints;
+        switch (this.currentTimeRange) {
+            case 1:
+                maxPoints = 12; // Каждые 5 минут
+                break;
+            case 6:
+                maxPoints = 18; // Каждые 20 минут
+                break;
+            case 24:
+                maxPoints = 24; // Каждый час
+                break;
+            default:
+                maxPoints = 20;
+        }
+        
+        // Выбираем точки для отображения
+        const step = Math.max(1, Math.floor(filteredData.length / maxPoints));
+        const displayData = [];
+        const displayLabels = [];
+        
+        for (let i = 0; i < filteredData.length; i += step) {
+            if (displayData.length >= maxPoints) break;
+            
+            displayData.push(filteredData[i].value);
+            
+            // Форматируем метку времени
+            const date = new Date(filteredData[i].timestamp);
+            let timeLabel;
+            
+            if (this.currentTimeRange === 1) {
+                // Для 1 часа показываем минуты
+                timeLabel = date.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else if (this.currentTimeRange === 6) {
+                // Для 6 часов показываем часы и минуты
+                timeLabel = date.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else {
+                // Для 24 часов показываем только часы
+                timeLabel = date.toLocaleTimeString('ru-RU', { 
+                    hour: '2-digit' 
+                });
+            }
+            
+            displayLabels.push(timeLabel);
+        }
+        
+        // Обновляем график
+        this.moistureChart.data.labels = displayLabels;
+        this.moistureChart.data.datasets[0].data = displayData;
         this.moistureChart.update('none');
     }
     
@@ -134,13 +252,13 @@ class ChartsManager {
                 datasets: [{
                     label: 'Поливы',
                     data: [3, 5, 2, 4, 6, 3, 5],
-                    backgroundColor: '#64ffda',
+                    backgroundColor: 'var(--accent-primary)',
                     borderRadius: 6,
                     borderWidth: 0
                 }, {
                     label: 'Часы света',
                     data: [8, 10, 9, 8, 12, 10, 9],
-                    backgroundColor: '#00d9ff',
+                    backgroundColor: 'var(--accent-secondary)',
                     borderRadius: 6,
                     borderWidth: 0
                 }]
@@ -151,7 +269,7 @@ class ChartsManager {
                 plugins: {
                     legend: {
                         labels: {
-                            color: '#a8b2d1',
+                            color: 'var(--text-secondary)',
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
@@ -160,10 +278,10 @@ class ChartsManager {
                 scales: {
                     y: {
                         grid: {
-                            color: 'rgba(100, 255, 218, 0.1)'
+                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)'
                         },
                         ticks: {
-                            color: '#8892b0'
+                            color: 'var(--text-secondary)'
                         }
                     },
                     x: {
@@ -171,7 +289,7 @@ class ChartsManager {
                             display: false
                         },
                         ticks: {
-                            color: '#8892b0'
+                            color: 'var(--text-secondary)'
                         }
                     }
                 }
@@ -191,7 +309,7 @@ class ChartsManager {
                         }
                     },
                     color: {
-                        value: "#64ffda"
+                        value: "var(--accent-primary)"
                     },
                     shape: {
                         type: "circle"
@@ -219,7 +337,7 @@ class ChartsManager {
                     line_linked: {
                         enable: true,
                         distance: 150,
-                        color: "#64ffda",
+                        color: "var(--accent-primary)",
                         opacity: 0.2,
                         width: 1
                     },
