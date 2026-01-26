@@ -2,58 +2,38 @@ class ChartsManager {
     constructor() {
         this.moistureChart = null;
         this.statsChart = null;
-        this.historyData = [];
-        this.currentTimeRange = 1;
-        this.timeRanges = {
-            1: 60 * 60 * 1000,
-            6: 6 * 60 * 60 * 1000,
-            24: 24 * 60 * 60 * 1000
+        this.selectedTimeRange = '1h';
+        this.chartData = {
+            timestamps: [],
+            moisture: []
         };
-        this.chartInitialized = false;
     }
     
     init() {
-        if (!this.chartInitialized) {
-            this.initMoistureChart();
-            this.initStatsChart();
-            this.setupTimeButtons();
-            this.chartInitialized = true;
-        }
+        this.initMoistureChart();
+        this.initStatsChart();
+        this.setupTimeRangeButtons();
     }
     
-    recreateCharts() {
-        this.chartInitialized = false;
-        this.init();
+    setupTimeRangeButtons() {
+        const buttons = document.querySelectorAll('.time-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                buttons.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.selectedTimeRange = e.target.dataset.range;
+                this.updateChartWithTimeRange();
+            });
+        });
     }
     
     initMoistureChart() {
         const ctx = document.getElementById('moistureChart');
         if (!ctx) return;
         
-        // Уничтожаем предыдущий график, если он существует
-        if (this.moistureChart) {
-            this.moistureChart.destroy();
-        }
-        
-        // Получаем цвета для текущей темы
-        const accentColor = getComputedStyle(document.documentElement)
-            .getPropertyValue('--accent-primary').trim() || '#00ff9d';
-        
-        const bgCard = getComputedStyle(document.documentElement)
-            .getPropertyValue('--bg-card').trim() || '#172a45';
-        
-        const textPrimary = getComputedStyle(document.documentElement)
-            .getPropertyValue('--text-primary').trim() || '#e2e8f0';
-        
-        const textSecondary = getComputedStyle(document.documentElement)
-            .getPropertyValue('--text-secondary').trim() || '#a0aec0';
-        
-        // Преобразуем hex в rgb
-        let rgbColor = this.hexToRgb(accentColor) || { r: 0, g: 255, b: 157 };
-        
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.3)`);
-        gradient.addColorStop(1, `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.05)`);
+        gradient.addColorStop(0, 'rgba(0, 255, 157, 0.3)');
+        gradient.addColorStop(1, 'rgba(0, 255, 157, 0.05)');
         
         this.moistureChart = new Chart(ctx, {
             type: 'line',
@@ -62,17 +42,16 @@ class ChartsManager {
                 datasets: [{
                     label: 'Влажность (%)',
                     data: [],
-                    borderColor: accentColor,
+                    borderColor: '#00ff9d',
                     backgroundColor: gradient,
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    // УБРАНЫ ТОЧКИ
-                    pointRadius: 0,
-                    pointHoverRadius: 0,
-                    pointBackgroundColor: 'transparent',
-                    pointBorderColor: 'transparent',
-                    pointBorderWidth: 0
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#00ff9d',
+                    pointBorderColor: '#0a192f',
+                    pointBorderWidth: 2
                 }]
             },
             options: {
@@ -89,10 +68,10 @@ class ChartsManager {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
-                        backgroundColor: bgCard,
-                        titleColor: accentColor,
-                        bodyColor: textPrimary,
-                        borderColor: accentColor,
+                        backgroundColor: 'rgba(10, 25, 47, 0.9)',
+                        titleColor: '#64ffda',
+                        bodyColor: '#e6f1ff',
+                        borderColor: '#64ffda',
                         borderWidth: 1,
                         cornerRadius: 8,
                         callbacks: {
@@ -107,11 +86,11 @@ class ChartsManager {
                         beginAtZero: true,
                         max: 100,
                         grid: {
-                            color: `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.1)`,
+                            color: 'rgba(100, 255, 218, 0.1)',
                             drawBorder: false
                         },
                         ticks: {
-                            color: textSecondary,
+                            color: '#8892b0',
                             font: {
                                 size: 11
                             },
@@ -120,18 +99,15 @@ class ChartsManager {
                     },
                     x: {
                         grid: {
-                            color: `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.1)`,
+                            color: 'rgba(100, 255, 218, 0.1)',
                             drawBorder: false
                         },
                         ticks: {
-                            color: textSecondary,
-                            maxRotation: 0,
-                            callback: (value, index, values) => {
-                                if (values.length > 10 && index % Math.floor(values.length / 5) !== 0) {
-                                    return '';
-                                }
-                                return this.getTimeLabel(values[index]);
-                            }
+                            color: '#8892b0',
+                            font: {
+                                size: 11
+                            },
+                            maxTicksLimit: 8
                         }
                     }
                 },
@@ -143,152 +119,126 @@ class ChartsManager {
         });
     }
     
-    hexToRgb(hex) {
-        // Удаляем # если есть
-        hex = hex.replace('#', '');
+    updateChartWithTimeRange() {
+        if (!this.moistureChart || !this.chartData.timestamps.length) return;
         
-        // Преобразуем 3-значный hex в 6-значный
-        if (hex.length === 3) {
-            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        const now = Date.now();
+        let timeFilter;
+        
+        switch(this.selectedTimeRange) {
+            case '1h':
+                timeFilter = now - (60 * 60 * 1000);
+                break;
+            case '6h':
+                timeFilter = now - (6 * 60 * 60 * 1000);
+                break;
+            case '24h':
+                timeFilter = now - (24 * 60 * 60 * 1000);
+                break;
+            default:
+                timeFilter = now - (60 * 60 * 1000);
         }
         
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
+        const filteredIndices = [];
+        const filteredTimestamps = [];
+        const filteredMoisture = [];
         
-        return { r, g, b };
-    }
-    
-    getTimeLabel(value) {
-        const label = this.moistureChart.data.labels[value];
-        if (!label) return '';
-        
-        const timeParts = label.split(':');
-        if (timeParts.length === 2) {
-            return `${timeParts[0]}:${timeParts[1]}`;
-        }
-        return label;
-    }
-    
-    setupTimeButtons() {
-        document.querySelectorAll('.time-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const hours = parseInt(e.target.dataset.hours);
-                this.setTimeRange(hours);
-                
-                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            });
-        });
-    }
-    
-    setTimeRange(hours) {
-        this.currentTimeRange = hours;
-        this.updateChartWithTimeRange();
-    }
-    
-    updateMoistureChart(historyData, currentTime = null) {
-        if (!this.moistureChart) {
-            this.initMoistureChart();
+        for (let i = 0; i < this.chartData.timestamps.length; i++) {
+            if (this.chartData.timestamps[i] >= timeFilter) {
+                filteredIndices.push(i);
+                filteredTimestamps.push(this.chartData.timestamps[i]);
+                filteredMoisture.push(this.chartData.moisture[i]);
+            }
         }
         
-        if (!historyData || !Array.isArray(historyData)) {
+        // If not enough data, generate demo data
+        if (filteredTimestamps.length < 5) {
+            this.generateDemoDataForTimeRange(timeFilter, now);
+            this.updateChartWithTimeRange();
             return;
         }
         
-        const now = new Date();
-        this.historyData.push({
-            timestamp: now.getTime(),
-            value: historyData[historyData.length - 1] || 50,
-            timeString: now.toLocaleTimeString('ru-RU', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            })
+        // Sample data for display (max 100 points)
+        const sampleStep = Math.max(1, Math.floor(filteredTimestamps.length / 100));
+        const sampledTimestamps = [];
+        const sampledMoisture = [];
+        
+        for (let i = 0; i < filteredTimestamps.length; i += sampleStep) {
+            sampledTimestamps.push(filteredTimestamps[i]);
+            sampledMoisture.push(filteredMoisture[i]);
+        }
+        
+        // Format time labels
+        const labels = sampledTimestamps.map(ts => {
+            const date = new Date(ts);
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
         });
         
-        const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
-        this.historyData = this.historyData.filter(data => data.timestamp > twentyFourHoursAgo);
+        this.moistureChart.data.labels = labels;
+        this.moistureChart.data.datasets[0].data = sampledMoisture;
+        this.moistureChart.update();
+    }
+    
+    updateMoistureChart(historyData) {
+        if (!this.moistureChart) return;
+        
+        const now = Date.now();
+        
+        // Add new data
+        if (Array.isArray(historyData)) {
+            // If array of history data
+            const step = 300000; // 5 minutes between points
+            historyData.forEach((value, index) => {
+                const timestamp = now - (historyData.length - index - 1) * step;
+                this.chartData.timestamps.push(timestamp);
+                this.chartData.moisture.push(value);
+            });
+        } else {
+            // If single value
+            this.chartData.timestamps.push(now);
+            this.chartData.moisture.push(historyData);
+        }
+        
+        // Limit data size (keep 7 days)
+        const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
+        while (this.chartData.timestamps.length > 0 && this.chartData.timestamps[0] < weekAgo) {
+            this.chartData.timestamps.shift();
+            this.chartData.moisture.shift();
+        }
         
         this.updateChartWithTimeRange();
     }
     
-    updateChartWithTimeRange() {
-        if (!this.moistureChart || this.historyData.length === 0) return;
+    generateDemoDataForTimeRange(startTime, endTime) {
+        const duration = endTime - startTime;
+        const pointCount = Math.min(100, Math.floor(duration / (5 * 60 * 1000))); // point every 5 minutes
         
-        const now = new Date().getTime();
-        const timeRange = this.timeRanges[this.currentTimeRange];
-        const cutoffTime = now - timeRange;
+        if (pointCount < 2) return;
         
-        const filteredData = this.historyData.filter(data => data.timestamp >= cutoffTime);
+        this.chartData.timestamps = [];
+        this.chartData.moisture = [];
         
-        if (filteredData.length === 0) return;
+        const baseMoisture = 50 + Math.random() * 20;
         
-        let maxPoints;
-        switch (this.currentTimeRange) {
-            case 1:
-                maxPoints = 12;
-                break;
-            case 6:
-                maxPoints = 18;
-                break;
-            case 24:
-                maxPoints = 24;
-                break;
-            default:
-                maxPoints = 20;
+        for (let i = 0; i < pointCount; i++) {
+            const timestamp = startTime + (i * duration / pointCount);
+            const moisture = baseMoisture + Math.sin(i * 0.5) * 15 + Math.random() * 5;
+            
+            this.chartData.timestamps.push(timestamp);
+            this.chartData.moisture.push(Math.max(0, Math.min(100, moisture)));
         }
-        
-        const step = Math.max(1, Math.floor(filteredData.length / maxPoints));
-        const displayData = [];
-        const displayLabels = [];
-        
-        for (let i = 0; i < filteredData.length; i += step) {
-            if (displayData.length >= maxPoints) break;
-            
-            displayData.push(filteredData[i].value);
-            
-            const date = new Date(filteredData[i].timestamp);
-            let timeLabel;
-            
-            if (this.currentTimeRange === 1) {
-                timeLabel = date.toLocaleTimeString('ru-RU', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-            } else if (this.currentTimeRange === 6) {
-                timeLabel = date.toLocaleTimeString('ru-RU', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-            } else {
-                timeLabel = date.toLocaleTimeString('ru-RU', { 
-                    hour: '2-digit' 
-                });
-            }
-            
-            displayLabels.push(timeLabel);
-        }
-        
-        this.moistureChart.data.labels = displayLabels;
-        this.moistureChart.data.datasets[0].data = displayData;
-        this.moistureChart.update('none');
+    }
+    
+    generateDemoData() {
+        const now = Date.now();
+        const oneHourAgo = now - (60 * 60 * 1000);
+        this.generateDemoDataForTimeRange(oneHourAgo, now);
+        this.updateChartWithTimeRange();
     }
     
     initStatsChart() {
         const ctx = document.getElementById('statsChart');
         if (!ctx) return;
-        
-        if (this.statsChart) {
-            this.statsChart.destroy();
-        }
-        
-        const accentPrimary = getComputedStyle(document.documentElement)
-            .getPropertyValue('--accent-primary').trim() || '#00ff9d';
-        const accentSecondary = getComputedStyle(document.documentElement)
-            .getPropertyValue('--accent-secondary').trim() || '#00d9ff';
-        
-        const textSecondary = getComputedStyle(document.documentElement)
-            .getPropertyValue('--text-secondary').trim() || '#a0aec0';
         
         this.statsChart = new Chart(ctx, {
             type: 'bar',
@@ -297,13 +247,13 @@ class ChartsManager {
                 datasets: [{
                     label: 'Поливы',
                     data: [3, 5, 2, 4, 6, 3, 5],
-                    backgroundColor: accentPrimary,
+                    backgroundColor: '#64ffda',
                     borderRadius: 6,
                     borderWidth: 0
                 }, {
                     label: 'Часы света',
                     data: [8, 10, 9, 8, 12, 10, 9],
-                    backgroundColor: accentSecondary,
+                    backgroundColor: '#00d9ff',
                     borderRadius: 6,
                     borderWidth: 0
                 }]
@@ -314,7 +264,7 @@ class ChartsManager {
                 plugins: {
                     legend: {
                         labels: {
-                            color: textSecondary,
+                            color: '#a8b2d1',
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
@@ -323,10 +273,10 @@ class ChartsManager {
                 scales: {
                     y: {
                         grid: {
-                            color: `rgba(${this.hexToRgb(accentPrimary).r}, ${this.hexToRgb(accentPrimary).g}, ${this.hexToRgb(accentPrimary).b}, 0.1)`
+                            color: 'rgba(100, 255, 218, 0.1)'
                         },
                         ticks: {
-                            color: textSecondary
+                            color: '#8892b0'
                         }
                     },
                     x: {
@@ -334,7 +284,7 @@ class ChartsManager {
                             display: false
                         },
                         ticks: {
-                            color: textSecondary
+                            color: '#8892b0'
                         }
                     }
                 }
