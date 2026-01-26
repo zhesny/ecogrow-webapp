@@ -3,11 +3,11 @@ class ChartsManager {
         this.moistureChart = null;
         this.statsChart = null;
         this.historyData = [];
-        this.currentTimeRange = 1; // 1 час по умолчанию
+        this.currentTimeRange = 1;
         this.timeRanges = {
-            1: 60 * 60 * 1000,    // 1 час в миллисекундах
-            6: 6 * 60 * 60 * 1000, // 6 часов
-            24: 24 * 60 * 60 * 1000 // 24 часа
+            1: 60 * 60 * 1000,
+            6: 6 * 60 * 60 * 1000,
+            24: 24 * 60 * 60 * 1000
         };
     }
     
@@ -22,9 +22,60 @@ class ChartsManager {
         const ctx = document.getElementById('moistureChart');
         if (!ctx) return;
         
+        // Получаем акцентный цвет из CSS переменной
+        const getAccentColor = () => {
+            return getComputedStyle(document.documentElement)
+                .getPropertyValue('--accent-primary')
+                .trim();
+        };
+        
+        const accentColor = getAccentColor();
+        
+        // Преобразуем HEX в RGB для rgba
+        const hexToRgb = (hex) => {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return { r, g, b };
+        };
+        
+        let gradientStart, gradientEnd;
+        
+        // Создаем градиент в зависимости от темы
+        if (accentColor === '#00ff9d' || accentColor === 'rgb(0, 255, 157)') {
+            gradientStart = 'rgba(0, 255, 157, 0.3)';
+            gradientEnd = 'rgba(0, 255, 157, 0.05)';
+        } else if (accentColor === '#10b981' || accentColor === 'rgb(16, 185, 129)') {
+            gradientStart = 'rgba(16, 185, 129, 0.3)';
+            gradientEnd = 'rgba(16, 185, 129, 0.05)';
+        } else if (accentColor === '#16a34a' || accentColor === 'rgb(22, 163, 74)') {
+            gradientStart = 'rgba(22, 163, 74, 0.3)';
+            gradientEnd = 'rgba(22, 163, 74, 0.05)';
+        } else if (accentColor === '#0ea5e9' || accentColor === 'rgb(14, 165, 233)') {
+            gradientStart = 'rgba(14, 165, 233, 0.3)';
+            gradientEnd = 'rgba(14, 165, 233, 0.05)';
+        } else {
+            // Для других цветов пробуем преобразовать HEX в RGBA
+            if (accentColor.startsWith('#')) {
+                try {
+                    const rgb = hexToRgb(accentColor);
+                    gradientStart = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`;
+                    gradientEnd = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.05)`;
+                } catch {
+                    // Fallback на синий цвет
+                    gradientStart = 'rgba(0, 255, 157, 0.3)';
+                    gradientEnd = 'rgba(0, 255, 157, 0.05)';
+                }
+            } else {
+                gradientStart = 'rgba(0, 255, 157, 0.3)';
+                gradientEnd = 'rgba(0, 255, 157, 0.05)';
+            }
+        }
+        
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.3)');
-        gradient.addColorStop(1, 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.05)');
+        gradient.addColorStop(0, gradientStart);
+        gradient.addColorStop(1, gradientEnd);
         
         this.moistureChart = new Chart(ctx, {
             type: 'line',
@@ -33,14 +84,14 @@ class ChartsManager {
                 datasets: [{
                     label: 'Влажность (%)',
                     data: [],
-                    borderColor: 'var(--accent-primary)',
+                    borderColor: accentColor,
                     backgroundColor: gradient,
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
                     pointRadius: 3,
                     pointHoverRadius: 6,
-                    pointBackgroundColor: 'var(--accent-primary)',
+                    pointBackgroundColor: accentColor,
                     pointBorderColor: 'var(--bg-card)',
                     pointBorderWidth: 2
                 }]
@@ -60,9 +111,9 @@ class ChartsManager {
                         mode: 'index',
                         intersect: false,
                         backgroundColor: 'var(--bg-card)',
-                        titleColor: 'var(--accent-primary)',
+                        titleColor: accentColor,
                         bodyColor: 'var(--text-primary)',
-                        borderColor: 'var(--accent-primary)',
+                        borderColor: accentColor,
                         borderWidth: 1,
                         cornerRadius: 8,
                         callbacks: {
@@ -77,7 +128,7 @@ class ChartsManager {
                         beginAtZero: true,
                         max: 100,
                         grid: {
-                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)',
+                            color: 'rgba(0, 255, 157, 0.1)',
                             drawBorder: false
                         },
                         ticks: {
@@ -90,14 +141,13 @@ class ChartsManager {
                     },
                     x: {
                         grid: {
-                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)',
+                            color: 'rgba(0, 255, 157, 0.1)',
                             drawBorder: false
                         },
                         ticks: {
                             color: 'var(--text-secondary)',
                             maxRotation: 0,
                             callback: (value, index, values) => {
-                                // Показываем время только для некоторых делений
                                 if (values.length > 10 && index % Math.floor(values.length / 5) !== 0) {
                                     return '';
                                 }
@@ -118,7 +168,6 @@ class ChartsManager {
         const label = this.moistureChart.data.labels[value];
         if (!label) return '';
         
-        // Преобразуем строку времени в более короткий формат
         const timeParts = label.split(':');
         if (timeParts.length === 2) {
             return `${timeParts[0]}:${timeParts[1]}`;
@@ -132,7 +181,6 @@ class ChartsManager {
                 const hours = parseInt(e.target.dataset.hours);
                 this.setTimeRange(hours);
                 
-                // Update active button
                 document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
             });
@@ -153,7 +201,6 @@ class ChartsManager {
             return;
         }
         
-        // Добавляем новые данные в историю
         const now = new Date();
         this.historyData.push({
             timestamp: now.getTime(),
@@ -164,7 +211,6 @@ class ChartsManager {
             })
         });
         
-        // Храним данные за последние 24 часа
         const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
         this.historyData = this.historyData.filter(data => data.timestamp > twentyFourHoursAgo);
         
@@ -178,28 +224,25 @@ class ChartsManager {
         const timeRange = this.timeRanges[this.currentTimeRange];
         const cutoffTime = now - timeRange;
         
-        // Фильтруем данные по выбранному диапазону
         const filteredData = this.historyData.filter(data => data.timestamp >= cutoffTime);
         
         if (filteredData.length === 0) return;
         
-        // Определяем количество точек для отображения
         let maxPoints;
         switch (this.currentTimeRange) {
             case 1:
-                maxPoints = 12; // Каждые 5 минут
+                maxPoints = 12;
                 break;
             case 6:
-                maxPoints = 18; // Каждые 20 минут
+                maxPoints = 18;
                 break;
             case 24:
-                maxPoints = 24; // Каждый час
+                maxPoints = 24;
                 break;
             default:
                 maxPoints = 20;
         }
         
-        // Выбираем точки для отображения
         const step = Math.max(1, Math.floor(filteredData.length / maxPoints));
         const displayData = [];
         const displayLabels = [];
@@ -209,24 +252,20 @@ class ChartsManager {
             
             displayData.push(filteredData[i].value);
             
-            // Форматируем метку времени
             const date = new Date(filteredData[i].timestamp);
             let timeLabel;
             
             if (this.currentTimeRange === 1) {
-                // Для 1 часа показываем минуты
                 timeLabel = date.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
             } else if (this.currentTimeRange === 6) {
-                // Для 6 часов показываем часы и минуты
                 timeLabel = date.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
             } else {
-                // Для 24 часов показываем только часы
                 timeLabel = date.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit' 
                 });
@@ -235,7 +274,6 @@ class ChartsManager {
             displayLabels.push(timeLabel);
         }
         
-        // Обновляем график
         this.moistureChart.data.labels = displayLabels;
         this.moistureChart.data.datasets[0].data = displayData;
         this.moistureChart.update('none');
@@ -278,7 +316,7 @@ class ChartsManager {
                 scales: {
                     y: {
                         grid: {
-                            color: 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.1)'
+                            color: 'rgba(0, 255, 157, 0.1)'
                         },
                         ticks: {
                             color: 'var(--text-secondary)'
