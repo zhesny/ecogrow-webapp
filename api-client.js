@@ -104,4 +104,31 @@ class EcoGrowAPI {
             method: 'POST'
         });
     }
+    
+    // NEW: Reset Statistics
+    async resetStats(ip) {
+        this.setBaseUrl(ip);
+        return await this.request('/api/stats/reset', {
+            method: 'POST'
+        });
+    }
+    
+    // NEW: Test connection quickly
+    async testConnection(ip) {
+        this.setBaseUrl(ip);
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            
+            const response = await fetch(`${this.baseUrl}/api/info`, {
+                method: 'HEAD',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
 }
