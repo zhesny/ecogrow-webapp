@@ -14,7 +14,9 @@ class EcoGrowApp {
             currentData: null,
             settings: {},
             lastUpdate: null,
-            updateInterval: 5000
+            updateInterval: 5000,
+            connectionRetryCount: 0,
+            maxRetries: 3
         };
         
         this.init();
@@ -44,6 +46,9 @@ class EcoGrowApp {
         
         // Initialize PWA
         this.initPWA();
+        
+        // Initialize network status listeners
+        this.initNetworkListeners();
     }
     
     initPWA() {
@@ -62,6 +67,22 @@ class EcoGrowApp {
         // Check if running as PWA
         if (window.matchMedia('(display-mode: standalone)').matches) {
             console.log('Запущено как PWA');
+        }
+    }
+    
+    initNetworkListeners() {
+        // Detect network changes
+        if (navigator.connection) {
+            navigator.connection.addEventListener('change', () => {
+                this.handleNetworkChange();
+            });
+        }
+    }
+    
+    handleNetworkChange() {
+        if (navigator.onLine && !this.state.connected && !this.state.demoMode) {
+            this.notifications.show('📡 Сеть доступна, пытаемся подключиться...', 'info');
+            this.tryAutoConnect();
         }
     }
     
@@ -112,19 +133,26 @@ class EcoGrowApp {
             return;
         }
         
-        // Try mDNS
-        try {
-            const response = await fetch('http://ecogrow.local/api/info', { 
-                method: 'HEAD',
-                timeout: 2000 
-            });
-            if (response.ok) {
-                this.state.espIp = 'ecogrow.local';
-                await this.connectToESP();
-                return;
+        // Try common local IPs
+        const commonIPs = [
+            'ecogrow.local',
+            '192.168.1.100',
+            '192.168.0.100',
+            '192.168.4.1',
+            '10.0.0.100'
+        ];
+        
+        for (const ip of commonIPs) {
+            try {
+                const isConnected = await this.api.testConnection(ip);
+                if (isConnected) {
+                    this.state.espIp = ip;
+                    await this.connectToESP();
+                    return;
+                }
+            } catch (error) {
+                continue;
             }
-        } catch (error) {
-            console.log('mDNS connection failed:', error);
         }
         
         // Show connection modal
@@ -146,22 +174,45 @@ class EcoGrowApp {
     }
     
     async connectToESP() {
-        if (!this.state.espIp) return;
+        if (!this.state.espIp) {
+            this.notifications.show('❌ Введите IP адрес устройства', 'error');
+            this.showConnectionModal();
+            return;
+        }
         
         try {
+            this.showLoading();
+            
+            // Normalize IP address
+            let normalizedIp = this.state.espIp;
+            if (!normalizedIp.includes('://')) {
+                normalizedIp = `http://${normalizedIp}`;
+            }
+            
             // Test connection
             this.state.demoMode = false;
+            const isConnected = await this.api.testConnection(this.state.espIp);
+            
+            if (!isConnected) {
+                throw new Error('Устройство недоступно');
+            }
+            
+            // Get device info
             const info = await this.api.getInfo(this.state.espIp);
             
             // Save to localStorage
             localStorage.setItem('ecogrow_ip', this.state.espIp);
+            
+            // Reset retry count on successful connection
+            this.state.connectionRetryCount = 0;
             
             // Update connection status
             this.state.connected = true;
             this.updateConnectionStatus();
             
             // Hide demo banner
-            document.getElementById('demoBanner').style.display = 'none';
+            const demoBanner = document.getElementById('demoBanner');
+            if (demoBanner) demoBanner.style.display = 'none';
             
             // Get initial data
             await this.updateData();
@@ -170,14 +221,29 @@ class EcoGrowApp {
             this.hideConnectionModal();
             
             // Show success notification
-            this.notifications.show('✅ Успешно подключено к системе!', 'success');
+            this.notifications.show(`✅ Успешно подключено к ${info.hostname || this.state.espIp}!`, 'success');
             
         } catch (error) {
             console.error('Connection failed:', error);
+            
             this.state.connected = false;
             this.updateConnectionStatus();
-            this.notifications.show('❌ Не удалось подключиться к системе', 'error');
-            this.showConnectionModal();
+            
+            // Clear stale data immediately
+            this.clearStaleData();
+            
+            // Check if we should retry
+            this.state.connectionRetryCount++;
+            
+            if (this.state.connectionRetryCount < this.state.maxRetries) {
+                this.notifications.show(`❌ Попытка ${this.state.connectionRetryCount}/${this.state.maxRetries}: ${error.message}`, 'error');
+                setTimeout(() => this.connectToESP(), 2000);
+            } else {
+                this.notifications.show('❌ Не удалось подключиться к системе. Запускаю демо-режим.', 'error');
+                this.startDemoMode();
+            }
+        } finally {
+            this.hideLoading();
         }
     }
     
@@ -292,10 +358,17 @@ class EcoGrowApp {
         }
         
         try {
+            // Quick connection test before full request
+            const isConnected = await this.api.testConnection(this.state.espIp);
+            if (!isConnected) {
+                throw new Error('Устройство недоступно');
+            }
+            
             // Get current state
             const data = await this.api.getState(this.state.espIp);
             this.state.currentData = data;
             this.state.lastUpdate = new Date();
+            this.state.connectionRetryCount = 0; // Reset retry count on successful update
             
             // Update UI
             this.updateUI(data);
@@ -308,10 +381,69 @@ class EcoGrowApp {
             
         } catch (error) {
             console.error('Update failed:', error);
-            this.state.connected = false;
-            this.updateConnectionStatus();
-            this.notifications.show('❌ Потеряно соединение с устройством', 'error');
+            
+            this.state.connectionRetryCount++;
+            
+            if (this.state.connectionRetryCount >= this.state.maxRetries) {
+                this.state.connected = false;
+                this.updateConnectionStatus();
+                this.clearStaleData();
+                this.notifications.show('❌ Потеряно соединение с устройством', 'error');
+                
+                // Ask user if they want to switch to demo mode
+                setTimeout(() => {
+                    if (!this.state.connected && !this.state.demoMode) {
+                        if (confirm('Не удается подключиться к устройству. Хотите перейти в демо-режим?')) {
+                            this.startDemoMode();
+                        }
+                    }
+                }, 1000);
+            } else {
+                this.notifications.show(`⚠️ Проблема с подключением (попытка ${this.state.connectionRetryCount}/${this.state.maxRetries})`, 'warning');
+            }
         }
+    }
+    
+    clearStaleData() {
+        // Clear all displayed data
+        const staleElements = [
+            'moistureValue', 'avgMoisture', 'minMoisture', 'maxMoisture',
+            'pumpStatus', 'lightStatus', 'currentTime', 'systemTime',
+            'totalWaterings', 'totalLightHours', 'energyUsed',
+            'moistureStatus', 'thresholdValue'
+        ];
+        
+        staleElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (id === 'moistureStatus') {
+                    element.textContent = '--%';
+                } else if (id === 'thresholdValue') {
+                    element.textContent = '--%';
+                } else if (id === 'pumpStatus' || id === 'lightStatus') {
+                    element.textContent = '--';
+                    element.className = 'card-status';
+                } else {
+                    element.textContent = '--';
+                }
+            }
+        });
+        
+        // Clear moisture bar
+        const moistureBarFill = document.getElementById('moistureBarFill');
+        if (moistureBarFill) {
+            moistureBarFill.style.width = '0%';
+        }
+        
+        // Clear chart
+        if (this.charts.moistureChart) {
+            this.charts.moistureChart.data.labels = ['Нет данных'];
+            this.charts.moistureChart.data.datasets[0].data = [0];
+            this.charts.moistureChart.update();
+        }
+        
+        // Clear errors list
+        this.updateErrorsList([]);
     }
     
     updateUI(data) {
@@ -547,7 +679,7 @@ class EcoGrowApp {
             });
         }
         
-        // Light controls
+        // Light controls - FIXED BUTTON STYLE
         const lightOnBtn = document.getElementById('lightOnBtn');
         const lightOffBtn = document.getElementById('lightOffBtn');
         
@@ -647,6 +779,28 @@ class EcoGrowApp {
                         setTimeout(() => this.updateData(), 1000);
                     } catch (error) {
                         this.notifications.show('❌ Ошибка очистки ошибок', 'error');
+                    }
+                }
+            });
+        }
+        
+        // NEW: Reset statistics button
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        if (resetStatsBtn) {
+            resetStatsBtn.addEventListener('click', async () => {
+                if (this.state.demoMode) {
+                    this.state.currentData.total_waterings = 0;
+                    this.state.currentData.total_light_hours = 0;
+                    this.state.currentData.total_energy = 0;
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show('✅ Статистика сброшена (демо)', 'success');
+                } else if (this.state.connected) {
+                    try {
+                        await this.api.resetStats(this.state.espIp);
+                        this.notifications.show('✅ Статистика сброшена', 'success');
+                        setTimeout(() => this.updateData(), 1000);
+                    } catch (error) {
+                        this.notifications.show('❌ Ошибка сброса статистики', 'error');
                     }
                 }
             });
@@ -752,11 +906,17 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('online', () => {
     if (window.ecoGrowApp && !window.ecoGrowApp.state.demoMode) {
         window.ecoGrowApp.notifications.show('📡 Соединение восстановлено', 'success');
+        if (!window.ecoGrowApp.state.connected) {
+            window.ecoGrowApp.tryAutoConnect();
+        }
     }
 });
 
 window.addEventListener('offline', () => {
     if (window.ecoGrowApp && !window.ecoGrowApp.state.demoMode) {
         window.ecoGrowApp.notifications.show('⚠️ Отсутствует интернет-соединение', 'warning');
+        window.ecoGrowApp.state.connected = false;
+        window.ecoGrowApp.updateConnectionStatus();
+        window.ecoGrowApp.clearStaleData();
     }
 });
