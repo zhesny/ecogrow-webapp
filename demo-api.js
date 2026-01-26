@@ -226,6 +226,16 @@ class DemoAPI {
         return { status: 'ok' };
     }
     
+    // Reset Statistics
+    resetStats() {
+        this.demoData.total_waterings = 0;
+        this.demoData.total_light_hours = 0;
+        this.demoData.total_energy = 0;
+        this.moistureHistory = [];
+        this.generateInitialHistory();
+        console.log('Demo stats reset');
+    }
+    
     // Get Weather Data (external API) - демо версия
     async getWeather(lat, lon, apiKey) {
         await new Promise(resolve => setTimeout(resolve, 300));
