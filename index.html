@@ -10,7 +10,6 @@
     <!-- PWA настройки -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a192f">
-    <!-- Исправленный meta тег -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -22,9 +21,6 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         /* === CSS RESET === */
@@ -80,7 +76,7 @@
             --transition-slow: 350ms ease;
         }
 
-        /* Светлая тема - исправленный зеленый */
+        /* Светлая тема */
         [data-theme="light"] {
             --bg-primary: #f8fafc;
             --bg-secondary: #f1f5f9;
@@ -94,6 +90,7 @@
             --accent-blue: #3b82f6;
             --accent-red: #ef4444;
             --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
             
             --text-primary: #1a202c;
             --text-secondary: #4a5568;
@@ -115,6 +112,7 @@
             --bg-tertiary: #2a5740;
             --bg-card: #1e3a2e;
             --accent-primary: #00ff9d;
+            --accent-secondary: #00d9ff;
             --accent-green: #00ff9d;
         }
 
@@ -125,14 +123,8 @@
             --bg-tertiary: #3d2a7f;
             --bg-card: #2a1b5f;
             --accent-primary: #b388ff;
+            --accent-secondary: #9c4dff;
             --accent-green: #b388ff;
-        }
-
-        /* Темно-синяя (основная) */
-        [data-theme="dark-blue"] {
-            --bg-primary: #0a192f;
-            --bg-secondary: #112240;
-            --accent-primary: #00ff9d;
         }
 
         /* Оранжевая тема */
@@ -142,6 +134,7 @@
             --bg-tertiary: #5a3c1a;
             --bg-card: #452a14;
             --accent-primary: #ff9d00;
+            --accent-secondary: #ff7b00;
             --accent-green: #ff9d00;
         }
 
@@ -152,6 +145,7 @@
             --bg-tertiary: #5d1a57;
             --bg-card: #4a1445;
             --accent-primary: #ff6b9d;
+            --accent-secondary: #ff4d8d;
             --accent-green: #ff6b9d;
         }
 
@@ -164,9 +158,10 @@
             --text-primary: #052e16;
             --text-secondary: #166534;
             --accent-primary: #16a34a;
-            --accent-green: #16a34a;
+            --accent-secondary: #0d9488;
             --accent-red: #dc2626;
             --accent-orange: #ea580c;
+            --accent-green: #16a34a;
         }
 
         /* Светло-голубая тема */
@@ -178,9 +173,10 @@
             --text-primary: #0c4a6e;
             --text-secondary: #0369a1;
             --accent-primary: #0ea5e9;
-            --accent-green: #0ea5e9;
+            --accent-secondary: #0284c7;
             --accent-red: #dc2626;
             --accent-orange: #f97316;
+            --accent-green: #0ea5e9;
         }
 
         /* === BASE STYLES === */
@@ -307,7 +303,7 @@
         }
 
         .status-dot.connected {
-            background: var(--accent-green);
+            background: var(--accent-primary);
             animation: pulse 2s infinite;
         }
 
@@ -1371,9 +1367,6 @@
                 <button class="header-btn" id="settingsBtn" title="Настройки">
                     <i class="fas fa-cog"></i>
                 </button>
-                <button class="header-btn" id="demoModeBtn" title="Демо-режим">
-                    <i class="fas fa-flask"></i>
-                </button>
             </div>
         </header>
 
@@ -1537,7 +1530,8 @@
                         </div>
                         
                         <div class="action-buttons mt-20">
-                            <button class="btn btn-warning" id="lightOnBtn">
+                            <!-- ИЗМЕНЕНО: btn-warning заменен на btn-primary -->
+                            <button class="btn btn-primary" id="lightOnBtn">
                                 <i class="fas fa-power-off"></i>
                                 Включить свет
                             </button>
@@ -1781,7 +1775,7 @@
                     <div class="control-group">
                         <label class="control-label">IP адрес ESP8266</label>
                         <div class="d-flex gap-10">
-                            <input type="text" id="espIp" placeholder="ecogrow.local" value="ecogrow.local" class="w-100">
+                            <input type="text" id="ipAddress" placeholder="ecogrow.local" value="ecogrow.local" class="w-100">
                             <button class="btn btn-success" id="connectBtn">
                                 <i class="fas fa-plug"></i>
                                 Подключить
