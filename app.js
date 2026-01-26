@@ -24,6 +24,8 @@ class EcoGrowApp {
     }
     
     async init() {
+        console.log('Initializing EcoGrow App v4.5.1');
+        
         // Initialize theme
         this.theme.init();
         
@@ -46,6 +48,8 @@ class EcoGrowApp {
         
         // Start update loops
         this.startUpdateLoop();
+        
+        console.log('App initialized');
     }
     
     showLoading() {
@@ -95,6 +99,7 @@ class EcoGrowApp {
         // Try mDNS connection
         console.log('Trying mDNS connection...');
         try {
+            // Use timeout for connection attempt
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
             
@@ -197,6 +202,8 @@ class EcoGrowApp {
         
         // Start demo update loop
         this.startDemoUpdateLoop();
+        
+        console.log('Demo mode enabled');
     }
     
     disableDemoMode() {
@@ -219,6 +226,8 @@ class EcoGrowApp {
         
         // Show connection modal
         this.showConnectionModal();
+        
+        console.log('Demo mode disabled');
     }
     
     hideConnectionModal() {
@@ -525,6 +534,8 @@ class EcoGrowApp {
     }
     
     setupEventListeners() {
+        console.log('Setting up event listeners');
+        
         // Connect button
         const connectBtn = document.getElementById('connectBtn');
         if (connectBtn) {
@@ -737,6 +748,17 @@ class EcoGrowApp {
             });
         }
         
+        // Widgets guide button
+        const widgetsGuideBtn = document.getElementById('widgetsGuideBtn');
+        const widgetsModal = document.getElementById('widgetsModal');
+        if (widgetsGuideBtn && widgetsModal) {
+            widgetsGuideBtn.addEventListener('click', () => {
+                widgetsModal.classList.add('active');
+                // Generate QR code when modal opens
+                generateQRCode();
+            });
+        }
+        
         // Modal close buttons
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -770,7 +792,7 @@ class EcoGrowApp {
                 
                 this.notifications.show(`✅ Тема изменена: ${this.theme.themes[theme].name}`, 'success');
                 
-                // Обновляем график
+                // Recreate charts with new theme colors
                 setTimeout(() => {
                     this.charts.recreateCharts();
                     if (this.state.currentData && this.state.currentData.moisture_history) {
@@ -793,6 +815,8 @@ class EcoGrowApp {
                 e.target.classList.add('active');
             });
         });
+        
+        console.log('Event listeners set up');
     }
     
     startUpdateLoop() {
@@ -815,6 +839,8 @@ class EcoGrowApp {
         this.state.timeUpdateInterval = setInterval(() => {
             this.updateCurrentTime();
         }, 60000);
+        
+        console.log('Update loops started');
     }
     
     startDemoUpdateLoop() {
@@ -827,6 +853,8 @@ class EcoGrowApp {
                 this.updateData();
             }
         }, 3000);
+        
+        console.log('Demo update loop started');
     }
     
     stopDemoUpdateLoop() {
@@ -850,13 +878,53 @@ class EcoGrowApp {
     }
 }
 
+// Generate QR code for PWA
+function generateQRCode() {
+    const qrContainer = document.getElementById('qrCode');
+    if (!qrContainer) return;
+    
+    const currentUrl = window.location.href;
+    // Используем сервис для генерации QR кода
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
+    
+    qrContainer.innerHTML = `
+        <img src="${qrUrl}" 
+             alt="QR Code для установки PWA" 
+             style="width: 100%; height: 100%; border-radius: var(--radius-md);"
+             onerror="this.onerror=null; this.src='https://via.placeholder.com/200?text=QR+Code';">
+    `;
+}
+
+// Show widgets guide link in footer (only when connected)
+function showWidgetsLink() {
+    const widgetsLink = document.getElementById('widgetsGuideBtn');
+    if (widgetsLink) {
+        widgetsLink.style.display = 'flex';
+    }
+}
+
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing app');
     window.ecoGrowApp = new EcoGrowApp();
+    
+    // Show widgets link
+    showWidgetsLink();
+    
+    // Listen for theme changes to update charts
+    window.addEventListener('themechange', () => {
+        if (window.ecoGrowApp && window.ecoGrowApp.charts) {
+            window.ecoGrowApp.charts.recreateCharts();
+            if (window.ecoGrowApp.state.currentData && window.ecoGrowApp.state.currentData.moisture_history) {
+                window.ecoGrowApp.charts.updateMoistureChart(window.ecoGrowApp.state.currentData.moisture_history);
+            }
+        }
+    });
 });
 
 // Service Worker registration
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && window.location.protocol === 'https:' && 
+    !window.location.hostname.includes('github.io')) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {
@@ -866,6 +934,8 @@ if ('serviceWorker' in navigator) {
                 console.log('ServiceWorker registration failed:', error);
             });
     });
+} else {
+    console.log('Service Worker не регистрируется (GitHub Pages или не HTTPS)');
 }
 
 // Keyboard shortcuts
