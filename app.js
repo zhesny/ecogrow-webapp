@@ -903,4 +903,49 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         window.ecoGrowApp?.updateData();
     }
+// Generate QR code for PWA installation
+function generateQRCode() {
+    const qrContainer = document.getElementById('qrCodeContainer');
+    if (!qrContainer) return;
+    
+    const currentUrl = window.location.href;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
+    
+    qrContainer.innerHTML = `
+        <img src="${qrCodeUrl}" 
+             alt="QR Code для установки PWA" 
+             onerror="this.src='https://via.placeholder.com/200x200?text=QR+Code+Error'">
+    `;
+}
+
+// Call when widgets modal is opened
+document.addEventListener('DOMContentLoaded', () => {
+    const widgetsModal = document.getElementById('widgetsModal');
+    const widgetsGuideBtn = document.getElementById('widgetsGuideBtn');
+    
+    if (widgetsModal && widgetsGuideBtn) {
+        widgetsModal.addEventListener('click', (e) => {
+            if (e.target === widgetsModal) {
+                widgetsModal.classList.remove('active');
+            }
+        });
+        
+        widgetsModal.addEventListener('transitionend', () => {
+            if (widgetsModal.classList.contains('active')) {
+                generateQRCode();
+            }
+        });
+    }
+    
+    // Add link to footer for widgets guide
+    const footerLinks = document.querySelector('.footer-links');
+    if (footerLinks) {
+        const widgetsLink = document.createElement('a');
+        widgetsLink.href = '#';
+        widgetsLink.className = 'footer-link guide-link';
+        widgetsLink.id = 'widgetsGuideBtn';
+        widgetsLink.innerHTML = '<i class="fas fa-mobile-alt"></i> Виджеты для смартфона';
+        footerLinks.appendChild(widgetsLink);
+    }
+});
 });
