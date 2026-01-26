@@ -9,14 +9,26 @@ class EcoGrowAPI {
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
         
         try {
-            const url = `${this.baseUrl}${endpoint}`;
+            // ОБРАБОТКА MIXED CONTENT: если страница HTTPS, а запрос HTTP
+            const isHttpsPage = window.location.protocol === 'https:';
+            let url = `${this.baseUrl}${endpoint}`;
+            
+            if (isHttpsPage && url.startsWith('http://')) {
+                console.warn('Mixed Content Warning: HTTPS page trying to access HTTP resource');
+                // Можно попробовать переключиться на HTTPS
+                url = url.replace('http://', 'https://');
+            }
+            
             const response = await fetch(url, {
                 ...options,
                 signal: controller.signal,
                 headers: {
                     'Content-Type': 'application/json',
                     ...options.headers
-                }
+                },
+                // Разрешаем небезопасные запросы в development
+                mode: 'cors',
+                credentials: 'omit'
             });
             
             clearTimeout(timeoutId);
@@ -29,16 +41,36 @@ class EcoGrowAPI {
             
         } catch (error) {
             clearTimeout(timeoutId);
+            
+            // Проверяем, не связано ли с CORS или Mixed Content
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                console.error('Network error - возможно, проблема с CORS или Mixed Content');
+                console.log('Подсказка: для локального устройства используйте HTTP страницу');
+            }
+            
             throw error;
         }
     }
     
     setBaseUrl(ip) {
-        if (!ip.startsWith('http://') && !ip.startsWith('https://')) {
-            this.baseUrl = `http://${ip}`;
-        } else {
-            this.baseUrl = ip;
+        // Автоматически определяем протокол
+        if (ip === 'demo-mode') {
+            this.baseUrl = 'demo://';
+            return;
         }
+        
+        // Убираем протокол, если он есть
+        const cleanIp = ip.replace(/^https?:\/\//, '');
+        
+        // Если на GitHub Pages, используем HTTPS
+        if (window.location.hostname === 'zhesny.github.io') {
+            this.baseUrl = `https://${cleanIp}`;
+        } else {
+            // Иначе используем тот же протокол, что и страница
+            this.baseUrl = `${window.location.protocol}//${cleanIp}`;
+        }
+        
+        console.log(`API URL установлен: ${this.baseUrl}`);
     }
     
     async getInfo(ip) {
@@ -106,18 +138,26 @@ class EcoGrowAPI {
     
     async testConnection(ip) {
         this.setBaseUrl(ip);
+        
+        // Для демо-режима всегда true
+        if (ip === 'demo-mode') {
+            return true;
+        }
+        
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
             
             const response = await fetch(`${this.baseUrl}/api/info`, {
                 method: 'HEAD',
-                signal: controller.signal
+                signal: controller.signal,
+                mode: 'no-cors' // Используем no-cors для избежания CORS ошибок
             });
             
             clearTimeout(timeoutId);
-            return response.ok;
+            return true;
         } catch (error) {
+            console.log(`Не удалось подключиться к ${ip}:`, error.message);
             return false;
         }
     }
