@@ -21,6 +21,11 @@ class ChartsManager {
         }
     }
     
+    recreateCharts() {
+        this.chartInitialized = false;
+        this.init();
+    }
+    
     initMoistureChart() {
         const ctx = document.getElementById('moistureChart');
         if (!ctx) return;
@@ -30,9 +35,18 @@ class ChartsManager {
             this.moistureChart.destroy();
         }
         
-        // Получаем акцентный цвет для темы
+        // Получаем цвета для текущей темы
         const accentColor = getComputedStyle(document.documentElement)
             .getPropertyValue('--accent-primary').trim() || '#00ff9d';
+        
+        const bgCard = getComputedStyle(document.documentElement)
+            .getPropertyValue('--bg-card').trim() || '#172a45';
+        
+        const textPrimary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--text-primary').trim() || '#e2e8f0';
+        
+        const textSecondary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--text-secondary').trim() || '#a0aec0';
         
         // Преобразуем hex в rgb
         let rgbColor = this.hexToRgb(accentColor) || { r: 0, g: 255, b: 157 };
@@ -75,11 +89,9 @@ class ChartsManager {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
-                        backgroundColor: getComputedStyle(document.documentElement)
-                            .getPropertyValue('--bg-card').trim() || '#172a45',
+                        backgroundColor: bgCard,
                         titleColor: accentColor,
-                        bodyColor: getComputedStyle(document.documentElement)
-                            .getPropertyValue('--text-primary').trim() || '#e2e8f0',
+                        bodyColor: textPrimary,
                         borderColor: accentColor,
                         borderWidth: 1,
                         cornerRadius: 8,
@@ -99,8 +111,7 @@ class ChartsManager {
                             drawBorder: false
                         },
                         ticks: {
-                            color: getComputedStyle(document.documentElement)
-                                .getPropertyValue('--text-secondary').trim() || '#a0aec0',
+                            color: textSecondary,
                             font: {
                                 size: 11
                             },
@@ -113,8 +124,7 @@ class ChartsManager {
                             drawBorder: false
                         },
                         ticks: {
-                            color: getComputedStyle(document.documentElement)
-                                .getPropertyValue('--text-secondary').trim() || '#a0aec0',
+                            color: textSecondary,
                             maxRotation: 0,
                             callback: (value, index, values) => {
                                 if (values.length > 10 && index % Math.floor(values.length / 5) !== 0) {
@@ -277,6 +287,9 @@ class ChartsManager {
         const accentSecondary = getComputedStyle(document.documentElement)
             .getPropertyValue('--accent-secondary').trim() || '#00d9ff';
         
+        const textSecondary = getComputedStyle(document.documentElement)
+            .getPropertyValue('--text-secondary').trim() || '#a0aec0';
+        
         this.statsChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -301,8 +314,7 @@ class ChartsManager {
                 plugins: {
                     legend: {
                         labels: {
-                            color: getComputedStyle(document.documentElement)
-                                .getPropertyValue('--text-secondary').trim() || '#a0aec0',
+                            color: textSecondary,
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
@@ -314,8 +326,7 @@ class ChartsManager {
                             color: `rgba(${this.hexToRgb(accentPrimary).r}, ${this.hexToRgb(accentPrimary).g}, ${this.hexToRgb(accentPrimary).b}, 0.1)`
                         },
                         ticks: {
-                            color: getComputedStyle(document.documentElement)
-                                .getPropertyValue('--text-secondary').trim() || '#a0aec0'
+                            color: textSecondary
                         }
                     },
                     x: {
@@ -323,8 +334,7 @@ class ChartsManager {
                             display: false
                         },
                         ticks: {
-                            color: getComputedStyle(document.documentElement)
-                                .getPropertyValue('--text-secondary').trim() || '#a0aec0'
+                            color: textSecondary
                         }
                     }
                 }
