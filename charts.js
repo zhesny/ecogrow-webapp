@@ -9,18 +9,27 @@ class ChartsManager {
             6: 6 * 60 * 60 * 1000, // 6 часов
             24: 24 * 60 * 60 * 1000 // 24 часа
         };
+        this.chartInitialized = false;
     }
     
     init() {
-        this.initMoistureChart();
-        this.initStatsChart();
-        this.initParticles();
-        this.setupTimeButtons();
+        if (!this.chartInitialized) {
+            this.initMoistureChart();
+            this.initStatsChart();
+            this.initParticles();
+            this.setupTimeButtons();
+            this.chartInitialized = true;
+        }
     }
     
     initMoistureChart() {
         const ctx = document.getElementById('moistureChart');
         if (!ctx) return;
+        
+        // Уничтожаем предыдущий график, если он существует
+        if (this.moistureChart) {
+            this.moistureChart.destroy();
+        }
         
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(var(--accent-primary-rgb, 0, 255, 157), 0.3)');
@@ -244,6 +253,11 @@ class ChartsManager {
     initStatsChart() {
         const ctx = document.getElementById('statsChart');
         if (!ctx) return;
+        
+        // Уничтожаем предыдущий график, если он существует
+        if (this.statsChart) {
+            this.statsChart.destroy();
+        }
         
         this.statsChart = new Chart(ctx, {
             type: 'bar',
