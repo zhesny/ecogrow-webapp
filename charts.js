@@ -16,7 +16,6 @@ class ChartsManager {
         if (!this.chartInitialized) {
             this.initMoistureChart();
             this.initStatsChart();
-            this.setupTimeButtons();
             this.chartInitialized = true;
         }
     }
@@ -67,7 +66,6 @@ class ChartsManager {
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    // УБРАНЫ ТОЧКИ
                     pointRadius: 0,
                     pointHoverRadius: 0,
                     pointBackgroundColor: 'transparent',
@@ -170,19 +168,8 @@ class ChartsManager {
         return label;
     }
     
-    setupTimeButtons() {
-        document.querySelectorAll('.time-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const hours = parseInt(e.target.dataset.hours);
-                this.setTimeRange(hours);
-                
-                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            });
-        });
-    }
-    
     setTimeRange(hours) {
+        console.log(`Установка диапазона времени: ${hours} часов`);
         this.currentTimeRange = hours;
         this.updateChartWithTimeRange();
     }
@@ -213,7 +200,13 @@ class ChartsManager {
     }
     
     updateChartWithTimeRange() {
-        if (!this.moistureChart || this.historyData.length === 0) return;
+        console.log(`Обновление графика с диапазоном: ${this.currentTimeRange}ч`);
+        console.log(`Данных в истории: ${this.historyData.length}`);
+        
+        if (!this.moistureChart || this.historyData.length === 0) {
+            console.warn('График не инициализирован или нет данных');
+            return;
+        }
         
         const now = new Date().getTime();
         const timeRange = this.timeRanges[this.currentTimeRange];
