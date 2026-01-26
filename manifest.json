@@ -2,49 +2,26 @@
     "name": "EcoGrow Control v4.5.1",
     "short_name": "EcoGrow",
     "description": "Умная система полива и контроля микроклимата растений",
-    "version": "4.5.1",
     "start_url": "./",
     "display": "standalone",
     "background_color": "#0a192f",
-    "theme_color": "#64ffda",
+    "theme_color": "#00ff9d",
     "orientation": "portrait",
     "icons": [
         {
             "src": "./icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         },
         {
             "src": "./icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         }
     ],
     "categories": ["productivity", "utilities"],
     "lang": "ru-RU",
-    "dir": "ltr",
-    "prefer_related_applications": false,
-    "scope": "./",
-    "shortcuts": [
-        {
-            "name": "Панель управления",
-            "short_name": "Управление",
-            "description": "Открыть панель управления",
-            "url": "./#controls"
-        },
-        {
-            "name": "Статистика",
-            "short_name": "Статистика",
-            "description": "Просмотр статистики",
-            "url": "./#stats"
-        },
-        {
-            "name": "Демо-режим",
-            "short_name": "Демо",
-            "description": "Запустить демо-режим",
-            "url": "./?demo=true"
-        }
-    ]
+    "dir": "ltr"
 }
