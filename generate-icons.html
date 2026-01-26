@@ -1,40 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Создать иконки EcoGrow</title>
+    <title>Создать иконки</title>
     <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-            background: #0a192f;
-            color: #e2e8f0;
-        }
-        canvas {
-            border: 1px solid #00ff9d;
-            margin: 10px;
-            border-radius: 8px;
-        }
-        button {
-            background: #00ff9d;
-            color: #0a192f;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 10px;
-        }
+        canvas { border: 1px solid #ccc; margin: 10px; }
     </style>
 </head>
 <body>
-    <h1>🌱 Создание иконок для EcoGrow</h1>
-    
     <canvas id="canvas192" width="192" height="192"></canvas>
     <canvas id="canvas512" width="512" height="512"></canvas>
     
-    <div>
-        <button onclick="generateIcons()">Создать иконки</button>
-    </div>
+    <button onclick="saveIcons()">Создать иконки</button>
     
     <script>
         function drawIcon(ctx, size) {
@@ -58,7 +34,7 @@
             ctx.fill();
         }
         
-        function generateIcons() {
+        function saveIcons() {
             // 192x192
             const canvas192 = document.getElementById('canvas192');
             const ctx192 = canvas192.getContext('2d');
@@ -78,11 +54,9 @@
             link512.download = 'icon-512.png';
             link512.href = canvas512.toDataURL('image/png');
             link512.click();
-            
-            alert('Иконки созданы! Файлы скачаны.');
         }
         
-        // Рисуем предпросмотр при загрузке
+        // Предпросмотр
         window.onload = function() {
             const ctx192 = document.getElementById('canvas192').getContext('2d');
             const ctx512 = document.getElementById('canvas512').getContext('2d');
