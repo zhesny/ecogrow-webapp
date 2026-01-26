@@ -5,29 +5,8 @@ class NotificationManager {
             this.createContainer();
         }
         
-        // Создаем простой звук для уведомлений (без файла)
-        this.notificationSound = new Audio();
-        
-        // Если хотите добавить звук, можно использовать data URL
-        // Создаем простой beep звук
-        try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800;
-            oscillator.type = 'sine';
-            gainNode.gain.value = 0.1;
-            
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
-        } catch (error) {
-            console.log('Web Audio API не доступен для звука:', error);
-        }
-        
+        // Отложенная инициализация AudioContext
+        this.audioContext = null;
         this.userInteracted = false;
         
         // Отмечаем взаимодействие пользователя
@@ -129,21 +108,25 @@ class NotificationManager {
     }
     
     playNotificationSound() {
+        if (!this.userInteracted) return;
+        
         try {
-            // Создаем простой beep звук через Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
             
             oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            gainNode.connect(this.audioContext.destination);
             
             oscillator.frequency.value = 800;
             oscillator.type = 'sine';
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.value = 0.1;
             
             oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
+            oscillator.stop(this.audioContext.currentTime + 0.1);
         } catch (error) {
             console.log('Не удалось воспроизвести звук уведомления:', error);
         }
