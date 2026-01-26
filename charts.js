@@ -7,7 +7,6 @@ class ChartsManager {
             timestamps: [],
             moisture: []
         };
-        this.lastDataHash = '';
         this.demoDataCounter = 0;
     }
     
@@ -49,12 +48,12 @@ class ChartsManager {
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 0, // Полностью убраны точки
-                    pointHoverRadius: 0, // Нет точек при наведении
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
                     pointBackgroundColor: 'transparent',
                     pointBorderColor: 'transparent',
                     pointBorderWidth: 0,
-                    pointStyle: false // Отключаем точки полностью
+                    pointStyle: false
                 }]
             },
             options: {
@@ -77,7 +76,7 @@ class ChartsManager {
                         borderColor: '#64ffda',
                         borderWidth: 1,
                         cornerRadius: 8,
-                        displayColors: false, // Убираем цветные квадратики
+                        displayColors: false,
                         callbacks: {
                             label: (context) => {
                                 return `Влажность: ${context.parsed.y}%`;
@@ -121,7 +120,7 @@ class ChartsManager {
                 },
                 elements: {
                     point: {
-                        radius: 0, // Дополнительное отключение точек
+                        radius: 0,
                         hoverRadius: 0
                     }
                 }
@@ -149,7 +148,6 @@ class ChartsManager {
                 timeFilter = now - (60 * 60 * 1000);
         }
         
-        // Если данных нет или они устарели, показываем сообщение
         if (this.chartData.timestamps.length === 0) {
             this.moistureChart.data.labels = ['Нет данных'];
             this.moistureChart.data.datasets[0].data = [0];
@@ -157,7 +155,6 @@ class ChartsManager {
             return;
         }
         
-        // Фильтруем данные по времени
         const filteredIndices = [];
         const filteredTimestamps = [];
         const filteredMoisture = [];
@@ -170,12 +167,10 @@ class ChartsManager {
             }
         }
         
-        // Если данных меньше 2, не обновляем график
         if (filteredTimestamps.length < 2) {
             return;
         }
         
-        // Сэмплируем данные для отображения (максимум 50 точек)
         const sampleStep = Math.max(1, Math.floor(filteredTimestamps.length / 50));
         const sampledTimestamps = [];
         const sampledMoisture = [];
@@ -185,18 +180,10 @@ class ChartsManager {
             sampledMoisture.push(filteredMoisture[i]);
         }
         
-        // Форматируем метки времени
         const labels = sampledTimestamps.map(ts => {
             const date = new Date(ts);
             return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
         });
-        
-        // Проверяем, изменились ли данные
-        const currentDataHash = sampledMoisture.join(',');
-        if (currentDataHash === this.lastDataHash) {
-            return; // Данные не изменились, не перерисовываем
-        }
-        this.lastDataHash = currentDataHash;
         
         this.moistureChart.data.labels = labels;
         this.moistureChart.data.datasets[0].data = sampledMoisture;
@@ -208,27 +195,20 @@ class ChartsManager {
         
         const now = Date.now();
         
-        // Добавляем новые данные
         if (Array.isArray(historyData)) {
-            // Если массив исторических данных
-            const step = 300000; // 5 минут между точками
-            
-            // Очищаем старые данные
             this.chartData.timestamps = [];
             this.chartData.moisture = [];
             
-            // Генерируем временные метки с конца к началу
+            const step = 300000;
             for (let i = 0; i < historyData.length; i++) {
                 const timestamp = now - (historyData.length - i - 1) * step;
                 this.chartData.timestamps.push(timestamp);
                 this.chartData.moisture.push(historyData[i]);
             }
         } else {
-            // Если одиночное значение
             this.chartData.timestamps.push(now);
             this.chartData.moisture.push(historyData);
             
-            // Ограничиваем размер данных (храним 100 точек)
             if (this.chartData.timestamps.length > 100) {
                 this.chartData.timestamps.shift();
                 this.chartData.moisture.shift();
@@ -241,12 +221,11 @@ class ChartsManager {
     generateDemoData() {
         this.demoDataCounter++;
         const now = Date.now();
-        const duration = 60 * 60 * 1000; // 1 час
+        const duration = 60 * 60 * 1000;
         
         this.chartData.timestamps = [];
         this.chartData.moisture = [];
         
-        // Генерируем разные данные каждый раз
         const baseMoisture = 50 + Math.sin(this.demoDataCounter * 0.1) * 10;
         const pointCount = 20;
         
@@ -267,7 +246,6 @@ class ChartsManager {
         if (this.moistureChart) {
             this.chartData.timestamps = [];
             this.chartData.moisture = [];
-            this.lastDataHash = '';
             this.moistureChart.data.labels = ['Нет данных'];
             this.moistureChart.data.datasets[0].data = [0];
             this.moistureChart.update();
