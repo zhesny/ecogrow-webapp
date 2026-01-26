@@ -201,6 +201,9 @@ class EcoGrowApp {
         
         // Stop demo update loop
         this.stopDemoUpdateLoop();
+        
+        // Show connection modal when disabling demo mode
+        this.showConnectionModal();
     }
     
     hideConnectionModal() {
@@ -344,7 +347,6 @@ class EcoGrowApp {
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
-            // Animate number changes
             if (typeof value === 'number' && !isNaN(parseFloat(element.textContent))) {
                 this.animateValue(element, parseFloat(element.textContent), value, 500);
             } else {
@@ -426,7 +428,6 @@ class EcoGrowApp {
     }
     
     checkNotifications(data) {
-        // Check for low moisture
         if (data.moisture < 20) {
             this.notifications.show(
                 `⚠️ Низкая влажность: ${data.moisture}%`, 
@@ -434,7 +435,6 @@ class EcoGrowApp {
             );
         }
         
-        // Check for sensor error
         if (data.moisture === 0) {
             this.notifications.show(
                 '❌ Ошибка датчика влажности!', 
@@ -442,7 +442,6 @@ class EcoGrowApp {
             );
         }
         
-        // Check for pump running
         if (data.pump) {
             this.notifications.show(
                 '💧 Насос работает...', 
@@ -478,20 +477,6 @@ class EcoGrowApp {
                 if (ipInput && ipInput.value) {
                     this.state.espIp = ipInput.value;
                     this.connectToESP();
-                }
-            });
-        }
-        
-        // Demo mode button in header
-        const demoModeBtn = document.getElementById('demoModeBtn');
-        if (demoModeBtn) {
-            demoModeBtn.addEventListener('click', () => {
-                if (this.state.demoMode) {
-                    this.disableDemoMode();
-                    this.notifications.show('✅ Демо-режим отключен', 'success');
-                    this.showConnectionModal();
-                } else {
-                    this.enableDemoMode();
                 }
             });
         }
@@ -666,19 +651,23 @@ class EcoGrowApp {
             });
         }
         
-        // Settings button
+        // Settings button - ИСПРАВЛЕНО
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
         if (settingsBtn && settingsModal) {
             settingsBtn.addEventListener('click', () => {
+                console.log('Settings button clicked');
                 settingsModal.classList.add('active');
             });
         }
         
         // Modal close buttons
         document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.closest('.modal').classList.remove('active');
+            btn.addEventListener('click', (e) => {
+                const modal = e.target.closest('.modal');
+                if (modal) {
+                    modal.classList.remove('active');
+                }
             });
         });
         
@@ -691,10 +680,11 @@ class EcoGrowApp {
             });
         });
         
-        // Theme buttons
+        // Theme buttons - ИСПРАВЛЕНО
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const theme = e.target.dataset.theme;
+                console.log('Setting theme to:', theme);
                 this.theme.setTheme(theme);
                 
                 // Update active button
@@ -704,6 +694,14 @@ class EcoGrowApp {
                 e.target.classList.add('active');
                 
                 this.notifications.show(`✅ Тема изменена: ${this.theme.themes[theme].name}`, 'success');
+                
+                // Обновляем график с новыми цветами
+                setTimeout(() => {
+                    this.charts.init();
+                    if (this.state.currentData && this.state.currentData.moisture_history) {
+                        this.charts.updateMoistureChart(this.state.currentData.moisture_history);
+                    }
+                }, 100);
             });
         });
         
@@ -819,7 +817,7 @@ document.addEventListener('keydown', (e) => {
         if (window.ecoGrowApp?.state.demoMode) {
             window.ecoGrowApp.disableDemoMode();
         } else {
-            window.ecoGrowApp.enableDemoMode();
+            window.ecoGrowApp.showConnectionModal();
         }
     }
 });
