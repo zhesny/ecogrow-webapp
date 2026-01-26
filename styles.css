@@ -1079,3 +1079,18 @@ input:checked + .slider-switch:before {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
 }
+/* Стили для скрытия точек на графике */
+.chartjs-render-monitor {
+    pointer-events: none;
+}
+
+.chartjs-tooltip {
+    pointer-events: none;
+}
+
+/* Убедитесь, что точки не видны */
+circle {
+    display: none !important;
+    opacity: 0 !important;
+    r: 0 !important;
+}
