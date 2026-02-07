@@ -85,7 +85,7 @@ self.addEventListener('fetch', event => {
                     return response;
                 })
                 .catch(() => {
-                    // Если нет сети, показывае оффлайн страницу
+                    // Если нет сети, показываем оффлайн страницу
                     return caches.match(OFFLINE_URL);
                 })
         );
@@ -145,7 +145,7 @@ self.addEventListener('message', event => {
 // Обработка синхронизации в фоне
 self.addEventListener('sync', event => {
     if (event.tag === 'sync-data') {
-        console.log('[Service Worker] Синхронизаци данных');
+        console.log('[Service Worker] Синхронизация данных');
         event.waitUntil(syncData());
     }
 });
