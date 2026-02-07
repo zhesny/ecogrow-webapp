@@ -1058,11 +1058,7 @@
             bottom: 20px;
             right: 20px;
             z-index: 1000;
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: flex-end;
-            gap: 10px;
-            max-width: 420px;
+            width: min(420px, calc(100% - 20px));
             pointer-events: none;
         }
 
@@ -1072,8 +1068,7 @@
             padding: 14px 16px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            min-width: 260px;
-            max-width: 100%;
+            width: 100%;
             transform: translateX(100%);
             animation: slideIn 0.3s ease forwards;
             display: flex;
@@ -1081,6 +1076,9 @@
             align-items: flex-start;
             gap: 16px;
             pointer-events: auto;
+            position: absolute;
+            bottom: 0;
+            right: 0;
         }
 
         @keyframes slideIn {
@@ -1298,15 +1296,11 @@
                 left: 10px;
                 right: 10px;
                 bottom: 10px;
-                align-items: stretch;
-                max-width: none;
-                gap: 0;
+                width: auto;
             }
 
             .notification {
                 width: 100%;
-                min-width: 0;
-                margin-top: -12px;
             }
         }
 
@@ -1909,7 +1903,7 @@
                         </a>
                         <a href="#" class="footer-link guide-link" id="quickGuideBtn">
                             <i class="fas fa-question-circle"></i>
-                            Краткая инструкця
+                            Краткая инструкция
                         </a>
                     </div>
                 </div>
@@ -2042,7 +2036,7 @@
                         </div>
                         <div>
                             <h4><i class="fas fa-flask"></i> 6. Демо-режим</h4>
-                            <p>Используйте демо-режим для тестирования функциональности без физического устройства.</p>
+                            <p>Используйте демо-режим для тестирования функциональнсти без физического устройства.</p>
                         </div>
                     </div>
                 </div>
