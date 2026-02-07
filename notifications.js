@@ -42,6 +42,7 @@ class NotificationManager {
         const notification = this.createNotification(message, type);
         this.container.appendChild(notification);
         this.trimNotifications();
+        this.updateStack();
         this.addToLog(message, type);
         
         // Auto remove after duration
@@ -106,6 +107,7 @@ class NotificationManager {
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification);
+                this.updateStack();
             }
         }, 300);
     }
@@ -117,6 +119,14 @@ class NotificationManager {
                 oldest.remove();
             }
         }
+        this.updateStack();
+    }
+
+    updateStack() {
+        const items = Array.from(this.container.children);
+        items.forEach((item, index) => {
+            item.style.zIndex = String(100 + index);
+        });
     }
 
     setEnabled(enabled) {
