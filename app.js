@@ -154,7 +154,7 @@ class EcoGrowApp {
     
     async connectToESP() {
         if (!this.state.espIp) {
-            this.notifications.show('❌ Введте IP адрес устройства', 'error');
+            this.notifications.show('❌ Введите IP адрес устройства', 'error');
             this.showConnectionModal();
             return;
         }
@@ -902,7 +902,6 @@ class EcoGrowApp {
             });
         }
 
-        const soundToggle = document.getElementById('soundToggle');
         const notificationsToggle = document.getElementById('notificationsToggle');
         const silentToggle = document.getElementById('silentNotificationsToggle');
 
@@ -910,24 +909,11 @@ class EcoGrowApp {
             if (notificationsToggle) {
                 notificationsToggle.checked = this.notifications.enabled;
             }
-            if (soundToggle) {
-                soundToggle.checked = this.notifications.soundEnabled;
-                soundToggle.disabled = !this.notifications.enabled;
-            }
             if (silentToggle) {
                 silentToggle.checked = this.notifications.silentMode;
                 silentToggle.disabled = !this.notifications.enabled;
             }
         };
-
-        if (soundToggle) {
-            const soundEnabled = localStorage.getItem('notifications_sound') !== 'false';
-            this.notifications.setSoundEnabled(soundEnabled);
-            soundToggle.addEventListener('change', (e) => {
-                this.notifications.setSoundEnabled(e.target.checked);
-                syncNotificationControls();
-            });
-        }
 
         if (notificationsToggle) {
             const notificationsEnabled = localStorage.getItem('notifications_enabled') !== 'false';
