@@ -11,9 +11,15 @@ class NotificationManager {
         if (localStorage.getItem('notifications_sound') === null) {
             localStorage.setItem('notifications_sound', 'true');
         }
+        if (localStorage.getItem('notifications_silent') === null) {
+            localStorage.setItem('notifications_silent', 'false');
+        }
 
         this.enabled = localStorage.getItem('notifications_enabled') !== 'false';
+        this.soundEnabled = localStorage.getItem('notifications_sound') !== 'false';
+        this.silentMode = localStorage.getItem('notifications_silent') === 'true';
         this.maxVisible = this.getMaxVisible();
+        this.logKey = 'notifications_log';
         
         // Отложенная инициализация AudioContext
         this.audioContext = null;
@@ -29,7 +35,7 @@ class NotificationManager {
             this.trimNotifications();
         });
     }
-    
+
     getMaxVisible() {
         return window.matchMedia('(max-width: 768px)').matches ? 2 : 3;
     }
@@ -42,16 +48,17 @@ class NotificationManager {
     }
     
     show(message, type = 'info', duration = 5000) {
-        if (!this.enabled || localStorage.getItem('notifications_enabled') === 'false') {
+        if (!this.enabled) {
             return null;
         }
 
         const notification = this.createNotification(message, type);
         this.container.appendChild(notification);
         this.trimNotifications();
+        this.addToLog(message, type);
         
         // Play sound only if user has interacted
-        if (this.userInteracted && localStorage.getItem('notifications_sound') !== 'false') {
+        if (this.userInteracted && this.soundEnabled && !this.silentMode) {
             this.playNotificationSound();
         }
         
@@ -139,9 +146,41 @@ class NotificationManager {
         }
     }
 
+    setSoundEnabled(enabled) {
+        this.soundEnabled = enabled;
+        localStorage.setItem('notifications_sound', enabled ? 'true' : 'false');
+    }
+
     clearAll() {
         if (!this.container) return;
         this.container.innerHTML = '';
+    }
+
+    addToLog(message, type) {
+        const entry = {
+            message,
+            type,
+            timestamp: new Date().toISOString()
+        };
+
+        const existing = this.getLog();
+        existing.unshift(entry);
+        const trimmed = existing.slice(0, 50);
+        localStorage.setItem(this.logKey, JSON.stringify(trimmed));
+    }
+
+    getLog() {
+        try {
+            const stored = localStorage.getItem(this.logKey);
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    setSilentMode(enabled) {
+        this.silentMode = enabled;
+        localStorage.setItem('notifications_silent', enabled ? 'true' : 'false');
     }
     
     playNotificationSound() {
