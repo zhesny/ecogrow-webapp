@@ -6,16 +6,25 @@ class NotificationManager {
         }
 
         this.enabled = localStorage.getItem('notifications_enabled') !== 'false';
-        this.maxVisible = 3;
+        this.maxVisible = this.getMaxVisible();
         
         // Отложенная инициализация AudioContext
         this.audioContext = null;
         this.userInteracted = false;
         
-        // Отмечаем взаимодействие пользователя
+        // Отмечаем взаимодействие пользоваеля
         document.addEventListener('click', () => {
             this.userInteracted = true;
         }, { once: true });
+
+        window.addEventListener('resize', () => {
+            this.maxVisible = this.getMaxVisible();
+            this.trimNotifications();
+        });
+    }
+    
+    getMaxVisible() {
+        return window.matchMedia('(max-width: 768px)').matches ? 2 : 3;
     }
     
     createContainer() {
@@ -57,8 +66,6 @@ class NotificationManager {
         notification.className = `notification ${type}`;
         
         const icon = this.getIconForType(type);
-        const color = this.getColorForType(type);
-        notification.style.setProperty('--notification-color', color);
         
         notification.innerHTML = `
             <div class="notification-content">
@@ -97,16 +104,6 @@ class NotificationManager {
             info: 'fa-info-circle'
         };
         return icons[type] || 'fa-bell';
-    }
-    
-    getColorForType(type) {
-        const colors = {
-            success: '#00ff9d',
-            error: '#ff6b6b',
-            warning: '#ffd166',
-            info: '#4ecdc4'
-        };
-        return colors[type] || '#64ffda';
     }
     
     removeNotification(notification) {
