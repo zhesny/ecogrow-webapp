@@ -4,6 +4,9 @@ class NotificationManager {
         if (!this.container) {
             this.createContainer();
         }
+
+        this.enabled = localStorage.getItem('notifications_enabled') !== 'false';
+        this.maxVisible = 3;
         
         // Отложенная инициализация AudioContext
         this.audioContext = null;
@@ -23,8 +26,13 @@ class NotificationManager {
     }
     
     show(message, type = 'info', duration = 5000) {
+        if (!this.enabled) {
+            return null;
+        }
+
         const notification = this.createNotification(message, type);
         this.container.appendChild(notification);
+        this.trimNotifications();
         
         // Play sound only if user has interacted
         if (this.userInteracted && localStorage.getItem('notifications_sound') !== 'false') {
@@ -50,18 +58,21 @@ class NotificationManager {
         
         const icon = this.getIconForType(type);
         const color = this.getColorForType(type);
+        notification.style.setProperty('--notification-color', color);
         
         notification.innerHTML = `
-            <div class="notification-icon" style="color: ${color}">
-                <i class="fas ${icon}"></i>
-            </div>
             <div class="notification-content">
                 <div class="notification-message">${message}</div>
                 <div class="notification-time">Только что</div>
             </div>
-            <button class="notification-close">
-                <i class="fas fa-times"></i>
-            </button>
+            <div class="notification-actions">
+                <div class="notification-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <button class="notification-close" aria-label="Закрыть уведомление">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         `;
         
         // Add close button handler
@@ -105,6 +116,29 @@ class NotificationManager {
                 notification.parentNode.removeChild(notification);
             }
         }, 300);
+    }
+
+    trimNotifications() {
+        while (this.container.children.length > this.maxVisible) {
+            const oldest = this.container.firstElementChild;
+            if (oldest) {
+                oldest.remove();
+            }
+        }
+    }
+
+    setEnabled(enabled) {
+        this.enabled = enabled;
+        localStorage.setItem('notifications_enabled', enabled ? 'true' : 'false');
+
+        if (!enabled) {
+            this.clearAll();
+        }
+    }
+
+    clearAll() {
+        if (!this.container) return;
+        this.container.innerHTML = '';
     }
     
     playNotificationSound() {
