@@ -15,7 +15,8 @@ class EcoGrowApp {
             lastUpdate: null,
             updateInterval: 5000,
             connectionRetryCount: 0,
-            maxRetries: 3
+            maxRetries: 3,
+            lastLatencyMs: null
         };
         
         this.init();
@@ -153,7 +154,7 @@ class EcoGrowApp {
     
     async connectToESP() {
         if (!this.state.espIp) {
-            this.notifications.show('❌ Введите IP адрес устройства', 'error');
+            this.notifications.show('❌ Введте IP адрес устройства', 'error');
             this.showConnectionModal();
             return;
         }
@@ -281,6 +282,8 @@ class EcoGrowApp {
                 statusElement.classList.remove('connected');
             }
         }
+
+        this.updateConnectionMetrics();
     }
     
     async updateData() {
@@ -331,7 +334,10 @@ class EcoGrowApp {
                 throw new Error('Устройство недоступно');
             }
             
+            const startTime = performance.now();
             const data = await this.api.getState(this.state.espIp);
+            const endTime = performance.now();
+            this.state.lastLatencyMs = Math.round(endTime - startTime);
             this.state.currentData = data;
             this.state.lastUpdate = new Date();
             this.state.connectionRetryCount = 0;
@@ -344,6 +350,7 @@ class EcoGrowApp {
             console.error('Update failed:', error);
             
             this.state.connectionRetryCount++;
+            this.updateConnectionMetrics();
             
             if (this.state.connectionRetryCount >= this.state.maxRetries) {
                 this.state.connected = false;
@@ -451,8 +458,22 @@ class EcoGrowApp {
         this.updateElement('totalWaterings', data.total_waterings || 0);
         this.updateElement('totalLightHours', data.total_light_hours || 0);
         this.updateElement('energyUsed', data.total_energy || '0');
+
+        this.updateConnectionMetrics();
         
         this.updateErrorsList(data.errors || []);
+    }
+
+    updateConnectionMetrics() {
+        const retryLabel = document.getElementById('retryCount');
+        if (retryLabel) {
+            retryLabel.textContent = `${this.state.connectionRetryCount}/${this.state.maxRetries}`;
+        }
+
+        const latencyLabel = document.getElementById('latencyValue');
+        if (latencyLabel) {
+            latencyLabel.textContent = this.state.lastLatencyMs ? `${this.state.lastLatencyMs} мс` : '--';
+        }
     }
     
     updateElement(id, value) {
@@ -502,62 +523,65 @@ class EcoGrowApp {
             const criticalClass = error.critical ? 'critical' : '';
             html += `
                 <div class="error-item ${criticalClass}">
-                    <div class="error-time">${error.time || '--:--'}</div>
-                    <div class="error-msg">${error.msg || error.message || 'Неизвестная ошибка'}</div>
+                    <div class="error-time">${error.time || 'Неизвестно'}</div>
+                    <div class="error-message">${error.message || error}</div>
                 </div>
             `;
         });
         
-        if (errors.length > 5) {
-            html += `
-                <div class="error-item more">
-                    <span>... и еще ${errors.length - 5} ошибок</span>
-                </div>
-            `;
-        }
-        
-        if (errorsList) errorsList.innerHTML = html;
+        errorsList.innerHTML = html;
     }
     
     checkNotifications(data) {
-        if (data.moisture < 20) {
-            this.notifications.show(
-                `⚠️ Низкая влажность: ${data.moisture}%`, 
-                'warning'
-            );
-        }
+        if (!data || !data.errors) return;
         
-        if (data.moisture === 0) {
-            this.notifications.show(
-                '❌ Ошибка датчика влажности!', 
-                'error'
-            );
+        if (data.errors.length > 0) {
+            const lastError = data.errors[0];
+            const message = lastError.message || lastError;
+            const severity = lastError.critical ? 'error' : 'warning';
+            
+            this.notifications.show(`⚠️ ${message}`, severity);
         }
+    }
+    
+    async loadSettings() {
+        if (this.state.demoMode) return;
         
-        if (data.pump) {
-            this.notifications.show(
-                '💧 Насос работает...', 
-                'info'
-            );
+        try {
+            const settings = await this.api.getSettings(this.state.espIp);
+            this.state.settings = settings;
+        } catch (error) {
+            console.error('Failed to load settings:', error);
         }
     }
     
     setupEventListeners() {
         const connectBtn = document.getElementById('connectBtn');
+        const demoBtn = document.getElementById('demoBtn');
+        const ipInput = document.getElementById('ipAddress');
+        
         if (connectBtn) {
-            connectBtn.addEventListener('click', () => {
-                const ipInput = document.getElementById('ipAddress');
-                if (ipInput && ipInput.value) {
-                    this.state.espIp = ipInput.value;
+            connectBtn.addEventListener('click', async () => {
+                const ip = ipInput.value.trim();
+                if (ip) {
+                    this.state.espIp = ip;
                     this.connectToESP();
+                } else {
+                    this.notifications.show('❌ Введите IP адрес устройства', 'error');
                 }
             });
         }
         
-        const demoBtn = document.getElementById('demoBtn');
         if (demoBtn) {
             demoBtn.addEventListener('click', () => {
                 this.startDemoMode();
+            });
+        }
+        
+        const closeConnectionModal = document.getElementById('closeConnectionModal');
+        if (closeConnectionModal) {
+            closeConnectionModal.addEventListener('click', () => {
+                this.hideConnectionModal();
             });
         }
         
@@ -832,7 +856,7 @@ class EcoGrowApp {
                         })
                         .catch((error) => {
                             console.error('Ошибка сброса статистики:', error);
-                            this.notifications.show('❌ Ошибка сброса статистики. Проверьте подлючение.', 'error');
+                            this.notifications.show('❌ Ошибка сброса статистики. Проверьте подключение.', 'error');
                         });
                 } else {
                     this.notifications.show('❌ Нет подключения к системе', 'error');
@@ -879,23 +903,51 @@ class EcoGrowApp {
         }
 
         const soundToggle = document.getElementById('soundToggle');
+        const notificationsToggle = document.getElementById('notificationsToggle');
+        const silentToggle = document.getElementById('silentNotificationsToggle');
+
+        const syncNotificationControls = () => {
+            if (notificationsToggle) {
+                notificationsToggle.checked = this.notifications.enabled;
+            }
+            if (soundToggle) {
+                soundToggle.checked = this.notifications.soundEnabled;
+                soundToggle.disabled = !this.notifications.enabled;
+            }
+            if (silentToggle) {
+                silentToggle.checked = this.notifications.silentMode;
+                silentToggle.disabled = !this.notifications.enabled;
+            }
+        };
+
         if (soundToggle) {
             const soundEnabled = localStorage.getItem('notifications_sound') !== 'false';
-            soundToggle.checked = soundEnabled;
+            this.notifications.setSoundEnabled(soundEnabled);
             soundToggle.addEventListener('change', (e) => {
-                localStorage.setItem('notifications_sound', e.target.checked ? 'true' : 'false');
+                this.notifications.setSoundEnabled(e.target.checked);
+                syncNotificationControls();
             });
         }
 
-        const notificationsToggle = document.getElementById('notificationsToggle');
         if (notificationsToggle) {
             const notificationsEnabled = localStorage.getItem('notifications_enabled') !== 'false';
-            notificationsToggle.checked = notificationsEnabled;
             this.notifications.setEnabled(notificationsEnabled);
             notificationsToggle.addEventListener('change', (e) => {
                 this.notifications.setEnabled(e.target.checked);
+                syncNotificationControls();
             });
         }
+
+        if (silentToggle) {
+            const silentEnabled = localStorage.getItem('notifications_silent') === 'true';
+            this.notifications.setSilentMode(silentEnabled);
+            silentToggle.addEventListener('change', (e) => {
+                this.notifications.setSilentMode(e.target.checked);
+                syncNotificationControls();
+            });
+        }
+
+        syncNotificationControls();
         
         const updateIntervalInput = document.getElementById('updateInterval');
         if (updateIntervalInput) {
