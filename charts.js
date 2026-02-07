@@ -143,7 +143,8 @@ class ChartsManager {
                         radius: 0, // Полностью убираем точки
                         hoverRadius: 0,
                         hitRadius: 0,
-                        pointStyle: false
+                        pointStyle: false,
+                        borderWidth: 0
                     }
                 }
             }
