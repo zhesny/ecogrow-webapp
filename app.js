@@ -25,17 +25,8 @@ class EcoGrowApp {
         this.theme.init();
         this.showLoading();
         
-        // ПРОВЕРЯЕМ, ЧТО МЫ НА GITHUB PAGES (HTTPS)
-        if (window.location.hostname === 'zhesny.github.io') {
-            console.log('Запущено на GitHub Pages, включаем демо-режим');
-            setTimeout(() => {
-                this.startDemoMode();
-                this.hideLoading();
-            }, 1500);
-        } else {
-            await this.tryAutoConnect();
-            this.hideLoading();
-        }
+        await this.tryAutoConnect();
+        this.hideLoading();
         
         this.charts.init();
         this.startUpdateLoop();
@@ -841,7 +832,7 @@ class EcoGrowApp {
                         })
                         .catch((error) => {
                             console.error('Ошибка сброса статистики:', error);
-                            this.notifications.show('❌ Ошибка сброса статистики. Проверьте подключение.', 'error');
+                            this.notifications.show('❌ Ошибка сброса статистики. Проверьте подлючение.', 'error');
                         });
                 } else {
                     this.notifications.show('❌ Нет подключения к системе', 'error');
