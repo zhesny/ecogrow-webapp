@@ -8,27 +8,14 @@ class NotificationManager {
         if (localStorage.getItem('notifications_enabled') === null) {
             localStorage.setItem('notifications_enabled', 'true');
         }
-        if (localStorage.getItem('notifications_sound') === null) {
-            localStorage.setItem('notifications_sound', 'true');
-        }
         if (localStorage.getItem('notifications_silent') === null) {
             localStorage.setItem('notifications_silent', 'false');
         }
 
         this.enabled = localStorage.getItem('notifications_enabled') !== 'false';
-        this.soundEnabled = localStorage.getItem('notifications_sound') !== 'false';
         this.silentMode = localStorage.getItem('notifications_silent') === 'true';
         this.maxVisible = this.getMaxVisible();
         this.logKey = 'notifications_log';
-        
-        // Отложенная инициализация AudioContext
-        this.audioContext = null;
-        this.userInteracted = false;
-        
-        // Отмечаем взаимодействие пользователя
-        document.addEventListener('click', () => {
-            this.userInteracted = true;
-        }, { once: true });
 
         window.addEventListener('resize', () => {
             this.maxVisible = this.getMaxVisible();
@@ -56,11 +43,6 @@ class NotificationManager {
         this.container.appendChild(notification);
         this.trimNotifications();
         this.addToLog(message, type);
-        
-        // Play sound only if user has interacted
-        if (this.userInteracted && this.soundEnabled && !this.silentMode) {
-            this.playNotificationSound();
-        }
         
         // Auto remove after duration
         setTimeout(() => {
@@ -146,11 +128,6 @@ class NotificationManager {
         }
     }
 
-    setSoundEnabled(enabled) {
-        this.soundEnabled = enabled;
-        localStorage.setItem('notifications_sound', enabled ? 'true' : 'false');
-    }
-
     clearAll() {
         if (!this.container) return;
         this.container.innerHTML = '';
@@ -181,31 +158,6 @@ class NotificationManager {
     setSilentMode(enabled) {
         this.silentMode = enabled;
         localStorage.setItem('notifications_silent', enabled ? 'true' : 'false');
-    }
-    
-    playNotificationSound() {
-        if (!this.userInteracted) return;
-        
-        try {
-            if (!this.audioContext) {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            
-            const oscillator = this.audioContext.createOscillator();
-            const gainNode = this.audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
-            
-            oscillator.frequency.value = 800;
-            oscillator.type = 'sine';
-            gainNode.gain.value = 0.1;
-            
-            oscillator.start();
-            oscillator.stop(this.audioContext.currentTime + 0.1);
-        } catch (error) {
-            console.log('Не удалось воспроизвести звук уведомления:', error);
-        }
     }
     
     async sendTelegramNotification(message) {
