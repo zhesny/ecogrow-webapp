@@ -11,6 +11,15 @@ class ChartsManager {
     }
     
     init() {
+        Chart.defaults.elements.point.radius = 0;
+        Chart.defaults.elements.point.hoverRadius = 0;
+        Chart.defaults.elements.point.hitRadius = 0;
+        Chart.defaults.elements.point.pointStyle = false;
+        Chart.defaults.datasets.line = Chart.defaults.datasets.line || {};
+        Chart.defaults.datasets.line.pointRadius = 0;
+        Chart.defaults.datasets.line.pointHoverRadius = 0;
+        Chart.defaults.datasets.line.pointHitRadius = 0;
+
         this.initMoistureChart();
         this.initStatsChart();
         this.setupTimeRangeButtons();
