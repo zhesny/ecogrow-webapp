@@ -200,7 +200,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--bg-primary);
+            background: radial-gradient(circle at top, rgba(0, 255, 157, 0.08), transparent 45%),
+                linear-gradient(135deg, #091627 0%, #0a192f 45%, #0f2340 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -210,6 +211,13 @@
 
         .loader {
             text-align: center;
+            background: rgba(17, 34, 64, 0.75);
+            border: 1px solid rgba(0, 255, 157, 0.18);
+            border-radius: var(--radius-lg);
+            padding: 30px 35px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(6px);
+            min-width: 260px;
         }
 
         .loader-spinner {
@@ -298,6 +306,25 @@
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .connection-quality {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .connection-metric {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            background: rgba(10, 25, 47, 0.4);
+            border: 1px solid rgba(0, 255, 157, 0.15);
         }
 
         .status-dot {
@@ -841,38 +868,64 @@
         }
 
         .telegram-link {
-            color: var(--accent-blue);
-            font-size: 1.2rem;
+            color: var(--accent-green);
+            text-decoration: none;
         }
 
         /* === FOOTER === */
         .footer {
-            margin-top: 30px;
-            padding: 20px;
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(0, 255, 157, 0.1);
+            margin-top: 40px;
+            padding: 30px 0;
+            border-top: 1px solid rgba(0, 255, 157, 0.1);
         }
 
         .footer-content {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
         }
 
-        .footer-section h3,
-        .footer-section h4 {
+        .footer-section h3, .footer-section h4 {
+            color: var(--accent-green);
+            margin-bottom: 15px;
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
             margin-bottom: 10px;
+        }
+
+        .developer-contacts {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .contact-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .contact-link:hover {
             color: var(--accent-green);
         }
 
         .footer-links {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .footer-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: var(--text-secondary);
             text-decoration: none;
             transition: color var(--transition-fast);
@@ -885,56 +938,52 @@
         .tech-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
         }
 
         .tech-tag {
-            padding: 4px 8px;
+            padding: 4px 10px;
             background: var(--bg-secondary);
             border-radius: var(--radius-sm);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
         }
 
         .footer-bottom {
-            margin-top: 15px;
-            padding-top: 10px;
+            padding-top: 20px;
             border-top: 1px solid rgba(0, 255, 157, 0.1);
             text-align: center;
-            color: var(--text-muted);
-            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         /* === MODALS === */
         .modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 25, 47, 0.8);
+            inset: 0;
+            background: rgba(10, 25, 47, 0.7);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
             opacity: 0;
-            visibility: hidden;
-            transition: all var(--transition-normal);
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 2000;
         }
 
         .modal.active {
             opacity: 1;
-            visibility: visible;
+            pointer-events: auto;
         }
 
         .modal-content {
-            background: var(--bg-card);
-            padding: 25px;
-            border-radius: var(--radius-lg);
             width: 90%;
             max-width: 500px;
-            border: 1px solid rgba(0, 255, 157, 0.2);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 25px;
             box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(0, 255, 157, 0.2);
         }
 
         .modal-header {
@@ -942,7 +991,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
             border-bottom: 1px solid rgba(0, 255, 157, 0.1);
         }
 
@@ -955,10 +1004,9 @@
         .modal-close {
             background: none;
             border: none;
-            font-size: 1.5rem;
             color: var(--text-secondary);
+            font-size: 1.4rem;
             cursor: pointer;
-            transition: color var(--transition-fast);
         }
 
         .modal-close:hover {
@@ -1133,6 +1181,7 @@
             .header-controls {
                 width: 100%;
                 justify-content: center;
+                flex-direction: column;
             }
             
             .dashboard-row,
@@ -1346,6 +1395,16 @@
                 <div class="connection-status" id="connectionStatus">
                     <div class="status-dot"></div>
                     <span>Нет подключения</span>
+                </div>
+                <div class="connection-quality" aria-label="Качество связи">
+                    <div class="connection-metric">
+                        <i class="fas fa-stopwatch"></i>
+                        <span id="latencyValue">--</span>
+                    </div>
+                    <div class="connection-metric">
+                        <i class="fas fa-rotate"></i>
+                        <span id="retryCount">0/3</span>
+                    </div>
                 </div>
                 <button class="header-btn" id="themeToggle" title="Сменить тему">
                     <i class="fas fa-moon"></i>
@@ -1860,6 +1919,14 @@
                             <span class="switch-slider"></span>
                         </label>
                         <span class="switch-label">Экранные уведомления</span>
+                    </div>
+
+                    <div class="toggle-switch mt-10">
+                        <label class="switch">
+                            <input type="checkbox" id="silentNotificationsToggle">
+                            <span class="switch-slider"></span>
+                        </label>
+                        <span class="switch-label">Тихий режим (без звука)</span>
                     </div>
                 </div>
             </div>
