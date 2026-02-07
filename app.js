@@ -586,6 +586,7 @@ class EcoGrowApp {
         
         const pumpOnBtn = document.getElementById('pumpOnBtn');
         const pumpOffBtn = document.getElementById('pumpOffBtn');
+        const waterNowBtn = document.getElementById('waterNowBtn');
         
         if (pumpOnBtn) {
             pumpOnBtn.addEventListener('click', async () => {
@@ -605,6 +606,46 @@ class EcoGrowApp {
                     } catch (error) {
                         this.notifications.show('❌ Ошибка включения насоса', 'error');
                     }
+                }
+            });
+        }
+
+        if (waterNowBtn) {
+            waterNowBtn.addEventListener('click', async () => {
+                const durationInput = document.getElementById('wateringDuration');
+                const durationSec = Math.max(1, parseInt(durationInput?.value, 10) || 10);
+                const durationMs = durationSec * 1000;
+
+                if (this.state.demoMode) {
+                    this.state.currentData.pump = true;
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show(`💧 Полив запущен на ${durationSec} сек (демо)`, 'success');
+                    setTimeout(() => {
+                        this.state.currentData.pump = false;
+                        this.updateUI(this.state.currentData);
+                    }, durationMs);
+                    return;
+                }
+
+                if (!this.state.connected) {
+                    this.notifications.show('❌ Нет подключения к системе', 'error');
+                    return;
+                }
+
+                try {
+                    await this.api.controlPump(this.state.espIp, 'on');
+                    this.notifications.show(`💧 Полив запущен на ${durationSec} сек`, 'success');
+                    setTimeout(async () => {
+                        try {
+                            await this.api.controlPump(this.state.espIp, 'off');
+                            this.notifications.show('✅ Полив завершен', 'success');
+                            setTimeout(() => this.updateData(), 1000);
+                        } catch (error) {
+                            this.notifications.show('❌ Ошибка отключения насоса', 'error');
+                        }
+                    }, durationMs);
+                } catch (error) {
+                    this.notifications.show('❌ Ошибка включения насоса', 'error');
                 }
             });
         }
@@ -682,6 +723,47 @@ class EcoGrowApp {
                 }
             });
         }
+
+        const setTimeBtn = document.getElementById('setTimeBtn');
+        const manualTimeInput = document.getElementById('manualTimeInput');
+        if (manualTimeInput) {
+            const now = new Date();
+            manualTimeInput.value = now.toTimeString().slice(0, 5);
+        }
+
+        if (setTimeBtn && manualTimeInput) {
+            setTimeBtn.addEventListener('click', async () => {
+                if (!manualTimeInput.value) {
+                    this.notifications.show('❌ Укажите время для установки', 'error');
+                    return;
+                }
+
+                const [hours, minutes] = manualTimeInput.value.split(':').map(Number);
+                if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+                    this.notifications.show('❌ Некорректный формат времени', 'error');
+                    return;
+                }
+
+                if (this.state.demoMode) {
+                    this.updateElement('systemTime', manualTimeInput.value);
+                    this.notifications.show('🕐 Время установлено (демо)', 'success');
+                    return;
+                }
+
+                if (!this.state.connected) {
+                    this.notifications.show('❌ Нет подключения к системе', 'error');
+                    return;
+                }
+
+                try {
+                    await this.api.setTime(this.state.espIp, hours, minutes);
+                    this.notifications.show('🕐 Время установлено', 'success');
+                    setTimeout(() => this.updateData(), 1000);
+                } catch (error) {
+                    this.notifications.show('❌ Ошибка установки времени', 'error');
+                }
+            });
+        }
         
         const thresholdSlider = document.getElementById('moistureThreshold');
         const thresholdValue = document.getElementById('thresholdValue');
@@ -715,7 +797,7 @@ class EcoGrowApp {
                 if (this.state.demoMode) {
                     this.state.currentData.errors = [];
                     this.updateErrorsList([]);
-                    this.notifications.show('✅ Ошибки очищены (демо)', 'success');
+                    this.notifications.show('✅ Ошибки оищены (демо)', 'success');
                 } else if (this.state.connected) {
                     try {
                         await this.api.clearErrors(this.state.espIp);
@@ -802,6 +884,25 @@ class EcoGrowApp {
             themeSelector.addEventListener('change', (e) => {
                 this.theme.setTheme(e.target.value);
                 this.notifications.show(`✅ Тема изменена на "${e.target.selectedOptions[0].text}"`, 'success');
+            });
+        }
+
+        const soundToggle = document.getElementById('soundToggle');
+        if (soundToggle) {
+            const soundEnabled = localStorage.getItem('notifications_sound') !== 'false';
+            soundToggle.checked = soundEnabled;
+            soundToggle.addEventListener('change', (e) => {
+                localStorage.setItem('notifications_sound', e.target.checked ? 'true' : 'false');
+            });
+        }
+
+        const notificationsToggle = document.getElementById('notificationsToggle');
+        if (notificationsToggle) {
+            const notificationsEnabled = localStorage.getItem('notifications_enabled') !== 'false';
+            notificationsToggle.checked = notificationsEnabled;
+            this.notifications.setEnabled(notificationsEnabled);
+            notificationsToggle.addEventListener('change', (e) => {
+                this.notifications.setEnabled(e.target.checked);
             });
         }
         
