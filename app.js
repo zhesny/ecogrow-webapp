@@ -797,7 +797,7 @@ class EcoGrowApp {
                 if (this.state.demoMode) {
                     this.state.currentData.errors = [];
                     this.updateErrorsList([]);
-                    this.notifications.show('✅ Ошибки оищены (демо)', 'success');
+                    this.notifications.show('✅ Ошибки очищены (демо)', 'success');
                 } else if (this.state.connected) {
                     try {
                         await this.api.clearErrors(this.state.espIp);
