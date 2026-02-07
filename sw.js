@@ -8,6 +8,8 @@ const STATIC_CACHE_URLS = [
     './index.html',
     './offline.html',
     './manifest.json',
+    './icon-192.png',
+    './icon-512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
     'https://cdn.jsdelivr.net/npm/chart.js',
     './api-client.js',
@@ -83,7 +85,7 @@ self.addEventListener('fetch', event => {
                     return response;
                 })
                 .catch(() => {
-                    // Если нет сети, показываем оффлайн страницу
+                    // Если нет сети, показывае оффлайн страницу
                     return caches.match(OFFLINE_URL);
                 })
         );
@@ -143,7 +145,7 @@ self.addEventListener('message', event => {
 // Обработка синхронизации в фоне
 self.addEventListener('sync', event => {
     if (event.tag === 'sync-data') {
-        console.log('[Service Worker] Синхронизация данных');
+        console.log('[Service Worker] Синхронизаци данных');
         event.waitUntil(syncData());
     }
 });
