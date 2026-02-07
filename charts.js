@@ -14,6 +14,9 @@ class ChartsManager {
         Chart.defaults.elements.point.radius = 0;
         Chart.defaults.elements.point.hoverRadius = 0;
         Chart.defaults.elements.point.hitRadius = 0;
+        Chart.defaults.elements.point.borderWidth = 0;
+        Chart.defaults.elements.point.backgroundColor = 'transparent';
+        Chart.defaults.elements.point.borderColor = 'transparent';
         Chart.defaults.elements.point.pointStyle = false;
         Chart.defaults.datasets.line = Chart.defaults.datasets.line || {};
         Chart.defaults.datasets.line.pointRadius = 0;
