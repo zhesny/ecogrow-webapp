@@ -12,6 +12,7 @@
     <meta name="theme-color" content="#0a192f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
@@ -358,6 +359,10 @@
             gap: 20px;
         }
 
+        .dashboard-row.single {
+            grid-template-columns: 1fr;
+        }
+
         /* === КАРТОЧКИ === */
         .card {
             background: var(--bg-card);
@@ -689,20 +694,21 @@
             right: 0;
             bottom: 0;
             background: var(--bg-secondary);
-            border-radius: 34px;
-            transition: var(--transition-normal);
+            transition: 0.4s;
+            border-radius: 26px;
+            border: 1px solid var(--bg-tertiary);
         }
 
         .switch-slider:before {
             position: absolute;
             content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background: var(--text-primary);
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 2px;
+            background: white;
+            transition: 0.4s;
             border-radius: 50%;
-            transition: var(--transition-normal);
         }
 
         input:checked + .switch-slider {
@@ -722,127 +728,110 @@
         .time-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-        }
-
-        .time-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+            gap: 10px;
         }
 
         .time-input-group label {
-            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 5px;
             color: var(--text-secondary);
+            font-size: 0.85rem;
         }
 
         .time-input-group input {
+            width: 100%;
             padding: 10px;
-            background: var(--bg-secondary);
             border: 1px solid var(--bg-tertiary);
-            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
             color: var(--text-primary);
-            font-size: 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
         }
 
-        /* === СТАТИСТИКА === */
+        /* === SLEEP MODE === */
+        .sleep-mode-info {
+            text-align: center;
+            margin-top: 15px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* === STATS === */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
-            margin-bottom: 20px;
         }
 
         .stat-card {
             background: var(--bg-secondary);
-            border-radius: var(--radius-md);
             padding: 15px;
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .stat-card .stat-icon {
+        .stat-icon {
             width: 40px;
             height: 40px;
-            background: rgba(0, 255, 157, 0.1);
             border-radius: var(--radius-md);
+            background: var(--gradient-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent-green);
-            font-size: 1.2rem;
+            color: var(--bg-primary);
         }
 
         .stat-number {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: var(--text-primary);
-            line-height: 1;
         }
 
-        /* === ОШИБКИ === */
+        /* === ERRORS === */
         .errors-list {
             max-height: 200px;
             overflow-y: auto;
-            margin: 15px 0;
         }
 
         .error-item {
-            background: rgba(255, 71, 87, 0.1);
-            padding: 12px;
-            margin-bottom: 8px;
+            background: var(--bg-secondary);
+            padding: 10px 15px;
             border-radius: var(--radius-md);
-            border-left: 4px solid var(--accent-red);
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-orange);
+        }
+
+        .error-item.critical {
+            border-left-color: var(--accent-red);
+            background: rgba(255, 71, 87, 0.1);
         }
 
         .error-item.empty {
-            background: rgba(0, 255, 157, 0.1);
             border-left-color: var(--accent-green);
             text-align: center;
+            color: var(--text-secondary);
         }
 
         .error-time {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            font-size: 0.8rem;
+            color: var(--text-muted);
             margin-bottom: 4px;
         }
 
-        .error-msg {
-            font-size: 0.9rem;
-            color: var(--text-primary);
-        }
-
-        .error-counter {
-            display: flex;
-            align-items: baseline;
-            gap: 5px;
-        }
-
-        .counter-number {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-red);
-        }
-
-        .counter-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        /* === TELEGRAM СЕКЦИЯ === */
+        /* === TELEGRAM === */
         .telegram-section {
             margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 255, 157, 0.1);
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
         }
 
         .telegram-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 10px;
         }
 
         .telegram-status {
@@ -851,72 +840,39 @@
             gap: 8px;
         }
 
-        .telegram-bot {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-secondary);
-        }
-
         .telegram-link {
-            color: var(--accent-green);
-            text-decoration: none;
+            color: var(--accent-blue);
+            font-size: 1.2rem;
         }
 
         /* === FOOTER === */
         .footer {
-            margin-top: 40px;
-            padding: 30px 0;
-            border-top: 1px solid rgba(0, 255, 157, 0.1);
+            margin-top: 30px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(0, 255, 157, 0.1);
         }
 
         .footer-content {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
         }
 
-        .footer-section h3, .footer-section h4 {
-            color: var(--accent-green);
-            margin-bottom: 15px;
-        }
-
-        .footer-section p {
-            color: var(--text-secondary);
+        .footer-section h3,
+        .footer-section h4 {
             margin-bottom: 10px;
-        }
-
-        .developer-contacts {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .contact-link {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color var(--transition-fast);
-        }
-
-        .contact-link:hover {
             color: var(--accent-green);
         }
 
         .footer-links {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .footer-link {
-            display: flex;
-            align-items: center;
-            gap: 8px;
             color: var(--text-secondary);
             text-decoration: none;
             transition: color var(--transition-fast);
@@ -930,53 +886,53 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 10px;
         }
 
         .tech-tag {
-            padding: 4px 12px;
-            background: rgba(0, 255, 157, 0.1);
-            color: var(--accent-green);
-            border-radius: 20px;
-            font-size: 0.85rem;
-            border: 1px solid rgba(0, 255, 157, 0.2);
+            padding: 4px 8px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
         }
 
         .footer-bottom {
-            text-align: center;
-            padding-top: 20px;
+            margin-top: 15px;
+            padding-top: 10px;
             border-top: 1px solid rgba(0, 255, 157, 0.1);
+            text-align: center;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        /* === MODAL === */
+        /* === MODALS === */
         .modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            display: none;
+            background: rgba(10, 25, 47, 0.8);
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-normal);
         }
 
         .modal.active {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
         }
 
         .modal-content {
             background: var(--bg-card);
+            padding: 25px;
             border-radius: var(--radius-lg);
-            padding: 30px;
-            max-width: 500px;
             width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            max-width: 500px;
             border: 1px solid rgba(0, 255, 157, 0.2);
             box-shadow: var(--shadow-lg);
         }
@@ -1016,19 +972,26 @@
             right: 20px;
             z-index: 1000;
             display: flex;
-            flex-direction: column;
+            flex-direction: column-reverse;
+            align-items: flex-end;
             gap: 10px;
+            max-width: 420px;
         }
 
         .notification {
             background: var(--bg-card);
-            border-left: 4px solid var(--accent-green);
-            padding: 15px;
+            border-left: 4px solid var(--notification-color, var(--accent-green));
+            padding: 14px 16px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            min-width: 300px;
+            min-width: 260px;
+            max-width: 100%;
             transform: translateX(100%);
             animation: slideIn 0.3s ease forwards;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
         }
 
         @keyframes slideIn {
@@ -1041,6 +1004,52 @@
 
         .notification.warning {
             border-left-color: var(--accent-orange);
+        }
+
+        .notification-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .notification-message {
+            font-weight: 600;
+        }
+
+        .notification-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification-icon,
+        .notification-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid color-mix(in srgb, var(--notification-color, var(--accent-green)) 40%, transparent);
+            background: color-mix(in srgb, var(--notification-color, var(--accent-green)) 18%, transparent);
+            color: var(--notification-color, var(--accent-green));
+            flex-shrink: 0;
+        }
+
+        .notification-icon i,
+        .notification-close i {
+            font-size: 0.9rem;
+        }
+
+        .notification-close {
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .notification-close:hover {
+            transform: scale(1.05);
+            background: color-mix(in srgb, var(--notification-color, var(--accent-green)) 28%, transparent);
         }
 
         /* === PWA INSTALL BUTTON === */
@@ -1110,6 +1119,10 @@
             .dashboard-row.first-row {
                 grid-template-columns: 1fr;
             }
+
+            .dashboard-row.single {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
@@ -1130,6 +1143,10 @@
             
             .dashboard-row,
             .dashboard-row.first-row {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-row.single {
                 grid-template-columns: 1fr;
             }
             
@@ -1161,11 +1178,29 @@
             .chart-wrapper {
                 height: 200px;
             }
+
+            .time-control {
+                flex-direction: column;
+                align-items: stretch;
+            }
             
             .modal-content {
                 width: 95%;
                 padding: 20px;
                 margin: 10px;
+            }
+
+            .notification-container {
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                align-items: stretch;
+                max-width: none;
+            }
+
+            .notification {
+                width: 100%;
+                min-width: 0;
             }
         }
 
@@ -1181,13 +1216,6 @@
             
             .btn {
                 padding: 8px 15px;
-                font-size: 0.9rem;
-            }
-            
-            .pwa-install-btn {
-                bottom: 10px;
-                right: 10px;
-                padding: 10px 15px;
                 font-size: 0.9rem;
             }
         }
@@ -1223,6 +1251,14 @@
         .gap-10 { gap: 10px; }
         .gap-20 { gap: 20px; }
         .w-100 { width: 100%; }
+
+        .time-control {
+            flex-wrap: wrap;
+        }
+
+        .time-control input {
+            min-width: 140px;
+        }
         
         /* === КНОПКА ОБНОВЛЕНИЯ ВРУЧНУЮ === */
         .refresh-btn {
@@ -1280,21 +1316,6 @@
             border-radius: 100%;
             transform: scale(1, 1) translate(-50%);
             transform-origin: 50% 50%;
-        }
-
-        #resetStatsBtn:focus:not(:active)::after {
-            animation: ripple 1s ease-out;
-        }
-
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(20, 20);
-                opacity: 0;
-            }
         }
     </style>
 </head>
@@ -1415,7 +1436,7 @@
                     <div class="card-header">
                         <div class="card-title">
                             <i class="fas fa-water"></i>
-                            <span>Управление насосом</span>
+                            <span>Управление поливом</span>
                         </div>
                         <div class="card-status status-off" id="pumpStatus">ВЫКЛ</div>
                     </div>
@@ -1455,6 +1476,10 @@
                         </div>
                         
                         <div class="action-buttons mt-20">
+                            <button class="btn btn-primary" id="waterNowBtn">
+                                <i class="fas fa-tint"></i>
+                                Полить сейчас
+                            </button>
                             <button class="btn btn-success" id="pumpOnBtn">
                                 <i class="fas fa-play"></i>
                                 Включить насос
@@ -1556,10 +1581,28 @@
                             </div>
                         </div>
                         
-                        <div class="control-group mt-20">
-                            <label class="control-label">Синхронизация времени</label>
+                        <div class="text-center mt-20">
+                            <div class="stat-label">Системное время:</div>
+                            <div class="stat-value" id="systemTime">--:--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2.5: Управление временем -->
+            <div class="dashboard-row single">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-clock"></i>
+                            <span>Управление временем</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="control-group">
+                            <label class="control-label">Синхронизация с сетью</label>
                             <div class="d-flex gap-10 align-center">
-                                <button class="btn btn-primary w-100" id="syncTimeBtn">
+                                <button class="btn btn-primary" id="syncTimeBtn">
                                     <i class="fas fa-sync-alt"></i>
                                     Синхронизировать время
                                 </button>
@@ -1568,10 +1611,19 @@
                                 Использует сетевые серверы времени
                             </p>
                         </div>
-                        
-                        <div class="text-center mt-20">
-                            <div class="stat-label">Системное время:</div>
-                            <div class="stat-value" id="systemTime">--:--</div>
+
+                        <div class="control-group mt-20">
+                            <label class="control-label">Установить своё время</label>
+                            <div class="d-flex gap-10 align-center time-control">
+                                <input type="time" id="manualTimeInput" class="w-100">
+                                <button class="btn btn-secondary" id="setTimeBtn">
+                                    <i class="fas fa-check"></i>
+                                    Применить
+                                </button>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
+                                Время будет задано для контроллера
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1737,7 +1789,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>© 2025-2026 EcoGrow System | Все права защищены</p>
+                <p>© 2025-2026 EcoGrow System</p>
             </div>
         </footer>
 
@@ -1816,7 +1868,7 @@
                             <input type="checkbox" id="notificationsToggle" checked>
                             <span class="switch-slider"></span>
                         </label>
-                        <span class="switch-label">Push-уведомления</span>
+                        <span class="switch-label">Экранные уведомления</span>
                     </div>
                 </div>
             </div>
