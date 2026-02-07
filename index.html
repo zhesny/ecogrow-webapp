@@ -976,11 +976,12 @@
             align-items: flex-end;
             gap: 10px;
             max-width: 420px;
+            pointer-events: none;
         }
 
         .notification {
             background: var(--bg-card);
-            border-left: 4px solid var(--notification-color, var(--accent-green));
+            border-left: 4px solid var(--accent-green);
             padding: 14px 16px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
@@ -992,18 +993,11 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 16px;
+            pointer-events: auto;
         }
 
         @keyframes slideIn {
             to { transform: translateX(0); }
-        }
-
-        .notification.error {
-            border-left-color: var(--accent-red);
-        }
-
-        .notification.warning {
-            border-left-color: var(--accent-orange);
         }
 
         .notification-content {
@@ -1031,9 +1025,9 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid color-mix(in srgb, var(--notification-color, var(--accent-green)) 40%, transparent);
-            background: color-mix(in srgb, var(--notification-color, var(--accent-green)) 18%, transparent);
-            color: var(--notification-color, var(--accent-green));
+            border: 1px solid rgba(0, 255, 157, 0.35);
+            background: rgba(0, 255, 157, 0.15);
+            color: var(--accent-green);
             flex-shrink: 0;
         }
 
@@ -1049,7 +1043,7 @@
 
         .notification-close:hover {
             transform: scale(1.05);
-            background: color-mix(in srgb, var(--notification-color, var(--accent-green)) 28%, transparent);
+            background: rgba(0, 255, 157, 0.25);
         }
 
         /* === PWA INSTALL BUTTON === */
@@ -1532,7 +1526,6 @@
                         </div>
                         
                         <div class="action-buttons mt-20">
-                            <!-- ИСПРАВЛЕННАЯ КНОПКА - ЗЕЛЕНАЯ ВМЕСТО ОРАНЖЕВОЙ -->
                             <button class="btn btn-success" id="lightOnBtn">
                                 <i class="fas fa-lightbulb"></i>
                                 Включить свет
@@ -1589,47 +1582,7 @@
                 </div>
             </div>
 
-            <!-- Row 2.5: Управление временем -->
-            <div class="dashboard-row single">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-clock"></i>
-                            <span>Управление временем</span>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="control-group">
-                            <label class="control-label">Синхронизация с сетью</label>
-                            <div class="d-flex gap-10 align-center">
-                                <button class="btn btn-primary" id="syncTimeBtn">
-                                    <i class="fas fa-sync-alt"></i>
-                                    Синхронизировать время
-                                </button>
-                            </div>
-                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
-                                Использует сетевые серверы времени
-                            </p>
-                        </div>
-
-                        <div class="control-group mt-20">
-                            <label class="control-label">Установить своё время</label>
-                            <div class="d-flex gap-10 align-center time-control">
-                                <input type="time" id="manualTimeInput" class="w-100">
-                                <button class="btn btn-secondary" id="setTimeBtn">
-                                    <i class="fas fa-check"></i>
-                                    Применить
-                                </button>
-                            </div>
-                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
-                                Время будет задано для контроллера
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Row 3: Статистика и Ошибки -->
+            <!-- Row 3: Статистика, Ошибки и Время -->
             <div class="dashboard-row">
                 <!-- Statistics -->
                 <div class="card">
@@ -1728,6 +1681,44 @@
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Control -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-clock"></i>
+                            <span>Управление временем</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="control-group">
+                            <label class="control-label">Синхронизация с сетью</label>
+                            <div class="d-flex gap-10 align-center">
+                                <button class="btn btn-primary" id="syncTimeBtn">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Синхронизировать время
+                                </button>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
+                                Использует сетевые серверы времени
+                            </p>
+                        </div>
+
+                        <div class="control-group mt-20">
+                            <label class="control-label">Установить своё время</label>
+                            <div class="d-flex gap-10 align-center time-control">
+                                <input type="time" id="manualTimeInput" class="w-100">
+                                <button class="btn btn-secondary" id="setTimeBtn">
+                                    <i class="fas fa-check"></i>
+                                    Применить
+                                </button>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
+                                Время будет задано для контроллера
+                            </p>
                         </div>
                     </div>
                 </div>
