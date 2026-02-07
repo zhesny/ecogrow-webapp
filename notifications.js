@@ -5,6 +5,13 @@ class NotificationManager {
             this.createContainer();
         }
 
+        if (localStorage.getItem('notifications_enabled') === null) {
+            localStorage.setItem('notifications_enabled', 'true');
+        }
+        if (localStorage.getItem('notifications_sound') === null) {
+            localStorage.setItem('notifications_sound', 'true');
+        }
+
         this.enabled = localStorage.getItem('notifications_enabled') !== 'false';
         this.maxVisible = this.getMaxVisible();
         
@@ -12,7 +19,7 @@ class NotificationManager {
         this.audioContext = null;
         this.userInteracted = false;
         
-        // Отмечаем взаимодействие пользоваеля
+        // Отмечаем взаимодействие пользователя
         document.addEventListener('click', () => {
             this.userInteracted = true;
         }, { once: true });
@@ -35,7 +42,7 @@ class NotificationManager {
     }
     
     show(message, type = 'info', duration = 5000) {
-        if (!this.enabled) {
+        if (!this.enabled || localStorage.getItem('notifications_enabled') === 'false') {
             return null;
         }
 
@@ -66,7 +73,6 @@ class NotificationManager {
         notification.className = `notification ${type}`;
         
         const icon = this.getIconForType(type);
-        
         notification.innerHTML = `
             <div class="notification-content">
                 <div class="notification-message">${message}</div>
