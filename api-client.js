@@ -2,6 +2,7 @@ class EcoGrowAPI {
     constructor() {
         this.baseUrl = '';
         this.timeout = 10000;
+        this.isLocalEndpoint = false;
     }
     
     async request(endpoint, options = {}) {
@@ -57,15 +58,15 @@ class EcoGrowAPI {
         // Автоматически определяем протокол
         if (ip === 'demo-mode') {
             this.baseUrl = 'demo://';
+            this.isLocalEndpoint = false;
             return;
         }
         
         // Убираем протокол, если он есть
         const cleanIp = ip.replace(/^https?:\/\//, '');
         
-        const isLocalHost = cleanIp === 'localhost' || cleanIp.endsWith('.local');
-        const isPrivateIp = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(cleanIp);
-        const isLocalTarget = isLocalHost || isPrivateIp;
+        const isLocalTarget = this.isLocalTarget(cleanIp);
+        this.isLocalEndpoint = isLocalTarget;
 
         if (isLocalTarget) {
             this.baseUrl = `http://${cleanIp}`;
@@ -74,6 +75,14 @@ class EcoGrowAPI {
         }
         
         console.log(`API URL установлен: ${this.baseUrl}`);
+    }
+
+    isLocalTarget(ip) {
+        const cleanIp = ip.replace(/^https?:\/\//, '');
+        const hostOnly = cleanIp.split('/')[0].split(':')[0];
+        const isLocalHost = hostOnly === 'localhost' || hostOnly.endsWith('.local');
+        const isPrivateIp = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(hostOnly);
+        return isLocalHost || isPrivateIp;
     }
     
     async getInfo(ip) {
