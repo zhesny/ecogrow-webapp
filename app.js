@@ -158,6 +158,17 @@ class EcoGrowApp {
             this.showConnectionModal();
             return;
         }
+
+        if (window.location.protocol === 'https:' && this.api.isLocalTarget(this.state.espIp)) {
+            this.notifications.show(
+                '⚠️ Страница открыта по HTTPS, а локальное устройство доступно только по HTTP. ' +
+                'Откройте панель локально (например, через python -m http.server) и попробуйте снова.',
+                'warning',
+                10000
+            );
+            this.showConnectionModal();
+            return;
+        }
         
         try {
             this.showLoading();
@@ -434,200 +445,144 @@ class EcoGrowApp {
         }
         
         this.updateElement('pumpStatus', data.pump ? 'ВКЛ' : 'ВЫКЛ');
-        const pumpStatusElement = document.getElementById('pumpStatus');
-        if (pumpStatusElement) {
-            pumpStatusElement.className = `card-status ${data.pump ? 'status-on' : 'status-off'}`;
-        }
-        
         this.updateElement('lightStatus', data.light ? 'ВКЛ' : 'ВЫКЛ');
-        const lightStatusElement = document.getElementById('lightStatus');
-        if (lightStatusElement) {
-            lightStatusElement.className = `card-status ${data.light ? 'status-on' : 'status-off'}`;
-        }
-        
-        const thresholdSlider = document.getElementById('moistureThreshold');
-        const thresholdValue = document.getElementById('thresholdValue');
-        if (thresholdSlider && thresholdValue && data.moisture_threshold) {
-            thresholdSlider.value = data.moisture_threshold;
-            thresholdValue.textContent = data.moisture_threshold + '%';
-        }
-        
-        this.updateElement('currentTime', data.current_time);
-        this.updateElement('systemTime', data.current_time);
-        
+        this.updateElement('currentTime', data.current_time || '--:--');
+        this.updateElement('systemTime', data.current_time || '--:--');
         this.updateElement('totalWaterings', data.total_waterings || 0);
         this.updateElement('totalLightHours', data.total_light_hours || 0);
-        this.updateElement('energyUsed', data.total_energy || '0');
-
-        this.updateConnectionMetrics();
+        this.updateElement('energyUsed', (data.total_energy || 0) + ' Вт·ч');
+        this.updateElement('lightToday', (data.total_light_hours || 0) + ' ч');
+        
+        const pumpStatus = document.getElementById('pumpStatus');
+        if (pumpStatus) {
+            pumpStatus.className = data.pump ? 'card-status active' : 'card-status';
+        }
+        
+        const lightStatus = document.getElementById('lightStatus');
+        if (lightStatus) {
+            lightStatus.className = data.light ? 'card-status active' : 'card-status';
+        }
+        
+        this.updateElement('thresholdValue', (data.moisture_threshold || 50) + '%');
+        const thresholdSlider = document.getElementById('moistureThreshold');
+        if (thresholdSlider) thresholdSlider.value = data.moisture_threshold || 50;
+        
+        this.updateElement('wateringDelay', data.watering_delay || 30);
+        this.updateElement('wateringDuration', data.watering_duration || 10);
+        this.updateElement('manualPumpTime', data.manual_pump_time || 10);
+        this.updateElement('manualLightTime', data.manual_light_time || 1);
+        
+        this.updateElement('lampStart', data.lamp_start || '08:00');
+        this.updateElement('lampEnd', data.lamp_end || '20:00');
+        this.updateElement('sleepStart', data.sleep_start || '23:00');
+        this.updateElement('sleepEnd', data.sleep_end || '07:00');
+        
+        const lampToggle = document.getElementById('lampEnabled');
+        if (lampToggle) lampToggle.checked = data.lamp_enabled;
+        
+        const sleepToggle = document.getElementById('sleepEnabled');
+        if (sleepToggle) sleepToggle.checked = data.sleep_enabled;
         
         this.updateErrorsList(data.errors || []);
-    }
-
-    updateConnectionMetrics() {
-        const retryLabel = document.getElementById('retryCount');
-        if (retryLabel) {
-            retryLabel.textContent = `${this.state.connectionRetryCount}/${this.state.maxRetries}`;
-        }
-
-        const latencyLabel = document.getElementById('latencyValue');
-        if (latencyLabel) {
-            latencyLabel.textContent = this.state.lastLatencyMs ? `${this.state.lastLatencyMs} мс` : '--';
-        }
+        this.updateConnectionMetrics();
     }
     
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
-            if (typeof value === 'number' && !isNaN(parseFloat(element.textContent))) {
-                this.animateValue(element, parseFloat(element.textContent), value, 500);
-            } else {
-                element.textContent = value;
-            }
+            element.textContent = value;
         }
-    }
-    
-    animateValue(element, start, end, duration) {
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const current = Math.floor(progress * (end - start) + start);
-            element.textContent = current;
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            }
-        };
-        window.requestAnimationFrame(step);
     }
     
     updateErrorsList(errors) {
         const errorsList = document.getElementById('errorsList');
-        const errorCount = document.getElementById('errorCount');
+        if (!errorsList) return;
+        
+        errorsList.innerHTML = '';
         
         if (!errors || errors.length === 0) {
-            errorsList.innerHTML = `
-                <div class="error-item empty">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Ошибок нет, система работает стабильно</span>
-                </div>
-            `;
-            if (errorCount) errorCount.textContent = '0';
+            errorsList.innerHTML = '<p class="no-errors">✅ Ошибок нет</p>';
             return;
         }
         
-        if (errorCount) errorCount.textContent = errors.length;
-        
-        let html = '';
-        errors.slice(0, 5).forEach(error => {
-            const criticalClass = error.critical ? 'critical' : '';
-            html += `
-                <div class="error-item ${criticalClass}">
-                    <div class="error-time">${error.time || 'Неизвестно'}</div>
-                    <div class="error-message">${error.message || error}</div>
-                </div>
+        errors.forEach(error => {
+            const errorElement = document.createElement('div');
+            errorElement.className = `error-item ${error.critical ? 'critical' : ''}`;
+            
+            errorElement.innerHTML = `
+                <div class="error-time">${error.time}</div>
+                <div class="error-message">${error.msg}</div>
             `;
+            
+            errorsList.appendChild(errorElement);
         });
-        
-        errorsList.innerHTML = html;
     }
     
-    checkNotifications(data) {
-        if (!data || !data.errors) return;
+    updateConnectionMetrics() {
+        const latencyElement = document.getElementById('latencyValue');
+        const retryElement = document.getElementById('retryCount');
         
-        if (data.errors.length > 0) {
-            const lastError = data.errors[0];
-            const message = lastError.message || lastError;
-            const severity = lastError.critical ? 'error' : 'warning';
-            
-            this.notifications.show(`⚠️ ${message}`, severity);
+        if (latencyElement) {
+            if (this.state.lastLatencyMs !== null) {
+                latencyElement.textContent = `${this.state.lastLatencyMs} мс`;
+                if (this.state.lastLatencyMs < 100) {
+                    latencyElement.style.color = 'var(--success)';
+                } else if (this.state.lastLatencyMs < 500) {
+                    latencyElement.style.color = 'var(--warning)';
+                } else {
+                    latencyElement.style.color = 'var(--error)';
+                }
+            } else {
+                latencyElement.textContent = '--';
+                latencyElement.style.color = 'var(--text-muted)';
+            }
+        }
+        
+        if (retryElement) {
+            retryElement.textContent = `${this.state.connectionRetryCount}/${this.state.maxRetries}`;
         }
     }
     
-    async loadSettings() {
-        if (this.state.demoMode) return;
+    checkNotifications(data) {
+        if (!this.notifications.enabled) return;
         
-        try {
-            const settings = await this.api.getSettings(this.state.espIp);
-            this.state.settings = settings;
-        } catch (error) {
-            console.error('Failed to load settings:', error);
+        if (data.moisture < 30) {
+            this.notifications.show('⚠️ Низкий уровень влажности!', 'warning');
+        }
+        
+        if (data.errors && data.errors.length > 0) {
+            const criticalErrors = data.errors.filter(error => error.critical);
+            if (criticalErrors.length > 0) {
+                this.notifications.show('🚨 Обнаружены критические ошибки!', 'error');
+            }
         }
     }
     
     setupEventListeners() {
         const connectBtn = document.getElementById('connectBtn');
-        const demoBtn = document.getElementById('demoBtn');
-        const ipInput = document.getElementById('ipAddress');
-        
         if (connectBtn) {
             connectBtn.addEventListener('click', async () => {
-                const ip = ipInput.value.trim();
-                if (ip) {
-                    this.state.espIp = ip;
-                    this.connectToESP();
-                } else {
-                    this.notifications.show('❌ Введите IP адрес устройства', 'error');
+                const ipInput = document.getElementById('ipInput');
+                if (ipInput) {
+                    this.state.espIp = ipInput.value.trim();
+                    await this.connectToESP();
                 }
             });
         }
         
+        const demoBtn = document.getElementById('demoBtn');
         if (demoBtn) {
             demoBtn.addEventListener('click', () => {
                 this.startDemoMode();
             });
         }
         
-        const closeConnectionModal = document.getElementById('closeConnectionModal');
-        if (closeConnectionModal) {
-            closeConnectionModal.addEventListener('click', () => {
-                this.hideConnectionModal();
-            });
-        }
-        
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                this.theme.toggle();
-            });
-        }
-        
-        const settingsBtn = document.getElementById('settingsBtn');
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', () => {
-                document.getElementById('settingsModal').classList.add('active');
-            });
-        }
-        
         const pumpOnBtn = document.getElementById('pumpOnBtn');
         const pumpOffBtn = document.getElementById('pumpOffBtn');
-        const waterNowBtn = document.getElementById('waterNowBtn');
         
         if (pumpOnBtn) {
             pumpOnBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    this.state.currentData.pump = true;
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show('💧 Насос включен (демо)', 'success');
-                    setTimeout(() => {
-                        this.state.currentData.pump = false;
-                        this.updateUI(this.state.currentData);
-                    }, 10000);
-                } else if (this.state.connected) {
-                    try {
-                        await this.api.controlPump(this.state.espIp, 'on');
-                        this.notifications.show('💧 Насос включен', 'success');
-                        setTimeout(() => this.updateData(), 1000);
-                    } catch (error) {
-                        this.notifications.show('❌ Ошибка включения насоса', 'error');
-                    }
-                }
-            });
-        }
-
-        if (waterNowBtn) {
-            waterNowBtn.addEventListener('click', async () => {
-                const durationInput = document.getElementById('wateringDuration');
+                const durationInput = document.getElementById('manualPumpTimeInput');
                 const durationSec = Math.max(1, parseInt(durationInput?.value, 10) || 10);
                 const durationMs = durationSec * 1000;
 
