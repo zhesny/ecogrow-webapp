@@ -9,14 +9,11 @@ class EcoGrowAPI {
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
         
         try {
-            // ОБРАБОТКА MIXED CONTENT: если страница HTTPS, а запрос HTTP
             const isHttpsPage = window.location.protocol === 'https:';
             let url = `${this.baseUrl}${endpoint}`;
             
             if (isHttpsPage && url.startsWith('http://')) {
                 console.warn('Mixed Content Warning: HTTPS page trying to access HTTP resource');
-                // Можно попробовать переключиться на HTTPS
-                url = url.replace('http://', 'https://');
             }
             
             const response = await fetch(url, {
@@ -45,7 +42,11 @@ class EcoGrowAPI {
             // Проверяем, не связано ли с CORS или Mixed Content
             if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
                 console.error('Network error - возможно, проблема с CORS или Mixed Content');
-                console.log('Подсказка: для локального устройства используйте HTTP страницу');
+                if (window.location.protocol === 'https:' && this.baseUrl.startsWith('http://')) {
+                    console.log('Подсказка: откройте страницу через HTTP или используйте локальный режим');
+                } else {
+                    console.log('Подсказка: для локального устройства используйте HTTP страницу');
+                }
             }
             
             throw error;
@@ -62,11 +63,13 @@ class EcoGrowAPI {
         // Убираем протокол, если он есть
         const cleanIp = ip.replace(/^https?:\/\//, '');
         
-        // Если на GitHub Pages, используем HTTPS
-        if (window.location.hostname === 'zhesny.github.io') {
-            this.baseUrl = `https://${cleanIp}`;
+        const isLocalHost = cleanIp === 'localhost' || cleanIp.endsWith('.local');
+        const isPrivateIp = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(cleanIp);
+        const isLocalTarget = isLocalHost || isPrivateIp;
+
+        if (isLocalTarget) {
+            this.baseUrl = `http://${cleanIp}`;
         } else {
-            // Иначе используем тот же протокол, что и страница
             this.baseUrl = `${window.location.protocol}//${cleanIp}`;
         }
         
