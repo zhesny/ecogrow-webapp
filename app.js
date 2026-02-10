@@ -144,7 +144,8 @@ class EcoGrowApp {
             this.showLoadingScreen();
             
             this.appState.demoMode = false;
-            const deviceAvailable = await this.apiClient.testDeviceConnection(this.appState.deviceAddress);
+            // ИСПРАВЛЕНО: testConnection вместо testDeviceConnection
+            const deviceAvailable = await this.apiClient.testConnection(this.appState.deviceAddress);
             
             if (!deviceAvailable) {
                 const alternativeIPs = await this.findDeviceInNetwork();
@@ -156,7 +157,8 @@ class EcoGrowApp {
                 throw new Error(`Устройство ${this.appState.deviceAddress} недоступно`);
             }
             
-            const deviceInfo = await this.apiClient.getSystemInfo(this.appState.deviceAddress);
+            // ИСПРАВЛЕНО: getInfo вместо getSystemInfo
+            const deviceInfo = await this.apiClient.getInfo(this.appState.deviceAddress);
             
             localStorage.setItem('ecogrow_ip', this.appState.deviceAddress);
             this.appState.connectionAttempts = 0;
@@ -219,7 +221,8 @@ class EcoGrowApp {
             if (ip === this.appState.deviceAddress) continue;
             
             try {
-                const available = await this.apiClient.testDeviceConnection(ip);
+                // ИСПРАВЛЕНО: testConnection вместо testDeviceConnection
+                const available = await this.apiClient.testConnection(ip);
                 if (available) {
                     foundIPs.push(ip);
                 }
@@ -376,7 +379,8 @@ class EcoGrowApp {
         
         try {
             const requestStart = performance.now();
-            const systemData = await this.apiClient.getSystemState(this.appState.deviceAddress);
+            // ИСПРАВЛЕНО: getState вместо getSystemState
+            const systemData = await this.apiClient.getState(this.appState.deviceAddress);
             const requestEnd = performance.now();
             
             this.appState.lastResponseTime = Math.round(requestEnd - requestStart);
@@ -637,11 +641,13 @@ class EcoGrowApp {
                 }
 
                 try {
-                    await this.apiClient.controlPumpOperation(this.appState.deviceAddress, 'on');
+                    // ИСПРАВЛЕНО: controlPump вместо controlPumpOperation
+                    await this.apiClient.controlPump(this.appState.deviceAddress, 'on');
                     this.notificationManager.show(`💧 Полив запущен на ${pumpDuration} сек`, 'success');
                     setTimeout(async () => {
                         try {
-                            await this.apiClient.controlPumpOperation(this.appState.deviceAddress, 'off');
+                            // ИСПРАВЛЕНО: controlPump вместо controlPumpOperation
+                            await this.apiClient.controlPump(this.appState.deviceAddress, 'off');
                             this.notificationManager.show('✅ Полив завершен', 'success');
                             setTimeout(() => this.refreshSystemData(), 1000);
                         } catch (error) {
@@ -662,7 +668,8 @@ class EcoGrowApp {
                     this.notificationManager.show('✅ Насос выключен (демо)', 'success');
                 } else if (this.appState.connected) {
                     try {
-                        await this.apiClient.controlPumpOperation(this.appState.deviceAddress, 'off');
+                        // ИСПРАВЛЕНО: controlPump вместо controlPumpOperation
+                        await this.apiClient.controlPump(this.appState.deviceAddress, 'off');
                         this.notificationManager.show('✅ Насос выключен', 'success');
                         setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
@@ -683,7 +690,8 @@ class EcoGrowApp {
                     this.notificationManager.show('💡 Свет включен (демо)', 'success');
                 } else if (this.appState.connected) {
                     try {
-                        await this.apiClient.controlLightOperation(this.appState.deviceAddress, 'on');
+                        // ИСПРАВЛЕНО: controlLight вместо controlLightOperation
+                        await this.apiClient.controlLight(this.appState.deviceAddress, 'on');
                         this.notificationManager.show('💡 Свет включен', 'success');
                         setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
@@ -701,7 +709,8 @@ class EcoGrowApp {
                     this.notificationManager.show('✅ Свет выключен (демо)', 'success');
                 } else if (this.appState.connected) {
                     try {
-                        await this.apiClient.controlLightOperation(this.appState.deviceAddress, 'off');
+                        // ИСПРАВЛЕНО: controlLight вместо controlLightOperation
+                        await this.apiClient.controlLight(this.appState.deviceAddress, 'off');
                         this.notificationManager.show('✅ Свет выключен', 'success');
                         setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
@@ -718,7 +727,8 @@ class EcoGrowApp {
                     this.notificationManager.show('🕐 Время синхронизировано (демо)', 'success');
                 } else if (this.appState.connected) {
                     try {
-                        await this.apiClient.synchronizeTime(this.appState.deviceAddress);
+                        // ИСПРАВЛЕНО: syncTime вместо synchronizeTime
+                        await this.apiClient.syncTime(this.appState.deviceAddress);
                         this.notificationManager.show('🕐 Время синхронизировано', 'success');
                         setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
@@ -760,7 +770,8 @@ class EcoGrowApp {
                 }
 
                 try {
-                    await this.apiClient.setDeviceTime(this.appState.deviceAddress, hoursValue, minutesValue);
+                    // ИСПРАВЛЕНО: setTime вместо setDeviceTime
+                    await this.apiClient.setTime(this.appState.deviceAddress, hoursValue, minutesValue);
                     this.notificationManager.show('🕐 Время установлено', 'success');
                     setTimeout(() => this.refreshSystemData(), 1000);
                 } catch (error) {
@@ -784,7 +795,8 @@ class EcoGrowApp {
                     this.notificationManager.show('✅ Порог влажности обновлен (демо)', 'success');
                 } else if (this.appState.connected) {
                     try {
-                        await this.apiClient.updateSystemSettings(this.appState.deviceAddress, {
+                        // ИСПРАВЛЕНО: updateSettings вместо updateSystemSettings
+                        await this.apiClient.updateSettings(this.appState.deviceAddress, {
                             moisture_threshold: thresholdValue
                         });
                         this.notificationManager.show('✅ Порог влажности обновлен', 'success');
@@ -804,7 +816,8 @@ class EcoGrowApp {
                     this.notificationManager.show('✅ Ошибки очищены (демо)', 'success');
                 } else if (this.appState.connected) {
                     try {
-                        await this.apiClient.clearErrorLog(this.appState.deviceAddress);
+                        // ИСПРАВЛЕНО: clearErrors вместо clearErrorLog
+                        await this.apiClient.clearErrors(this.appState.deviceAddress);
                         this.notificationManager.show('✅ Ошибки очищены', 'success');
                         setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
@@ -827,7 +840,8 @@ class EcoGrowApp {
                     this.updateInterface(this.appState.currentSystemData);
                     this.notificationManager.show('✅ Статистика сброшена (демо)', 'success');
                 } else if (this.appState.connected) {
-                    this.apiClient.resetSystemStatistics(this.appState.deviceAddress)
+                    // ИСПРАВЛЕНО: resetStats вместо resetSystemStatistics
+                    this.apiClient.resetStats(this.appState.deviceAddress)
                         .then(() => {
                             this.notificationManager.show('✅ Статистика сброшена', 'success');
                             setTimeout(() => this.refreshSystemData(), 500);
