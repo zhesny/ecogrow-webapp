@@ -1,50 +1,50 @@
 class EcoGrowApp {
     constructor() {
-        this.api = new EcoGrowAPI();
-        this.charts = new ChartsManager();
-        this.theme = new ThemeManager();
-        this.notifications = new NotificationManager();
-        this.config = new ConfigManager();
+        this.apiClient = new EcoGrowAPI();
+        this.chartManager = new ChartsManager();
+        this.themeManager = new ThemeManager();
+        this.notificationManager = new NotificationManager();
+        this.configManager = new ConfigManager();
         
-        this.state = {
+        this.appState = {
             connected: false,
             demoMode: false,
-            espIp: null,
-            currentData: null,
-            settings: {},
-            lastUpdate: null,
-            updateInterval: 5000,
-            connectionRetryCount: 0,
-            maxRetries: 5,
-            lastLatencyMs: null
+            deviceAddress: null,
+            currentSystemData: null,
+            userSettings: {},
+            lastDataUpdate: null,
+            updateFrequency: 5000,
+            connectionAttempts: 0,
+            maxConnectionAttempts: 5,
+            lastResponseTime: null
         };
         
-        this.init();
+        this.initializeApplication();
     }
     
-    async init() {
-        this.theme.init();
-        this.showLoading();
+    async initializeApplication() {
+        this.themeManager.init();
+        this.showLoadingScreen();
         
-        await this.tryAutoConnect();
-        this.hideLoading();
+        await this.attemptAutoConnection();
+        this.hideLoadingScreen();
         
-        this.charts.init();
-        this.startUpdateLoop();
-        this.setupEventListeners();
-        this.initPWA();
-        this.initNetworkListeners();
+        this.chartManager.init();
+        this.startDataUpdateCycle();
+        this.setupUserInteractions();
+        this.initializePWA();
+        this.setupNetworkMonitoring();
     }
     
-    initPWA() {
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            this.deferredPrompt = e;
+    initializePWA() {
+        window.addEventListener('beforeinstallprompt', (installEvent) => {
+            installEvent.preventDefault();
+            this.pwaInstallPrompt = installEvent;
             
-            const installBtn = document.getElementById('pwaInstallBtn');
-            if (installBtn) {
-                installBtn.style.display = 'flex';
-                installBtn.addEventListener('click', () => this.installPWA());
+            const installButton = document.getElementById('pwaInstallBtn');
+            if (installButton) {
+                installButton.style.display = 'flex';
+                installButton.addEventListener('click', () => this.installPWAApplication());
             }
         });
 
@@ -53,174 +53,172 @@ class EcoGrowApp {
         }
     }
     
-    initNetworkListeners() {
+    setupNetworkMonitoring() {
         if (navigator.connection) {
             navigator.connection.addEventListener('change', () => {
-                this.handleNetworkChange();
+                this.handleNetworkStatusChange();
             });
         }
     }
     
-    handleNetworkChange() {
-        if (navigator.onLine && !this.state.connected && !this.state.demoMode) {
-            this.notifications.show('📡 Сеть доступна, проверяем подключение...', 'info');
-            this.tryAutoConnect();
+    handleNetworkStatusChange() {
+        if (navigator.onLine && !this.appState.connected && !this.appState.demoMode) {
+            this.notificationManager.show('📡 Сеть доступна, проверяем подключение...', 'info');
+            this.attemptAutoConnection();
         }
     }
     
-    async installPWA() {
-        if (!this.deferredPrompt) return;
+    async installPWAApplication() {
+        if (!this.pwaInstallPrompt) return;
         
-        this.deferredPrompt.prompt();
-        const { outcome } = await this.deferredPrompt.userChoice;
+        this.pwaInstallPrompt.prompt();
+        const userChoice = await this.pwaInstallPrompt.userChoice;
         
-        if (outcome === 'accepted') {
+        if (userChoice.outcome === 'accepted') {
             console.log('PWA установлено');
-            const installBtn = document.getElementById('pwaInstallBtn');
-            if (installBtn) installBtn.style.display = 'none';
+            const installButton = document.getElementById('pwaInstallBtn');
+            if (installButton) installButton.style.display = 'none';
         }
         
-        this.deferredPrompt = null;
+        this.pwaInstallPrompt = null;
     }
     
-    showLoading() {
-        const loadingScreen = document.getElementById('loadingScreen');
-        if (loadingScreen) {
-            loadingScreen.style.opacity = '1';
-            loadingScreen.style.pointerEvents = 'all';
+    showLoadingScreen() {
+        const loadingElement = document.getElementById('loadingScreen');
+        if (loadingElement) {
+            loadingElement.style.opacity = '1';
+            loadingElement.style.pointerEvents = 'all';
         }
     }
     
-    hideLoading() {
-        const loadingScreen = document.getElementById('loadingScreen');
-        const mainContainer = document.getElementById('mainContainer');
+    hideLoadingScreen() {
+        const loadingElement = document.getElementById('loadingScreen');
+        const mainInterface = document.getElementById('mainContainer');
         
-        if (loadingScreen) {
-            loadingScreen.style.opacity = '0';
+        if (loadingElement) {
+            loadingElement.style.opacity = '0';
             setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                if (mainContainer) {
-                    mainContainer.style.display = 'block';
+                loadingElement.style.display = 'none';
+                if (mainInterface) {
+                    mainInterface.style.display = 'block';
                 }
             }, 500);
         }
     }
     
-    async tryAutoConnect() {
-        const savedIp = localStorage.getItem('ecogrow_ip');
-        if (savedIp) {
-            this.state.espIp = savedIp;
-            const connected = await this.connectToESP();
-            if (connected) return;
+    async attemptAutoConnection() {
+        const savedAddress = localStorage.getItem('ecogrow_ip');
+        if (savedAddress) {
+            this.appState.deviceAddress = savedAddress;
+            const connectionSuccessful = await this.connectToDevice();
+            if (connectionSuccessful) return;
         }
         
-        this.showConnectionModal();
+        this.showConnectionDialog();
     }
     
-    showConnectionModal() {
-        const modal = document.getElementById('connectionModal');
-        if (modal) {
-            modal.classList.add('active');
+    showConnectionDialog() {
+        const connectionDialog = document.getElementById('connectionModal');
+        if (connectionDialog) {
+            connectionDialog.classList.add('active');
         }
     }
     
-    hideConnectionModal() {
-        const modal = document.getElementById('connectionModal');
-        if (modal) {
-            modal.classList.remove('active');
+    hideConnectionDialog() {
+        const connectionDialog = document.getElementById('connectionModal');
+        if (connectionDialog) {
+            connectionDialog.classList.remove('active');
         }
     }
     
-    async connectToESP() {
-        if (!this.state.espIp) {
-            this.notifications.show('❌ Введите IP адрес устройства', 'error');
-            this.showConnectionModal();
+    async connectToDevice() {
+        if (!this.appState.deviceAddress) {
+            this.notificationManager.show('❌ Введите IP адрес устройства', 'error');
+            this.showConnectionDialog();
             return false;
         }
         
-        console.log(`Попытка подключения к: ${this.state.espIp}`);
+        console.log(`Попытка подключения к: ${this.appState.deviceAddress}`);
         
         try {
-            this.showLoading();
+            this.showLoadingScreen();
             
-            this.state.demoMode = false;
-            const isConnected = await this.api.testConnection(this.state.espIp);
+            this.appState.demoMode = false;
+            const deviceAvailable = await this.apiClient.testDeviceConnection(this.appState.deviceAddress);
             
-            if (!isConnected) {
-                throw new Error(`Устройство ${this.state.espIp} недоступно`);
+            if (!deviceAvailable) {
+                throw new Error(`Устройство ${this.appState.deviceAddress} недоступно`);
             }
             
-            const info = await this.api.getInfo(this.state.espIp);
+            const deviceInfo = await this.apiClient.getSystemInfo(this.appState.deviceAddress);
             
-            localStorage.setItem('ecogrow_ip', this.state.espIp);
-            this.state.connectionRetryCount = 0;
-            this.state.connected = true;
-            this.updateConnectionStatus();
+            localStorage.setItem('ecogrow_ip', this.appState.deviceAddress);
+            this.appState.connectionAttempts = 0;
+            this.appState.connected = true;
+            this.updateConnectionDisplay();
             
-            const demoBanner = document.getElementById('demoBanner');
-            if (demoBanner) demoBanner.style.display = 'none';
+            const demoIndicator = document.getElementById('demoBanner');
+            if (demoIndicator) demoIndicator.style.display = 'none';
             
-            await this.updateData();
-            this.hideConnectionModal();
+            await this.refreshSystemData();
+            this.hideConnectionDialog();
             
-            this.notifications.show(`✅ Успешно подключено к ${info.hostname || this.state.espIp}!`, 'success');
+            this.notificationManager.show(`✅ Успешно подключено к ${deviceInfo.hostname || this.appState.deviceAddress}!`, 'success');
             return true;
             
         } catch (error) {
             console.error('Ошибка подключения:', error);
             
-            this.state.connected = false;
-            this.updateConnectionStatus();
-            this.clearStaleData();
+            this.appState.connected = false;
+            this.updateConnectionDisplay();
+            this.clearDisplayedData();
             
-            this.state.connectionRetryCount++;
+            this.appState.connectionAttempts++;
             
-            let errorMsg = error.message;
+            let errorDescription = error.message;
             
             if (error.message.includes('Mixed Content')) {
-                errorMsg = 'Ошибка Mixed Content: HTTPS страница не может получить доступ к HTTP ресурсу.';
-                errorMsg += '\nПопробуйте:';
-                errorMsg += '\n1. Открыть ESP8266 по адресу http://' + this.state.espIp;
-                errorMsg += '\n2. Использовать ngrok для туннелирования';
+                errorDescription = 'Ошибка Mixed Content: HTTPS страница не может получить доступ к HTTP ресурсу.';
+                errorDescription += ' Попробуйте открыть ESP8266 по адресу http://' + this.appState.deviceAddress;
             }
             
-            if (this.state.connectionRetryCount < this.state.maxRetries) {
-                this.notifications.show(
-                    `❌ Попытка ${this.state.connectionRetryCount}/${this.state.maxRetries}: ${errorMsg}`,
+            if (this.appState.connectionAttempts < this.appState.maxConnectionAttempts) {
+                this.notificationManager.show(
+                    `❌ Попытка ${this.appState.connectionAttempts}/${this.appState.maxConnectionAttempts}: ${errorDescription}`,
                     'error',
                     8000
                 );
             } else {
-                this.notifications.show(
+                this.notificationManager.show(
                     '❌ Не удалось подключиться к системе\n' +
                     'Проверьте:\n' +
                     '• Устройство включено и подключено к Wi-Fi\n' +
-                    '• Правильный IP адрес (попробуйте http://' + this.state.espIp + ')\n' +
+                    '• Правильный IP адрес (попробуйте http://' + this.appState.deviceAddress + ')\n' +
                     '• Устройство в той же сети\n' +
                     '• Для GitHub Pages используйте ngrok',
                     'error',
                     10000
                 );
-                this.showConnectionModal();
+                this.showConnectionDialog();
             }
             return false;
         } finally {
-            this.hideLoading();
+            this.hideLoadingScreen();
         }
     }
     
     async startDemoMode() {
-        this.state.demoMode = true;
-        this.state.connected = true;
-        this.state.espIp = 'demo-mode';
+        this.appState.demoMode = true;
+        this.appState.connected = true;
+        this.appState.deviceAddress = 'demo-mode';
         
-        const randomOffset = Math.random() * 10;
+        const randomVariation = Math.random() * 10;
         
-        this.state.currentData = {
-            moisture: Math.round(50 + Math.sin(Date.now() / 60000) * 15 + randomOffset),
-            avg_moisture: Math.round(55 + randomOffset),
-            min_moisture: Math.round(40 + randomOffset),
-            max_moisture: Math.round(70 + randomOffset),
+        this.appState.currentSystemData = {
+            moisture: Math.round(50 + Math.sin(Date.now() / 60000) * 15 + randomVariation),
+            avg_moisture: Math.round(55 + randomVariation),
+            min_moisture: Math.round(40 + randomVariation),
+            max_moisture: Math.round(70 + randomVariation),
             pump: false,
             light: false,
             moisture_threshold: 50,
@@ -242,44 +240,44 @@ class EcoGrowApp {
             total_light_hours: Math.round(356 + Math.random() * 50),
             total_energy: Math.round(17800 + Math.random() * 1000),
             errors: [],
-            moisture_history: Array.from({length: 20}, (_, i) => 
-                60 + Math.sin((i + randomOffset) * 0.5) * 10 + Math.random() * 5
+            moisture_history: Array.from({length: 20}, (_, index) => 
+                60 + Math.sin((index + randomVariation) * 0.5) * 10 + Math.random() * 5
             )
         };
         
-        this.state.currentData.min_moisture = this.state.currentData.moisture;
-        this.state.currentData.max_moisture = this.state.currentData.moisture;
+        this.appState.currentSystemData.min_moisture = this.appState.currentSystemData.moisture;
+        this.appState.currentSystemData.max_moisture = this.appState.currentSystemData.moisture;
         
-        this.updateConnectionStatus();
-        this.updateUI(this.state.currentData);
-        this.charts.updateMoistureChart(this.state.currentData.moisture_history);
+        this.updateConnectionDisplay();
+        this.updateInterface(this.appState.currentSystemData);
+        this.chartManager.updateMoistureChart(this.appState.currentSystemData.moisture_history);
         
-        const demoBanner = document.getElementById('demoBanner');
-        if (demoBanner) demoBanner.style.display = 'flex';
+        const demoIndicator = document.getElementById('demoBanner');
+        if (demoIndicator) demoIndicator.style.display = 'flex';
         
-        this.notifications.show('🔧 Запущен демо-режим', 'info');
-        this.hideConnectionModal();
+        this.notificationManager.show('🔧 Запущен демо-режим', 'info');
+        this.hideConnectionDialog();
     }
     
-    updateConnectionStatus() {
+    updateConnectionDisplay() {
         const statusElement = document.getElementById('connectionStatus');
         if (statusElement) {
-            if (this.state.connected) {
-                if (this.state.demoMode) {
+            if (this.appState.connected) {
+                if (this.appState.demoMode) {
                     statusElement.innerHTML = `
                         <div class="status-dot" style="background: var(--accent-orange)"></div>
                         <span>Демо-режим</span>
                     `;
                     statusElement.classList.add('connected');
                 } else {
-                    const shortIp = this.state.espIp ? 
-                        (this.state.espIp.length > 20 ? 
-                            this.state.espIp.substring(0, 17) + '...' : 
-                            this.state.espIp) : 
+                    const shortAddress = this.appState.deviceAddress ? 
+                        (this.appState.deviceAddress.length > 20 ? 
+                            this.appState.deviceAddress.substring(0, 17) + '...' : 
+                            this.appState.deviceAddress) : 
                         '--';
                     statusElement.innerHTML = `
                         <div class="status-dot"></div>
-                        <span>Подключено: ${shortIp}</span>
+                        <span>Подключено: ${shortAddress}</span>
                     `;
                     statusElement.classList.add('connected');
                 }
@@ -295,614 +293,611 @@ class EcoGrowApp {
         this.updateConnectionMetrics();
     }
     
-    async updateData() {
-        if (!this.state.connected) return;
+    async refreshSystemData() {
+        if (!this.appState.connected) return;
         
-        if (this.state.demoMode) {
-            const now = new Date();
-            const hour = now.getHours();
+        if (this.appState.demoMode) {
+            const currentTime = new Date();
+            const currentHour = currentTime.getHours();
             
-            if (hour >= 8 && hour < 20) {
-                this.state.currentData.light = true;
+            if (currentHour >= 8 && currentHour < 20) {
+                this.appState.currentSystemData.light = true;
             } else {
-                this.state.currentData.light = false;
+                this.appState.currentSystemData.light = false;
             }
             
-            this.state.currentData.moisture = Math.max(20, Math.min(80, 
+            this.appState.currentSystemData.moisture = Math.max(20, Math.min(80, 
                 60 + Math.sin(Date.now() / 60000) * 10 + Math.random() * 5
             ));
             
-            if (this.state.currentData.moisture < this.state.currentData.min_moisture) {
-                this.state.currentData.min_moisture = this.state.currentData.moisture;
+            if (this.appState.currentSystemData.moisture < this.appState.currentSystemData.min_moisture) {
+                this.appState.currentSystemData.min_moisture = this.appState.currentSystemData.moisture;
             }
-            if (this.state.currentData.moisture > this.state.currentData.max_moisture) {
-                this.state.currentData.max_moisture = this.state.currentData.moisture;
+            if (this.appState.currentSystemData.moisture > this.appState.currentSystemData.max_moisture) {
+                this.appState.currentSystemData.max_moisture = this.appState.currentSystemData.moisture;
             }
             
-            this.state.currentData.current_time = now.toLocaleTimeString('ru-RU', { 
+            this.appState.currentSystemData.current_time = currentTime.toLocaleTimeString('ru-RU', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
             
-            this.state.currentData.moisture_history.push(this.state.currentData.moisture);
-            if (this.state.currentData.moisture_history.length > 20) {
-                this.state.currentData.moisture_history.shift();
+            this.appState.currentSystemData.moisture_history.push(this.appState.currentSystemData.moisture);
+            if (this.appState.currentSystemData.moisture_history.length > 20) {
+                this.appState.currentSystemData.moisture_history.shift();
             }
             
-            this.updateUI(this.state.currentData);
-            this.charts.updateMoistureChart(this.state.currentData.moisture_history);
+            this.updateInterface(this.appState.currentSystemData);
+            this.chartManager.updateMoistureChart(this.appState.currentSystemData.moisture_history);
             return;
         }
         
         try {
-            const startTime = performance.now();
-            const data = await this.api.getState(this.state.espIp);
-            const endTime = performance.now();
+            const requestStart = performance.now();
+            const systemData = await this.apiClient.getSystemState(this.appState.deviceAddress);
+            const requestEnd = performance.now();
             
-            this.state.lastLatencyMs = Math.round(endTime - startTime);
-            this.state.currentData = data;
-            this.state.lastUpdate = new Date();
-            this.state.connectionRetryCount = 0;
+            this.appState.lastResponseTime = Math.round(requestEnd - requestStart);
+            this.appState.currentSystemData = systemData;
+            this.appState.lastDataUpdate = new Date();
+            this.appState.connectionAttempts = 0;
             
-            this.updateUI(data);
-            this.charts.updateMoistureChart(data.moisture_history);
-            this.checkNotifications(data);
+            this.updateInterface(systemData);
+            this.chartManager.updateMoistureChart(systemData.moisture_history);
+            this.checkSystemNotifications(systemData);
             
         } catch (error) {
             console.error('Ошибка обновления данных:', error);
             
-            this.state.connectionRetryCount++;
+            this.appState.connectionAttempts++;
             this.updateConnectionMetrics();
             
-            if (this.state.connectionRetryCount >= 3) {
-                this.state.connected = false;
-                this.updateConnectionStatus();
-                this.clearStaleData();
-                this.notifications.show('❌ Потеряно соединение с устройством', 'error');
+            if (this.appState.connectionAttempts >= 3) {
+                this.appState.connected = false;
+                this.updateConnectionDisplay();
+                this.clearDisplayedData();
+                this.notificationManager.show('❌ Потеряно соединение с устройством', 'error');
                 
                 setTimeout(() => {
-                    if (!this.state.connected && !this.state.demoMode) {
-                        this.showConnectionModal();
+                    if (!this.appState.connected && !this.appState.demoMode) {
+                        this.showConnectionDialog();
                     }
                 }, 1000);
             }
         }
     }
     
-    clearStaleData() {
-        const staleElements = [
+    clearDisplayedData() {
+        const displayElements = [
             'moistureValue', 'avgMoisture', 'minMoisture', 'maxMoisture',
             'pumpStatus', 'lightStatus', 'currentTime', 'systemTime',
             'totalWaterings', 'totalLightHours', 'energyUsed',
             'moistureStatus', 'thresholdValue', 'lightToday'
         ];
         
-        staleElements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                if (id === 'moistureStatus') {
-                    element.textContent = '--%';
-                } else if (id === 'thresholdValue') {
-                    element.textContent = '50%';
-                } else if (id === 'pumpStatus' || id === 'lightStatus') {
-                    element.textContent = '--';
-                    element.className = 'card-status';
-                } else if (id === 'lightToday') {
-                    element.textContent = '0 ч';
+        displayElements.forEach(elementId => {
+            const displayElement = document.getElementById(elementId);
+            if (displayElement) {
+                if (elementId === 'moistureStatus') {
+                    displayElement.textContent = '--%';
+                } else if (elementId === 'thresholdValue') {
+                    displayElement.textContent = '50%';
+                } else if (elementId === 'pumpStatus' || elementId === 'lightStatus') {
+                    displayElement.textContent = '--';
+                    displayElement.className = 'card-status';
+                } else if (elementId === 'lightToday') {
+                    displayElement.textContent = '0 ч';
                 } else {
-                    element.textContent = '--';
+                    displayElement.textContent = '--';
                 }
             }
         });
         
-        const thresholdSlider = document.getElementById('moistureThreshold');
-        if (thresholdSlider) thresholdSlider.value = 50;
+        const thresholdControl = document.getElementById('moistureThreshold');
+        if (thresholdControl) thresholdControl.value = 50;
         
-        const moistureBarFill = document.getElementById('moistureBarFill');
-        if (moistureBarFill) moistureBarFill.style.width = '0%';
+        const moistureIndicator = document.getElementById('moistureBarFill');
+        if (moistureIndicator) moistureIndicator.style.width = '0%';
         
-        if (this.charts) {
-            this.charts.clearChart();
+        if (this.chartManager) {
+            this.chartManager.clearChart();
         }
         
-        this.updateErrorsList([]);
+        this.updateErrorDisplay([]);
     }
     
-    updateUI(data) {
-        if (!data) return;
+    updateInterface(systemData) {
+        if (!systemData) return;
         
-        this.updateElement('moistureValue', Math.round(data.moisture));
-        this.updateElement('avgMoisture', Math.round(data.avg_moisture || data.moisture) + '%');
-        this.updateElement('minMoisture', Math.round(data.min_moisture || data.moisture) + '%');
-        this.updateElement('maxMoisture', Math.round(data.max_moisture || data.moisture) + '%');
+        this.updateDisplayElement('moistureValue', Math.round(systemData.moisture));
+        this.updateDisplayElement('avgMoisture', Math.round(systemData.avg_moisture || systemData.moisture) + '%');
+        this.updateDisplayElement('minMoisture', Math.round(systemData.min_moisture || systemData.moisture) + '%');
+        this.updateDisplayElement('maxMoisture', Math.round(systemData.max_moisture || systemData.moisture) + '%');
         
-        const moistureBarFill = document.getElementById('moistureBarFill');
-        if (moistureBarFill) {
-            moistureBarFill.style.width = `${data.moisture}%`;
+        const moistureIndicator = document.getElementById('moistureBarFill');
+        if (moistureIndicator) {
+            moistureIndicator.style.width = `${systemData.moisture}%`;
         }
         
-        const statusElement = document.getElementById('moistureStatus');
-        if (statusElement) {
-            let icon = 'fa-leaf';
-            if (data.moisture < 30) icon = 'fa-exclamation-triangle';
-            else if (data.moisture < 50) icon = 'fa-tint';
-            else if (data.moisture > 80) icon = 'fa-flood';
+        const statusDisplay = document.getElementById('moistureStatus');
+        if (statusDisplay) {
+            let statusIcon = 'fa-leaf';
+            if (systemData.moisture < 30) statusIcon = 'fa-exclamation-triangle';
+            else if (systemData.moisture < 50) statusIcon = 'fa-tint';
+            else if (systemData.moisture > 80) statusIcon = 'fa-flood';
             
-            statusElement.innerHTML = `<i class="fas ${icon}"></i> ${Math.round(data.moisture)}%`;
+            statusDisplay.innerHTML = `<i class="fas ${statusIcon}"></i> ${Math.round(systemData.moisture)}%`;
         }
         
-        this.updateElement('pumpStatus', data.pump ? 'ВКЛ' : 'ВЫКЛ');
-        this.updateElement('lightStatus', data.light ? 'ВКЛ' : 'ВЫКЛ');
-        this.updateElement('currentTime', data.current_time || '--:--');
-        this.updateElement('systemTime', data.current_time || '--:--');
-        this.updateElement('totalWaterings', data.total_waterings || 0);
-        this.updateElement('totalLightHours', data.total_light_hours || 0);
-        this.updateElement('energyUsed', (data.total_energy || 0) + ' Вт·ч');
-        this.updateElement('lightToday', (data.total_light_hours || 0) + ' ч');
+        this.updateDisplayElement('pumpStatus', systemData.pump ? 'ВКЛ' : 'ВЫКЛ');
+        this.updateDisplayElement('lightStatus', systemData.light ? 'ВКЛ' : 'ВЫКЛ');
+        this.updateDisplayElement('currentTime', systemData.current_time || '--:--');
+        this.updateDisplayElement('systemTime', systemData.current_time || '--:--');
+        this.updateDisplayElement('totalWaterings', systemData.total_waterings || 0);
+        this.updateDisplayElement('totalLightHours', systemData.total_light_hours || 0);
+        this.updateDisplayElement('energyUsed', (systemData.total_energy || 0) + ' Вт·ч');
+        this.updateDisplayElement('lightToday', (systemData.total_light_hours || 0) + ' ч');
         
-        const pumpStatus = document.getElementById('pumpStatus');
-        if (pumpStatus) {
-            pumpStatus.className = data.pump ? 'card-status active' : 'card-status';
+        const pumpStatusElement = document.getElementById('pumpStatus');
+        if (pumpStatusElement) {
+            pumpStatusElement.className = systemData.pump ? 'card-status active' : 'card-status';
         }
         
-        const lightStatus = document.getElementById('lightStatus');
-        if (lightStatus) {
-            lightStatus.className = data.light ? 'card-status active' : 'card-status';
+        const lightStatusElement = document.getElementById('lightStatus');
+        if (lightStatusElement) {
+            lightStatusElement.className = systemData.light ? 'card-status active' : 'card-status';
         }
         
-        this.updateElement('thresholdValue', (data.moisture_threshold || 50) + '%');
-        const thresholdSlider = document.getElementById('moistureThreshold');
-        if (thresholdSlider) thresholdSlider.value = data.moisture_threshold || 50;
+        this.updateDisplayElement('thresholdValue', (systemData.moisture_threshold || 50) + '%');
+        const thresholdControl = document.getElementById('moistureThreshold');
+        if (thresholdControl) thresholdControl.value = systemData.moisture_threshold || 50;
         
-        this.updateElement('wateringDelay', data.watering_delay || 30);
-        this.updateElement('wateringDuration', data.watering_duration || 10);
-        this.updateElement('manualPumpTime', data.manual_pump_time || 10);
-        this.updateElement('manualLightTime', data.manual_light_time || 1);
+        this.updateDisplayElement('wateringDelay', systemData.watering_delay || 30);
+        this.updateDisplayElement('wateringDuration', systemData.watering_duration || 10);
+        this.updateDisplayElement('manualPumpTime', systemData.manual_pump_time || 10);
+        this.updateDisplayElement('manualLightTime', systemData.manual_light_time || 1);
         
-        this.updateElement('lampStart', data.lamp_start || '08:00');
-        this.updateElement('lampEnd', data.lamp_end || '20:00');
-        this.updateElement('sleepStart', data.sleep_start || '23:00');
-        this.updateElement('sleepEnd', data.sleep_end || '07:00');
+        this.updateDisplayElement('lampStart', systemData.lamp_start || '08:00');
+        this.updateDisplayElement('lampEnd', systemData.lamp_end || '20:00');
+        this.updateDisplayElement('sleepStart', systemData.sleep_start || '23:00');
+        this.updateDisplayElement('sleepEnd', systemData.sleep_end || '07:00');
         
         const lampToggle = document.getElementById('lampEnabled');
-        if (lampToggle) lampToggle.checked = data.lamp_enabled;
+        if (lampToggle) lampToggle.checked = systemData.lamp_enabled;
         
         const sleepToggle = document.getElementById('sleepEnabled');
-        if (sleepToggle) sleepToggle.checked = data.sleep_enabled;
+        if (sleepToggle) sleepToggle.checked = systemData.sleep_enabled;
         
-        this.updateErrorsList(data.errors || []);
+        this.updateErrorDisplay(systemData.errors || []);
         this.updateConnectionMetrics();
     }
     
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
+    updateDisplayElement(elementId, displayValue) {
+        const displayElement = document.getElementById(elementId);
+        if (displayElement) {
+            displayElement.textContent = displayValue;
         }
     }
     
-    updateErrorsList(errors) {
-        const errorsList = document.getElementById('errorsList');
-        if (!errorsList) return;
+    updateErrorDisplay(errorList) {
+        const errorContainer = document.getElementById('errorsList');
+        if (!errorContainer) return;
         
-        errorsList.innerHTML = '';
+        errorContainer.innerHTML = '';
         
-        if (!errors || errors.length === 0) {
-            errorsList.innerHTML = '<p class="no-errors">✅ Ошибок нет</p>';
+        if (!errorList || errorList.length === 0) {
+            errorContainer.innerHTML = '<p class="no-errors">✅ Ошибок нет</p>';
             return;
         }
         
-        errors.forEach(error => {
+        errorList.forEach(errorItem => {
             const errorElement = document.createElement('div');
-            errorElement.className = `error-item ${error.critical ? 'critical' : ''}`;
+            errorElement.className = `error-item ${errorItem.critical ? 'critical' : ''}`;
             
             errorElement.innerHTML = `
-                <div class="error-time">${error.time}</div>
-                <div class="error-message">${error.msg}</div>
+                <div class="error-time">${errorItem.time}</div>
+                <div class="error-message">${errorItem.msg}</div>
             `;
             
-            errorsList.appendChild(errorElement);
+            errorContainer.appendChild(errorElement);
         });
     }
     
     updateConnectionMetrics() {
-        const latencyElement = document.getElementById('latencyValue');
-        const retryElement = document.getElementById('retryCount');
+        const latencyDisplay = document.getElementById('latencyValue');
+        const retryDisplay = document.getElementById('retryCount');
         
-        if (latencyElement) {
-            if (this.state.lastLatencyMs !== null) {
-                latencyElement.textContent = `${this.state.lastLatencyMs} мс`;
-                if (this.state.lastLatencyMs < 100) {
-                    latencyElement.style.color = 'var(--success)';
-                } else if (this.state.lastLatencyMs < 500) {
-                    latencyElement.style.color = 'var(--warning)';
+        if (latencyDisplay) {
+            if (this.appState.lastResponseTime !== null) {
+                latencyDisplay.textContent = `${this.appState.lastResponseTime} мс`;
+                if (this.appState.lastResponseTime < 100) {
+                    latencyDisplay.style.color = 'var(--success)';
+                } else if (this.appState.lastResponseTime < 500) {
+                    latencyDisplay.style.color = 'var(--warning)';
                 } else {
-                    latencyElement.style.color = 'var(--error)';
+                    latencyDisplay.style.color = 'var(--error)';
                 }
             } else {
-                latencyElement.textContent = '--';
-                latencyElement.style.color = 'var(--text-muted)';
+                latencyDisplay.textContent = '--';
+                latencyDisplay.style.color = 'var(--text-muted)';
             }
         }
         
-        if (retryElement) {
-            retryElement.textContent = `${this.state.connectionRetryCount}/${this.state.maxRetries}`;
+        if (retryDisplay) {
+            retryDisplay.textContent = `${this.appState.connectionAttempts}/${this.appState.maxConnectionAttempts}`;
         }
     }
     
-    checkNotifications(data) {
-        if (!this.notifications.enabled) return;
+    checkSystemNotifications(systemData) {
+        if (!this.notificationManager.enabled) return;
         
-        if (data.moisture < 30) {
-            this.notifications.show('⚠️ Низкий уровень влажности!', 'warning');
+        if (systemData.moisture < 30) {
+            this.notificationManager.show('⚠️ Низкий уровень влажности!', 'warning');
         }
         
-        if (data.errors && data.errors.length > 0) {
-            const criticalErrors = data.errors.filter(error => error.critical);
-            if (criticalErrors.length > 0) {
-                this.notifications.show('🚨 Обнаружены критические ошибки!', 'error');
+        if (systemData.errors && systemData.errors.length > 0) {
+            const criticalIssues = systemData.errors.filter(error => error.critical);
+            if (criticalIssues.length > 0) {
+                this.notificationManager.show('🚨 Обнаружены критические ошибки!', 'error');
             }
         }
     }
     
-    setupEventListeners() {
-        const manualConnectBtn = document.getElementById('manualConnectBtn');
-        if (manualConnectBtn) {
-            manualConnectBtn.addEventListener('click', () => {
-                console.log('Кнопка подключения нажата');
-                this.showConnectionModal();
+    setupUserInteractions() {
+        const connectButton = document.getElementById('manualConnectBtn');
+        if (connectButton) {
+            connectButton.addEventListener('click', () => {
+                this.showConnectionDialog();
             });
         }
         
-        const connectBtn = document.getElementById('connectBtn');
-        if (connectBtn) {
-            connectBtn.addEventListener('click', async () => {
-                console.log('Кнопка "Подключить" нажата');
-                const ipInput = document.getElementById('ipAddress');
-                if (ipInput) {
-                    this.state.espIp = ipInput.value.trim();
-                    console.log(`Попытка подключения к IP: ${this.state.espIp}`);
-                    await this.connectToESP();
+        const confirmConnectButton = document.getElementById('connectBtn');
+        if (confirmConnectButton) {
+            confirmConnectButton.addEventListener('click', async () => {
+                const addressInput = document.getElementById('ipAddress');
+                if (addressInput) {
+                    this.appState.deviceAddress = addressInput.value.trim();
+                    await this.connectToDevice();
                 }
             });
         }
         
-        const demoBtn = document.getElementById('demoBtn');
-        if (demoBtn) {
-            demoBtn.addEventListener('click', () => {
+        const demoButton = document.getElementById('demoBtn');
+        if (demoButton) {
+            demoButton.addEventListener('click', () => {
                 this.startDemoMode();
             });
         }
         
-        const pumpOnBtn = document.getElementById('pumpOnBtn');
-        const pumpOffBtn = document.getElementById('pumpOffBtn');
+        const pumpStartButton = document.getElementById('pumpOnBtn');
+        const pumpStopButton = document.getElementById('pumpOffBtn');
         
-        if (pumpOnBtn) {
-            pumpOnBtn.addEventListener('click', async () => {
+        if (pumpStartButton) {
+            pumpStartButton.addEventListener('click', async () => {
                 const durationInput = document.getElementById('manualPumpTimeInput');
-                const durationSec = Math.max(1, parseInt(durationInput?.value, 10) || 10);
-                const durationMs = durationSec * 1000;
+                const pumpDuration = Math.max(1, parseInt(durationInput?.value, 10) || 10);
+                const pumpDurationMs = pumpDuration * 1000;
 
-                if (this.state.demoMode) {
-                    this.state.currentData.pump = true;
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show(`💧 Полив запущен на ${durationSec} сек (демо)`, 'success');
+                if (this.appState.demoMode) {
+                    this.appState.currentSystemData.pump = true;
+                    this.updateInterface(this.appState.currentSystemData);
+                    this.notificationManager.show(`💧 Полив запущен на ${pumpDuration} сек (демо)`, 'success');
                     setTimeout(() => {
-                        this.state.currentData.pump = false;
-                        this.updateUI(this.state.currentData);
-                    }, durationMs);
+                        this.appState.currentSystemData.pump = false;
+                        this.updateInterface(this.appState.currentSystemData);
+                    }, pumpDurationMs);
                     return;
                 }
 
-                if (!this.state.connected) {
-                    this.notifications.show('❌ Нет подключения к системе', 'error');
+                if (!this.appState.connected) {
+                    this.notificationManager.show('❌ Нет подключения к системе', 'error');
                     return;
                 }
 
                 try {
-                    await this.api.controlPump(this.state.espIp, 'on');
-                    this.notifications.show(`💧 Полив запущен на ${durationSec} сек`, 'success');
+                    await this.apiClient.controlPumpOperation(this.appState.deviceAddress, 'on');
+                    this.notificationManager.show(`💧 Полив запущен на ${pumpDuration} сек`, 'success');
                     setTimeout(async () => {
                         try {
-                            await this.api.controlPump(this.state.espIp, 'off');
-                            this.notifications.show('✅ Полив завершен', 'success');
-                            setTimeout(() => this.updateData(), 1000);
+                            await this.apiClient.controlPumpOperation(this.appState.deviceAddress, 'off');
+                            this.notificationManager.show('✅ Полив завершен', 'success');
+                            setTimeout(() => this.refreshSystemData(), 1000);
                         } catch (error) {
-                            this.notifications.show('❌ Ошибка отключения насоса', 'error');
+                            this.notificationManager.show('❌ Ошибка отключения насоса', 'error');
                         }
-                    }, durationMs);
+                    }, pumpDurationMs);
                 } catch (error) {
-                    this.notifications.show('❌ Ошибка включения насоса', 'error');
+                    this.notificationManager.show('❌ Ошибка включения насоса', 'error');
                 }
             });
         }
         
-        if (pumpOffBtn) {
-            pumpOffBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    this.state.currentData.pump = false;
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show('✅ Насос выключен (демо)', 'success');
-                } else if (this.state.connected) {
+        if (pumpStopButton) {
+            pumpStopButton.addEventListener('click', async () => {
+                if (this.appState.demoMode) {
+                    this.appState.currentSystemData.pump = false;
+                    this.updateInterface(this.appState.currentSystemData);
+                    this.notificationManager.show('✅ Насос выключен (демо)', 'success');
+                } else if (this.appState.connected) {
                     try {
-                        await this.api.controlPump(this.state.espIp, 'off');
-                        this.notifications.show('✅ Насос выключен', 'success');
-                        setTimeout(() => this.updateData(), 1000);
+                        await this.apiClient.controlPumpOperation(this.appState.deviceAddress, 'off');
+                        this.notificationManager.show('✅ Насос выключен', 'success');
+                        setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
-                        this.notifications.show('❌ Ошибка выключения насоса', 'error');
+                        this.notificationManager.show('❌ Ошибка выключения насоса', 'error');
                     }
                 }
             });
         }
         
-        const lightOnBtn = document.getElementById('lightOnBtn');
-        const lightOffBtn = document.getElementById('lightOffBtn');
+        const lightStartButton = document.getElementById('lightOnBtn');
+        const lightStopButton = document.getElementById('lightOffBtn');
         
-        if (lightOnBtn) {
-            lightOnBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    this.state.currentData.light = true;
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show('💡 Свет включен (демо)', 'success');
-                } else if (this.state.connected) {
+        if (lightStartButton) {
+            lightStartButton.addEventListener('click', async () => {
+                if (this.appState.demoMode) {
+                    this.appState.currentSystemData.light = true;
+                    this.updateInterface(this.appState.currentSystemData);
+                    this.notificationManager.show('💡 Свет включен (демо)', 'success');
+                } else if (this.appState.connected) {
                     try {
-                        await this.api.controlLight(this.state.espIp, 'on');
-                        this.notifications.show('💡 Свет включен', 'success');
-                        setTimeout(() => this.updateData(), 1000);
+                        await this.apiClient.controlLightOperation(this.appState.deviceAddress, 'on');
+                        this.notificationManager.show('💡 Свет включен', 'success');
+                        setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
-                        this.notifications.show('❌ Ошибка включения света', 'error');
+                        this.notificationManager.show('❌ Ошибка включения света', 'error');
                     }
                 }
             });
         }
         
-        if (lightOffBtn) {
-            lightOffBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    this.state.currentData.light = false;
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show('✅ Свет выключен (демо)', 'success');
-                } else if (this.state.connected) {
+        if (lightStopButton) {
+            lightStopButton.addEventListener('click', async () => {
+                if (this.appState.demoMode) {
+                    this.appState.currentSystemData.light = false;
+                    this.updateInterface(this.appState.currentSystemData);
+                    this.notificationManager.show('✅ Свет выключен (демо)', 'success');
+                } else if (this.appState.connected) {
                     try {
-                        await this.api.controlLight(this.state.espIp, 'off');
-                        this.notifications.show('✅ Свет выключен', 'success');
-                        setTimeout(() => this.updateData(), 1000);
+                        await this.apiClient.controlLightOperation(this.appState.deviceAddress, 'off');
+                        this.notificationManager.show('✅ Свет выключен', 'success');
+                        setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
-                        this.notifications.show('❌ Ошибка выключения света', 'error');
+                        this.notificationManager.show('❌ Ошибка выключения света', 'error');
                     }
                 }
             });
         }
         
-        const syncTimeBtn = document.getElementById('syncTimeBtn');
-        if (syncTimeBtn) {
-            syncTimeBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    this.notifications.show('🕐 Время синхронизировано (демо)', 'success');
-                } else if (this.state.connected) {
+        const timeSyncButton = document.getElementById('syncTimeBtn');
+        if (timeSyncButton) {
+            timeSyncButton.addEventListener('click', async () => {
+                if (this.appState.demoMode) {
+                    this.notificationManager.show('🕐 Время синхронизировано (демо)', 'success');
+                } else if (this.appState.connected) {
                     try {
-                        await this.api.syncTime(this.state.espIp);
-                        this.notifications.show('🕐 Время синхронизировано', 'success');
-                        setTimeout(() => this.updateData(), 1000);
+                        await this.apiClient.synchronizeTime(this.appState.deviceAddress);
+                        this.notificationManager.show('🕐 Время синхронизировано', 'success');
+                        setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
-                        this.notifications.show('❌ Ошибка синхронизации времени', 'error');
+                        this.notificationManager.show('❌ Ошибка синхронизации времени', 'error');
                     }
                 }
             });
         }
 
-        const setTimeBtn = document.getElementById('setTimeBtn');
+        const setTimeButton = document.getElementById('setTimeBtn');
         const manualTimeInput = document.getElementById('manualTimeInput');
         if (manualTimeInput) {
-            const now = new Date();
-            manualTimeInput.value = now.toTimeString().slice(0, 5);
+            const currentTime = new Date();
+            manualTimeInput.value = currentTime.toTimeString().slice(0, 5);
         }
 
-        if (setTimeBtn && manualTimeInput) {
-            setTimeBtn.addEventListener('click', async () => {
+        if (setTimeButton && manualTimeInput) {
+            setTimeButton.addEventListener('click', async () => {
                 if (!manualTimeInput.value) {
-                    this.notifications.show('❌ Укажите время для установки', 'error');
+                    this.notificationManager.show('❌ Укажите время для установки', 'error');
                     return;
                 }
 
-                const [hours, minutes] = manualTimeInput.value.split(':').map(Number);
-                if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-                    this.notifications.show('❌ Некорректный формат времени', 'error');
+                const [hoursValue, minutesValue] = manualTimeInput.value.split(':').map(Number);
+                if (Number.isNaN(hoursValue) || Number.isNaN(minutesValue)) {
+                    this.notificationManager.show('❌ Некорректный формат времени', 'error');
                     return;
                 }
 
-                if (this.state.demoMode) {
-                    this.updateElement('systemTime', manualTimeInput.value);
-                    this.notifications.show('🕐 Время установлено (демо)', 'success');
+                if (this.appState.demoMode) {
+                    this.updateDisplayElement('systemTime', manualTimeInput.value);
+                    this.notificationManager.show('🕐 Время установлено (демо)', 'success');
                     return;
                 }
 
-                if (!this.state.connected) {
-                    this.notifications.show('❌ Нет подключения к системе', 'error');
+                if (!this.appState.connected) {
+                    this.notificationManager.show('❌ Нет подключения к системе', 'error');
                     return;
                 }
 
                 try {
-                    await this.api.setTime(this.state.espIp, hours, minutes);
-                    this.notifications.show('🕐 Время установлено', 'success');
-                    setTimeout(() => this.updateData(), 1000);
+                    await this.apiClient.setDeviceTime(this.appState.deviceAddress, hoursValue, minutesValue);
+                    this.notificationManager.show('🕐 Время установлено', 'success');
+                    setTimeout(() => this.refreshSystemData(), 1000);
                 } catch (error) {
-                    this.notifications.show('❌ Ошибка установки времени', 'error');
+                    this.notificationManager.show('❌ Ошибка установки времени', 'error');
                 }
             });
         }
         
         const thresholdSlider = document.getElementById('moistureThreshold');
-        const thresholdValue = document.getElementById('thresholdValue');
+        const thresholdDisplay = document.getElementById('thresholdValue');
         
-        if (thresholdSlider && thresholdValue) {
-            thresholdSlider.addEventListener('input', (e) => {
-                thresholdValue.textContent = e.target.value + '%';
+        if (thresholdSlider && thresholdDisplay) {
+            thresholdSlider.addEventListener('input', (sliderEvent) => {
+                thresholdDisplay.textContent = sliderEvent.target.value + '%';
             });
             
-            thresholdSlider.addEventListener('change', async (e) => {
-                const value = parseInt(e.target.value);
-                if (this.state.demoMode) {
-                    this.state.currentData.moisture_threshold = value;
-                    this.notifications.show('✅ Порог влажности обновлен (демо)', 'success');
-                } else if (this.state.connected) {
+            thresholdSlider.addEventListener('change', async (sliderEvent) => {
+                const thresholdValue = parseInt(sliderEvent.target.value);
+                if (this.appState.demoMode) {
+                    this.appState.currentSystemData.moisture_threshold = thresholdValue;
+                    this.notificationManager.show('✅ Порог влажности обновлен (демо)', 'success');
+                } else if (this.appState.connected) {
                     try {
-                        await this.api.updateSettings(this.state.espIp, {
-                            moisture_threshold: value
+                        await this.apiClient.updateSystemSettings(this.appState.deviceAddress, {
+                            moisture_threshold: thresholdValue
                         });
-                        this.notifications.show('✅ Порог влажности обновлен', 'success');
+                        this.notificationManager.show('✅ Порог влажности обновлен', 'success');
                     } catch (error) {
-                        this.notifications.show('❌ Ошибка обновления настроек', 'error');
+                        this.notificationManager.show('❌ Ошибка обновления настроек', 'error');
                     }
                 }
             });
         }
         
-        const clearErrorsBtn = document.getElementById('clearErrorsBtn');
-        if (clearErrorsBtn) {
-            clearErrorsBtn.addEventListener('click', async () => {
-                if (this.state.demoMode) {
-                    this.state.currentData.errors = [];
-                    this.updateErrorsList([]);
-                    this.notifications.show('✅ Ошибки очищены (демо)', 'success');
-                } else if (this.state.connected) {
+        const clearErrorsButton = document.getElementById('clearErrorsBtn');
+        if (clearErrorsButton) {
+            clearErrorsButton.addEventListener('click', async () => {
+                if (this.appState.demoMode) {
+                    this.appState.currentSystemData.errors = [];
+                    this.updateErrorDisplay([]);
+                    this.notificationManager.show('✅ Ошибки очищены (демо)', 'success');
+                } else if (this.appState.connected) {
                     try {
-                        await this.api.clearErrors(this.state.espIp);
-                        this.notifications.show('✅ Ошибки очищены', 'success');
-                        setTimeout(() => this.updateData(), 1000);
+                        await this.apiClient.clearErrorLog(this.appState.deviceAddress);
+                        this.notificationManager.show('✅ Ошибки очищены', 'success');
+                        setTimeout(() => this.refreshSystemData(), 1000);
                     } catch (error) {
-                        this.notifications.show('❌ Ошибка очистки ошибок', 'error');
+                        this.notificationManager.show('❌ Ошибка очистки ошибок', 'error');
                     }
                 }
             });
         }
         
-        const resetStatsBtn = document.getElementById('resetStatsBtn');
-        if (resetStatsBtn) {
-            resetStatsBtn.addEventListener('click', () => {
-                if (this.state.demoMode) {
-                    this.state.currentData.total_waterings = 0;
-                    this.state.currentData.total_light_hours = 0;
-                    this.state.currentData.total_energy = 0;
-                    this.state.currentData.min_moisture = this.state.currentData.moisture;
-                    this.state.currentData.max_moisture = this.state.currentData.moisture;
+        const resetStatsButton = document.getElementById('resetStatsBtn');
+        if (resetStatsButton) {
+            resetStatsButton.addEventListener('click', () => {
+                if (this.appState.demoMode) {
+                    this.appState.currentSystemData.total_waterings = 0;
+                    this.appState.currentSystemData.total_light_hours = 0;
+                    this.appState.currentSystemData.total_energy = 0;
+                    this.appState.currentSystemData.min_moisture = this.appState.currentSystemData.moisture;
+                    this.appState.currentSystemData.max_moisture = this.appState.currentSystemData.moisture;
                     
-                    this.updateUI(this.state.currentData);
-                    this.notifications.show('✅ Статистика сброшена (демо)', 'success');
-                } else if (this.state.connected) {
-                    this.api.resetStats(this.state.espIp)
+                    this.updateInterface(this.appState.currentSystemData);
+                    this.notificationManager.show('✅ Статистика сброшена (демо)', 'success');
+                } else if (this.appState.connected) {
+                    this.apiClient.resetSystemStatistics(this.appState.deviceAddress)
                         .then(() => {
-                            this.notifications.show('✅ Статистика сброшена', 'success');
-                            setTimeout(() => this.updateData(), 500);
+                            this.notificationManager.show('✅ Статистика сброшена', 'success');
+                            setTimeout(() => this.refreshSystemData(), 500);
                         })
                         .catch((error) => {
                             console.error('Ошибка сброса статистики:', error);
-                            this.notifications.show('❌ Ошибка сброса статистики', 'error');
+                            this.notificationManager.show('❌ Ошибка сброса статистики', 'error');
                         });
                 } else {
-                    this.notifications.show('❌ Нет подключения к системе', 'error');
+                    this.notificationManager.show('❌ Нет подключения к системе', 'error');
                 }
             });
         }
         
-        const docsLink = document.getElementById('docsLink');
-        if (docsLink) {
-            docsLink.addEventListener('click', (e) => {
-                e.preventDefault();
+        const documentationLink = document.getElementById('docsLink');
+        if (documentationLink) {
+            documentationLink.addEventListener('click', (clickEvent) => {
+                clickEvent.preventDefault();
                 window.open('https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit', '_blank');
             });
         }
         
-        const quickGuideBtn = document.getElementById('quickGuideBtn');
-        const quickGuideModal = document.getElementById('quickGuideModal');
-        if (quickGuideBtn && quickGuideModal) {
-            quickGuideBtn.addEventListener('click', () => {
-                quickGuideModal.classList.add('active');
+        const quickGuideButton = document.getElementById('quickGuideBtn');
+        const quickGuideDialog = document.getElementById('quickGuideModal');
+        if (quickGuideButton && quickGuideDialog) {
+            quickGuideButton.addEventListener('click', () => {
+                quickGuideDialog.classList.add('active');
             });
         }
         
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.closest('.modal').classList.remove('active');
+        document.querySelectorAll('.modal-close').forEach(closeButton => {
+            closeButton.addEventListener('click', () => {
+                closeButton.closest('.modal').classList.remove('active');
             });
         });
         
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
+        document.querySelectorAll('.modal').forEach(dialogElement => {
+            dialogElement.addEventListener('click', (clickEvent) => {
+                if (clickEvent.target === dialogElement) {
+                    dialogElement.classList.remove('active');
                 }
             });
         });
         
         const themeSelector = document.getElementById('themeSelector');
         if (themeSelector) {
-            themeSelector.addEventListener('change', (e) => {
-                this.theme.setTheme(e.target.value);
-                this.notifications.show(`✅ Тема изменена на "${e.target.selectedOptions[0].text}"`, 'success');
+            themeSelector.addEventListener('change', (selectionEvent) => {
+                this.themeManager.setTheme(selectionEvent.target.value);
+                this.notificationManager.show(`✅ Тема изменена на "${selectionEvent.target.selectedOptions[0].text}"`, 'success');
             });
         }
 
         const notificationsToggle = document.getElementById('notificationsToggle');
         const silentToggle = document.getElementById('silentNotificationsToggle');
 
-        const syncNotificationControls = () => {
+        const updateNotificationControls = () => {
             if (notificationsToggle) {
-                notificationsToggle.checked = this.notifications.enabled;
+                notificationsToggle.checked = this.notificationManager.enabled;
             }
             if (silentToggle) {
-                silentToggle.checked = this.notifications.silentMode;
-                silentToggle.disabled = !this.notifications.enabled;
+                silentToggle.checked = this.notificationManager.silentMode;
+                silentToggle.disabled = !this.notificationManager.enabled;
             }
         };
 
         if (notificationsToggle) {
             const notificationsEnabled = localStorage.getItem('notifications_enabled') !== 'false';
-            this.notifications.setEnabled(notificationsEnabled);
-            notificationsToggle.addEventListener('change', (e) => {
-                this.notifications.setEnabled(e.target.checked);
-                syncNotificationControls();
+            this.notificationManager.setEnabled(notificationsEnabled);
+            notificationsToggle.addEventListener('change', (toggleEvent) => {
+                this.notificationManager.setEnabled(toggleEvent.target.checked);
+                updateNotificationControls();
             });
         }
 
         if (silentToggle) {
             const silentEnabled = localStorage.getItem('notifications_silent') === 'true';
-            this.notifications.setSilentMode(silentEnabled);
-            silentToggle.addEventListener('change', (e) => {
-                this.notifications.setSilentMode(e.target.checked);
-                syncNotificationControls();
+            this.notificationManager.setSilentMode(silentEnabled);
+            silentToggle.addEventListener('change', (toggleEvent) => {
+                this.notificationManager.setSilentMode(toggleEvent.target.checked);
+                updateNotificationControls();
             });
         }
 
-        syncNotificationControls();
+        updateNotificationControls();
         
         const updateIntervalInput = document.getElementById('updateInterval');
         if (updateIntervalInput) {
-            updateIntervalInput.addEventListener('change', (e) => {
-                const value = parseInt(e.target.value) * 1000;
-                if (value >= 2000 && value <= 60000) {
-                    this.state.updateInterval = value;
-                    this.notifications.show(`✅ Интервал обновления: ${e.target.value} сек`, 'success');
+            updateIntervalInput.addEventListener('change', (inputEvent) => {
+                const intervalValue = parseInt(inputEvent.target.value) * 1000;
+                if (intervalValue >= 2000 && intervalValue <= 60000) {
+                    this.appState.updateFrequency = intervalValue;
+                    this.notificationManager.show(`✅ Интервал обновления: ${inputEvent.target.value} сек`, 'success');
                 }
             });
         }
     }
     
-    startUpdateLoop() {
+    startDataUpdateCycle() {
         setInterval(() => {
-            if (this.state.connected) {
-                this.updateData();
+            if (this.appState.connected) {
+                this.refreshSystemData();
             }
-        }, this.state.updateInterval);
+        }, this.appState.updateFrequency);
         
         setInterval(() => {
-            if (this.state.demoMode && this.state.currentData) {
-                const now = new Date();
-                this.state.currentData.current_time = now.toLocaleTimeString('ru-RU', { 
+            if (this.appState.demoMode && this.appState.currentSystemData) {
+                const currentTime = new Date();
+                this.appState.currentSystemData.current_time = currentTime.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
-                this.updateElement('systemTime', this.state.currentData.current_time);
+                this.updateDisplayElement('systemTime', this.appState.currentSystemData.current_time);
             }
         }, 60000);
     }
@@ -925,19 +920,19 @@ if ('serviceWorker' in navigator) {
 }
 
 window.addEventListener('online', () => {
-    if (window.ecoGrowApp && !window.ecoGrowApp.state.demoMode) {
-        window.ecoGrowApp.notifications.show('📡 Соединение восстановлено', 'success');
-        if (!window.ecoGrowApp.state.connected) {
-            window.ecoGrowApp.tryAutoConnect();
+    if (window.ecoGrowApp && !window.ecoGrowApp.appState.demoMode) {
+        window.ecoGrowApp.notificationManager.show('📡 Соединение восстановлено', 'success');
+        if (!window.ecoGrowApp.appState.connected) {
+            window.ecoGrowApp.attemptAutoConnection();
         }
     }
 });
 
 window.addEventListener('offline', () => {
-    if (window.ecoGrowApp && !window.ecoGrowApp.state.demoMode) {
-        window.ecoGrowApp.notifications.show('⚠️ Отсутствует интернет-соединение', 'warning');
-        window.ecoGrowApp.state.connected = false;
-        window.ecoGrowApp.updateConnectionStatus();
-        window.ecoGrowApp.clearStaleData();
+    if (window.ecoGrowApp && !window.ecoGrowApp.appState.demoMode) {
+        window.ecoGrowApp.notificationManager.show('⚠️ Отсутствует интернет-соединение', 'warning');
+        window.ecoGrowApp.appState.connected = false;
+        window.ecoGrowApp.updateConnectionDisplay();
+        window.ecoGrowApp.clearDisplayedData();
     }
 });
