@@ -2,6 +2,7 @@ class EcoGrowAPI {
     constructor() {
         this.serverAddress = '';
         this.requestTimeout = 8000;
+        this.localConnection = false;
     }
     
     async makeRequest(endpoint, requestOptions = {}) {
@@ -47,36 +48,29 @@ class EcoGrowAPI {
     configureServerAddress(ipAddress) {
         if (ipAddress === 'demo-mode') {
             this.serverAddress = 'demo://';
+            this.localConnection = false;
             return;
         }
         
         let cleanedAddress = ipAddress.trim();
         
-        // Удаляем протокол если есть
-        cleanedAddress = cleanedAddress.replace(/^https?:\/\//, '');
+        if (!cleanedAddress.startsWith('http://') && !cleanedAddress.startsWith('https://')) {
+            cleanedAddress = 'http://' + cleanedAddress;
+        }
         
-        // Убираем порт 80 если он указан (может мешать)
-        cleanedAddress = cleanedAddress.replace(/:80$/, '');
+        this.serverAddress = cleanedAddress;
         
-        // Проверяем локальный ли адрес
-        const isLocal = this.isLocalAddress(cleanedAddress);
+        const hostname = new URL(this.serverAddress).hostname;
+        this.localConnection = this.checkLocalDevice(hostname);
         
-        // Всегда используем HTTP для ESP8266
-        this.serverAddress = `http://${cleanedAddress}`;
-        
-        console.log(`API URL установлен: ${this.serverAddress}`);
-        return isLocal;
+        console.log(`API URL установлен: ${this.serverAddress} (локальное: ${this.localConnection})`);
     }
 
-    isLocalAddress(ipAddress) {
-        const hostname = ipAddress.split('/')[0].split(':')[0];
-        
-        // Проверка localhost и .local доменов
+    checkLocalDevice(hostname) {
         if (hostname === 'localhost' || hostname.endsWith('.local')) {
             return true;
         }
         
-        // Проверка приватных IP-адресов
         const ipPatterns = [
             /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
             /^192\.168\.\d{1,3}\.\d{1,3}$/,
