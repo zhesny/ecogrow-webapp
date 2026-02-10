@@ -114,32 +114,6 @@ class EcoGrowApp {
             if (connected) return;
         }
         
-        const commonIPs = [
-            'ecogrow.local',
-            '192.168.1.100',
-            '192.168.0.187',
-            '192.168.4.1',
-            '10.174.79.89',
-            '10.108.130.89',
-            '192.168.0.100',
-            '192.168.1.187'
-        ];
-        
-        for (const ip of commonIPs) {
-            try {
-                console.log(`Проверяем подключение к ${ip}...`);
-                const isConnected = await this.api.testConnection(ip);
-                if (isConnected) {
-                    this.state.espIp = ip;
-                    const connected = await this.connectToESP();
-                    if (connected) return;
-                }
-            } catch (error) {
-                console.log(`Ошибка при проверке ${ip}:`, error.message);
-                continue;
-            }
-        }
-        
         this.showConnectionModal();
     }
     
@@ -163,18 +137,6 @@ class EcoGrowApp {
             this.showConnectionModal();
             return false;
         }
-
-        if (window.location.protocol === 'https:' && this.api.isLocalTarget(this.state.espIp)) {
-            this.notifications.show(
-                '⚠️ Обнаружена проблема Mixed Content!\n' +
-                'Страница открыта по HTTPS, а локальное устройство доступно только по HTTP.\n' +
-                'Для подключения откройте панель управления по HTTP (http://localhost:8000 или http://ваш-ip)',
-                'warning',
-                15000
-            );
-            this.showConnectionModal();
-            return false;
-        }
         
         try {
             this.showLoading();
@@ -183,7 +145,7 @@ class EcoGrowApp {
             const isConnected = await this.api.testConnection(this.state.espIp);
             
             if (!isConnected) {
-                throw new Error(`Устройство ${this.state.espIp} недоступно. Проверьте:\n1. Устройство включено\n2. IP адрес правильный\n3. Устройство в той же сети`);
+                throw new Error(`Устройство ${this.state.espIp} недоступно`);
             }
             
             const info = await this.api.getInfo(this.state.espIp);
@@ -217,22 +179,12 @@ class EcoGrowApp {
                     'error',
                     5000
                 );
-                
-                setTimeout(async () => {
-                    await this.connectToESP();
-                }, 2000);
             } else {
                 this.notifications.show(
-                    '❌ Не удалось подключиться к системе.\n' +
-                    'Проверьте:\n' +
-                    '1. Устройство включено и подключено к Wi-Fi\n' +
-                    '2. Правильный IP адрес\n' +
-                    '3. Брандмауэр не блокирует подключение\n' +
-                    '4. Для локальных устройств страница должна быть открыта по HTTP (не HTTPS)',
+                    '❌ Не удалось подключиться к системе',
                     'error',
-                    10000
+                    5000
                 );
-                
                 this.showConnectionModal();
             }
             return false;
@@ -578,7 +530,6 @@ class EcoGrowApp {
     }
     
     setupEventListeners() {
-        // Кнопка подключения в хедере
         const manualConnectBtn = document.getElementById('manualConnectBtn');
         if (manualConnectBtn) {
             manualConnectBtn.addEventListener('click', () => {
@@ -604,7 +555,6 @@ class EcoGrowApp {
             });
         }
         
-        // Обработчики для насоса и света (остаются без изменений)
         const pumpOnBtn = document.getElementById('pumpOnBtn');
         const pumpOffBtn = document.getElementById('pumpOffBtn');
         
