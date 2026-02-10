@@ -1,27 +1,22 @@
-
 class EcoGrowAPI {
     constructor() {
         this.baseUrl = '';
         this.timeout = 8000;
-        this.connectionAttempts = 0;
-        this.maxAttempts = 3;
+        this.isLocalEndpoint = false;
     }
     
- 
     async request(endpoint, options = {}) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
         
         try {
-            const url = `${this.baseUrl}${endpoint}`;
-            console.log(`Отправка запроса: ${url}`);
+            let url = `${this.baseUrl}${endpoint}`;
             
             const response = await fetch(url, {
                 ...options,
                 signal: controller.signal,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
                     ...options.headers
                 },
                 mode: 'cors',
@@ -32,7 +27,6 @@ class EcoGrowAPI {
             
             if (!response.ok) {
                 const errorText = await response.text().catch(() => response.statusText);
-                console.error(`Ошибка HTTP ${response.status}: ${errorText}`);
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
             
@@ -40,7 +34,6 @@ class EcoGrowAPI {
             
         } catch (error) {
             clearTimeout(timeoutId);
-            this.connectionAttempts++;
             
             if (error.name === 'AbortError') {
                 throw new Error('Таймаут соединения (8 секунд)');
@@ -48,67 +41,50 @@ class EcoGrowAPI {
             
             if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
                 console.error('Сетевая ошибка подключения');
-                console.log('Возможные причины:');
-                console.log('1. Устройство не включено или не подключено к сети');
-                console.log('2. Неправильный IP адрес устройства');
-                console.log('3. Устройство в другой подсети');
-                console.log('4. Брандмауэр блокирует подключение');
             }
             
             throw error;
         }
     }
     
-
     setBaseUrl(ip) {
         if (ip === 'demo-mode') {
             this.baseUrl = 'demo://';
+            this.isLocalEndpoint = false;
             return;
         }
         
-
         const cleanIp = ip.replace(/^https?:\/\//, '');
-        
-        
-        if (cleanIp.includes('.local') || this.isPrivateIP(cleanIp)) {
-            // Для локальных устройств используем текущий протокол страницы
-            this.baseUrl = `${window.location.protocol}//${cleanIp}`;
-        } else {
+        const isLocalTarget = this.isLocalTarget(cleanIp);
+        this.isLocalEndpoint = isLocalTarget;
 
-            this.baseUrl = `https://${cleanIp}`;
+        if (isLocalTarget) {
+            this.baseUrl = `http://${cleanIp}`;
+        } else {
+            this.baseUrl = `${window.location.protocol}//${cleanIp}`;
         }
         
-        console.log(`Установлен API URL: ${this.baseUrl}`);
+        console.log(`API URL установлен: ${this.baseUrl}`);
+    }
+
+    isLocalTarget(ip) {
+        const cleanIp = ip.replace(/^https?:\/\//, '');
+        const hostOnly = cleanIp.split('/')[0].split(':')[0];
+        const isLocalHost = hostOnly === 'localhost' || hostOnly.endsWith('.local');
+        const isPrivateIp = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|127\.0\.0\.1)/.test(hostOnly);
+        return isLocalHost || isPrivateIp;
     }
     
-    
-    isPrivateIP(ip) {
-        const host = ip.split('/')[0].split(':')[0];
-        
-        
-        const isLocal = host === 'localhost' || 
-                       host.endsWith('.local') || 
-                       host === '127.0.0.1';
-        
-        // Проверка приватных диапазонов
-        const isPrivateRange = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host);
-        
-        return isLocal || isPrivateRange;
-    }
-    
-   
     async getInfo(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/info');
     }
     
-
     async getState(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/state');
     }
     
-
     async controlPump(ip, action) {
         this.setBaseUrl(ip);
         return await this.request('/api/pump', {
@@ -117,7 +93,6 @@ class EcoGrowAPI {
         });
     }
     
-
     async controlLight(ip, action) {
         this.setBaseUrl(ip);
         return await this.request('/api/light', {
@@ -126,7 +101,6 @@ class EcoGrowAPI {
         });
     }
     
-
     async updateSettings(ip, settings) {
         this.setBaseUrl(ip);
         return await this.request('/api/settings', {
@@ -135,7 +109,6 @@ class EcoGrowAPI {
         });
     }
     
-   
     async setTime(ip, hours, minutes) {
         this.setBaseUrl(ip);
         return await this.request('/api/time', {
@@ -144,14 +117,12 @@ class EcoGrowAPI {
         });
     }
     
-    
     async syncTime(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/time/sync', {
             method: 'POST'
         });
     }
-    
     
     async clearErrors(ip) {
         this.setBaseUrl(ip);
@@ -160,7 +131,6 @@ class EcoGrowAPI {
         });
     }
     
-    
     async resetStats(ip) {
         this.setBaseUrl(ip);
         return await this.request('/api/stats/reset', {
@@ -168,15 +138,14 @@ class EcoGrowAPI {
         });
     }
     
-    
     async testConnection(ip) {
         if (ip === 'demo-mode') {
             return true;
         }
         
+        this.setBaseUrl(ip);
+        
         try {
-            this.setBaseUrl(ip);
-            
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 4000);
             
@@ -191,19 +160,13 @@ class EcoGrowAPI {
             if (response.ok) {
                 const data = await response.json().catch(() => ({}));
                 console.log(`Успешное подключение к ${ip}:`, data);
-                this.connectionAttempts = 0;
                 return true;
             }
             
             return false;
         } catch (error) {
-            console.log(`Ошибка подключения к ${ip}:`, error.message);
+            console.log(`Не удалось подключиться к ${ip}:`, error.message);
             return false;
         }
-    }
-    
-    
-    resetConnectionAttempts() {
-        this.connectionAttempts = 0;
     }
 }
