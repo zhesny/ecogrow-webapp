@@ -1,39 +1,39 @@
 class EcoGrowAPI {
     constructor() {
-        this.baseUrl = '';
-        this.timeout = 8000;
-        this.isLocalEndpoint = false;
+        this.serverAddress = '';
+        this.requestTimeout = 8000;
+        this.localConnection = false;
     }
     
-    async request(endpoint, options = {}) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    async makeRequest(endpoint, requestOptions = {}) {
+        const abortController = new AbortController();
+        const timeoutTimer = setTimeout(() => abortController.abort(), this.requestTimeout);
         
         try {
-            let url = `${this.baseUrl}${endpoint}`;
+            let requestUrl = `${this.serverAddress}${endpoint}`;
             
-            const response = await fetch(url, {
-                ...options,
-                signal: controller.signal,
+            const apiResponse = await fetch(requestUrl, {
+                ...requestOptions,
+                signal: abortController.signal,
                 headers: {
                     'Content-Type': 'application/json',
-                    ...options.headers
+                    ...requestOptions.headers
                 },
                 mode: 'cors',
                 credentials: 'omit'
             });
             
-            clearTimeout(timeoutId);
+            clearTimeout(timeoutTimer);
             
-            if (!response.ok) {
-                const errorText = await response.text().catch(() => response.statusText);
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            if (!apiResponse.ok) {
+                const errorText = await apiResponse.text().catch(() => apiResponse.statusText);
+                throw new Error(`HTTP ${apiResponse.status}: ${errorText}`);
             }
             
-            return await response.json();
+            return await apiResponse.json();
             
         } catch (error) {
-            clearTimeout(timeoutId);
+            clearTimeout(timeoutTimer);
             
             if (error.name === 'AbortError') {
                 throw new Error('Таймаут соединения (8 секунд)');
@@ -47,125 +47,125 @@ class EcoGrowAPI {
         }
     }
     
-    setBaseUrl(ip) {
-        if (ip === 'demo-mode') {
-            this.baseUrl = 'demo://';
-            this.isLocalEndpoint = false;
+    configureServerAddress(ipAddress) {
+        if (ipAddress === 'demo-mode') {
+            this.serverAddress = 'demo://';
+            this.localConnection = false;
             return;
         }
         
-        const cleanIp = ip.replace(/^https?:\/\//, '');
-        const isLocalTarget = this.isLocalTarget(cleanIp);
-        this.isLocalEndpoint = isLocalTarget;
+        const cleanedAddress = ipAddress.replace(/^https?:\/\//, '');
+        const isLocalDevice = this.checkLocalDevice(cleanedAddress);
+        this.localConnection = isLocalDevice;
 
-        if (isLocalTarget) {
-            this.baseUrl = `http://${cleanIp}`;
+        if (isLocalDevice) {
+            this.serverAddress = `http://${cleanedAddress}`;
         } else {
-            this.baseUrl = `${window.location.protocol}//${cleanIp}`;
+            this.serverAddress = `${window.location.protocol}//${cleanedAddress}`;
         }
         
-        console.log(`API URL установлен: ${this.baseUrl}`);
+        console.log(`API URL установлен: ${this.serverAddress}`);
     }
 
-    isLocalTarget(ip) {
-        const cleanIp = ip.replace(/^https?:\/\//, '');
-        const hostOnly = cleanIp.split('/')[0].split(':')[0];
-        const isLocalHost = hostOnly === 'localhost' || hostOnly.endsWith('.local');
-        const isPrivateIp = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|127\.0\.0\.1)/.test(hostOnly);
-        return isLocalHost || isPrivateIp;
+    checkLocalDevice(ipAddress) {
+        const cleanedIp = ipAddress.replace(/^https?:\/\//, '');
+        const hostnameOnly = cleanedIp.split('/')[0].split(':')[0];
+        const isLocalHostname = hostnameOnly === 'localhost' || hostnameOnly.endsWith('.local');
+        const isPrivateAddress = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|127\.0\.0\.1)/.test(hostnameOnly);
+        return isLocalHostname || isPrivateAddress;
     }
     
-    async getInfo(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/info');
+    async getSystemInfo(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/info');
     }
     
-    async getState(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/state');
+    async getSystemState(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/state');
     }
     
-    async controlPump(ip, action) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/pump', {
+    async controlPumpOperation(ipAddress, action) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/pump', {
             method: 'POST',
             body: JSON.stringify({ state: action })
         });
     }
     
-    async controlLight(ip, action) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/light', {
+    async controlLightOperation(ipAddress, action) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/light', {
             method: 'POST',
             body: JSON.stringify({ state: action })
         });
     }
     
-    async updateSettings(ip, settings) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/settings', {
+    async updateSystemSettings(ipAddress, newSettings) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/settings', {
             method: 'POST',
-            body: JSON.stringify(settings)
+            body: JSON.stringify(newSettings)
         });
     }
     
-    async setTime(ip, hours, minutes) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/time', {
+    async setDeviceTime(ipAddress, hoursValue, minutesValue) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/time', {
             method: 'POST',
-            body: JSON.stringify({ hours, minutes })
+            body: JSON.stringify({ hours: hoursValue, minutes: minutesValue })
         });
     }
     
-    async syncTime(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/time/sync', {
+    async synchronizeTime(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/time/sync', {
             method: 'POST'
         });
     }
     
-    async clearErrors(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/errors/clear', {
+    async clearErrorLog(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/errors/clear', {
             method: 'POST'
         });
     }
     
-    async resetStats(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/stats/reset', {
+    async resetSystemStatistics(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/stats/reset', {
             method: 'POST'
         });
     }
     
-    async testConnection(ip) {
-        if (ip === 'demo-mode') {
+    async testDeviceConnection(ipAddress) {
+        if (ipAddress === 'demo-mode') {
             return true;
         }
         
-        this.setBaseUrl(ip);
+        this.configureServerAddress(ipAddress);
         
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            const abortController = new AbortController();
+            const connectionTimer = setTimeout(() => abortController.abort(), 4000);
             
-            const response = await fetch(`${this.baseUrl}/api/info`, {
+            const testResponse = await fetch(`${this.serverAddress}/api/info`, {
                 method: 'GET',
-                signal: controller.signal,
+                signal: abortController.signal,
                 mode: 'cors'
             });
             
-            clearTimeout(timeoutId);
+            clearTimeout(connectionTimer);
             
-            if (response.ok) {
-                const data = await response.json().catch(() => ({}));
-                console.log(`Успешное подключение к ${ip}:`, data);
+            if (testResponse.ok) {
+                const responseData = await testResponse.json().catch(() => ({}));
+                console.log(`Успешное подключение к ${ipAddress}:`, responseData);
                 return true;
             }
             
             return false;
         } catch (error) {
-            console.log(`Не удалось подключиться к ${ip}:`, error.message);
+            console.log(`Не удалось подключиться к ${ipAddress}:`, error.message);
             return false;
         }
     }
