@@ -138,6 +138,8 @@ class EcoGrowApp {
             return false;
         }
         
+        console.log(`Попытка подключения к: ${this.state.espIp}`);
+        
         try {
             this.showLoading();
             
@@ -173,17 +175,31 @@ class EcoGrowApp {
             
             this.state.connectionRetryCount++;
             
+            let errorMsg = error.message;
+            
+            if (error.message.includes('Mixed Content')) {
+                errorMsg = 'Ошибка Mixed Content: HTTPS страница не может получить доступ к HTTP ресурсу.';
+                errorMsg += '\nПопробуйте:';
+                errorMsg += '\n1. Открыть ESP8266 по адресу http://' + this.state.espIp;
+                errorMsg += '\n2. Использовать ngrok для туннелирования';
+            }
+            
             if (this.state.connectionRetryCount < this.state.maxRetries) {
                 this.notifications.show(
-                    `❌ Попытка ${this.state.connectionRetryCount}/${this.state.maxRetries}: ${error.message}`,
+                    `❌ Попытка ${this.state.connectionRetryCount}/${this.state.maxRetries}: ${errorMsg}`,
                     'error',
-                    5000
+                    8000
                 );
             } else {
                 this.notifications.show(
-                    '❌ Не удалось подключиться к системе',
+                    '❌ Не удалось подключиться к системе\n' +
+                    'Проверьте:\n' +
+                    '• Устройство включено и подключено к Wi-Fi\n' +
+                    '• Правильный IP адрес (попробуйте http://' + this.state.espIp + ')\n' +
+                    '• Устройство в той же сети\n' +
+                    '• Для GitHub Pages используйте ngrok',
                     'error',
-                    5000
+                    10000
                 );
                 this.showConnectionModal();
             }
@@ -533,6 +549,7 @@ class EcoGrowApp {
         const manualConnectBtn = document.getElementById('manualConnectBtn');
         if (manualConnectBtn) {
             manualConnectBtn.addEventListener('click', () => {
+                console.log('Кнопка подключения нажата');
                 this.showConnectionModal();
             });
         }
@@ -540,9 +557,11 @@ class EcoGrowApp {
         const connectBtn = document.getElementById('connectBtn');
         if (connectBtn) {
             connectBtn.addEventListener('click', async () => {
+                console.log('Кнопка "Подключить" нажата');
                 const ipInput = document.getElementById('ipAddress');
                 if (ipInput) {
                     this.state.espIp = ipInput.value.trim();
+                    console.log(`Попытка подключения к IP: ${this.state.espIp}`);
                     await this.connectToESP();
                 }
             });
