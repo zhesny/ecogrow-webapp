@@ -1,8 +1,8 @@
 {
-    "name": "EcoGrow Control v4.5.1",
+    "name": "EcoGrow Control v4.6",
     "short_name": "EcoGrow",
     "description": "Умная система полива и контроля микроклимата растений",
-    "version": "4.5.1",
+    "version": "4.6",
     "start_url": "./",
     "display": "standalone",
     "background_color": "#0a192f",
@@ -26,5 +26,12 @@
     "lang": "ru-RU",
     "dir": "ltr",
     "prefer_related_applications": false,
-    "scope": "./"
+    "scope": "./",
+    "screenshots": [
+        {
+            "src": "./screenshot.png",
+            "sizes": "1280x720",
+            "type": "image/png"
+        }
+    ]
 }
