@@ -49,30 +49,54 @@ class EcoGrowAPI {
     
     configureServerAddress(ipAddress) {
         if (ipAddress === 'demo-mode') {
-            this.serverAddress = 'demo://';
+            this.serverAddress = '';
             this.localConnection = false;
             return;
         }
         
-        const cleanedAddress = ipAddress.replace(/^https?:\/\//, '');
+        const cleanedAddress = ipAddress.replace(/^https?:\/\//, '').toLowerCase();
         const isLocalDevice = this.checkLocalDevice(cleanedAddress);
         this.localConnection = isLocalDevice;
 
         if (isLocalDevice) {
             this.serverAddress = `http://${cleanedAddress}`;
         } else {
-            this.serverAddress = `${window.location.protocol}//${cleanedAddress}`;
+            if (window.location.protocol === 'https:' && !cleanedAddress.startsWith('https://')) {
+                this.serverAddress = `https://${cleanedAddress}`;
+            } else {
+                this.serverAddress = `http://${cleanedAddress}`;
+            }
         }
         
         console.log(`API URL установлен: ${this.serverAddress}`);
     }
 
     checkLocalDevice(ipAddress) {
-        const cleanedIp = ipAddress.replace(/^https?:\/\//, '');
-        const hostnameOnly = cleanedIp.split('/')[0].split(':')[0];
-        const isLocalHostname = hostnameOnly === 'localhost' || hostnameOnly.endsWith('.local');
-        const isPrivateAddress = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|127\.0\.0\.1)/.test(hostnameOnly);
-        return isLocalHostname || isPrivateAddress;
+        const hostnameOnly = ipAddress.split('/')[0].split(':')[0];
+        
+        if (hostnameOnly === 'localhost' || hostnameOnly.endsWith('.local')) {
+            return true;
+        }
+        
+        if (hostnameOnly === 'demo-mode') {
+            return false;
+        }
+        
+        const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+        const match = hostnameOnly.match(ipPattern);
+        
+        if (match) {
+            const [_, a, b, c, d] = match.map(Number);
+            
+            if (a === 10) return true;
+            if (a === 172 && b >= 16 && b <= 31) return true;
+            if (a === 192 && b === 168) return true;
+            if (a === 127 && b === 0 && c === 0 && d === 1) return true;
+            if (a === 169 && b === 254) return true;
+            if (a === 100 && b >= 64 && b <= 127) return true;
+        }
+        
+        return false;
     }
     
     async getSystemInfo(ipAddress) {
@@ -140,26 +164,32 @@ class EcoGrowAPI {
     
     async testDeviceConnection(ipAddress) {
         if (ipAddress === 'demo-mode') {
-            return true;
+            return new Promise(resolve => {
+                setTimeout(() => resolve(true), 500);
+            });
         }
         
         this.configureServerAddress(ipAddress);
         
         try {
             const abortController = new AbortController();
-            const connectionTimer = setTimeout(() => abortController.abort(), 4000);
+            const connectionTimer = setTimeout(() => abortController.abort(), 3000);
             
             const testResponse = await fetch(`${this.serverAddress}/api/info`, {
                 method: 'GET',
                 signal: abortController.signal,
-                mode: 'cors'
+                mode: 'cors',
+                credentials: 'omit',
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
             
             clearTimeout(connectionTimer);
             
             if (testResponse.ok) {
                 const responseData = await testResponse.json().catch(() => ({}));
-                console.log(`Успешное подключение к ${ipAddress}:`, responseData);
+                console.log(`Подключение к ${ipAddress}:`, responseData);
                 return true;
             }
             
