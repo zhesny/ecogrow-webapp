@@ -2,6 +2,7 @@ class EcoGrowAPI {
     constructor() {
         this.baseUrl = '';
         this.timeout = 10000;
+        this.isGitHubPages = window.location.hostname === 'zhesny.github.io';
     }
     
     async request(endpoint, options = {}) {
@@ -9,14 +10,11 @@ class EcoGrowAPI {
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
         
         try {
-            // ОБРАБОТКА MIXED CONTENT: если страница HTTPS, а запрос HTTP
-            const isHttpsPage = window.location.protocol === 'https:';
-            let url = `${this.baseUrl}${endpoint}`;
+            const url = `${this.baseUrl}${endpoint}`;
             
-            if (isHttpsPage && url.startsWith('http://')) {
-                console.warn('Mixed Content Warning: HTTPS page trying to access HTTP resource');
-                // Можно попробовать переключиться на HTTPS
-                url = url.replace('http://', 'https://');
+            // Блокировка HTTP-запросов на GitHub Pages
+            if (this.isGitHubPages && this.baseUrl.startsWith('http://')) {
+                throw new Error('GitHub Pages блокирует HTTP-запросы к локальным устройствам. Используйте локальный запуск интерфейса.');
             }
             
             const response = await fetch(url, {
@@ -26,7 +24,6 @@ class EcoGrowAPI {
                     'Content-Type': 'application/json',
                     ...options.headers
                 },
-                // Разрешаем небезопасные запросы в development
                 mode: 'cors',
                 credentials: 'omit'
             });
@@ -42,10 +39,13 @@ class EcoGrowAPI {
         } catch (error) {
             clearTimeout(timeoutId);
             
-            // Проверяем, не связано ли с CORS или Mixed Content
+            // Специальная обработка для GitHub Pages
+            if (this.isGitHubPages && error.message.includes('GitHub Pages блокирует')) {
+                throw error;
+            }
+            
             if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                console.error('Network error - возможно, проблема с CORS или Mixed Content');
-                console.log('Подсказка: для локального устройства используйте HTTP страницу');
+                console.error('Сетевая ошибка - возможно, проблема с CORS или Mixed Content');
             }
             
             throw error;
@@ -53,27 +53,32 @@ class EcoGrowAPI {
     }
     
     setBaseUrl(ip) {
-    
-    if (ip === 'demo-mode') {
-        this.baseUrl = 'demo://';
-        return;
-    }
-    
-    
-    const cleanIp = ip.replace(/^https?:\/\//, '');
-    if (cleanIp.match(/^(?:\d{1,3}\.){3}\d{1,3}$/) || cleanIp.endsWith('.local')) {
-        this.baseUrl = `http://${cleanIp}`;
-    } else {
-       
-        if (window.location.hostname === 'zhesny.github.io') {
+        if (ip === 'demo-mode') {
+            this.baseUrl = 'demo://';
+            return;
+        }
+        
+        const cleanIp = ip.replace(/^https?:\/\//, '');
+        
+        // На GitHub Pages всегда используем HTTPS (даже если это не сработает)
+        // В локальном режиме - определяем автоматически
+        if (this.isGitHubPages) {
             this.baseUrl = `https://${cleanIp}`;
         } else {
-            this.baseUrl = `${window.location.protocol}//${cleanIp}`;
+            // Для локального запуска: если открыто через file:// или localhost, используем HTTP
+            const isLocalPage = window.location.protocol === 'file:' || 
+                               window.location.hostname === 'localhost' ||
+                               window.location.hostname === '127.0.0.1';
+            
+            if (isLocalPage) {
+                this.baseUrl = `http://${cleanIp}`;
+            } else {
+                this.baseUrl = `${window.location.protocol}//${cleanIp}`;
+            }
         }
+        
+        console.log(`API URL установлен: ${this.baseUrl} (GitHub Pages: ${this.isGitHubPages})`);
     }
-    
-    console.log(`API URL установлен: ${this.baseUrl}`);
-}
     
     async getInfo(ip) {
         this.setBaseUrl(ip);
@@ -141,9 +146,14 @@ class EcoGrowAPI {
     async testConnection(ip) {
         this.setBaseUrl(ip);
         
-        // Для демо-режима всегда true
         if (ip === 'demo-mode') {
             return true;
+        }
+        
+        // На GitHub Pages пропускаем реальную проверку, сразу показываем инструкцию
+        if (this.isGitHubPages && !ip.includes('github.io')) {
+            console.warn('GitHub Pages не может проверить подключение к локальному устройству');
+            return false;
         }
         
         try {
@@ -151,15 +161,26 @@ class EcoGrowAPI {
             const timeoutId = setTimeout(() => controller.abort(), 3000);
             
             const response = await fetch(`${this.baseUrl}/api/info`, {
-                method: 'HEAD',
+                method: 'GET',
                 signal: controller.signal,
-                mode: 'no-cors' // Используем no-cors для избежания CORS ошибок
+                mode: 'cors'
+            }).catch(err => {
+                console.log(`Не удалось подключиться к ${ip}:`, err.message);
+                throw err;
             });
             
             clearTimeout(timeoutId);
-            return true;
+            
+            if (response.ok) {
+                console.log(`✅ Успешно подключено к ${ip}`);
+                return true;
+            } else {
+                console.log(`❌ ${ip} недоступен: ${response.status}`);
+                return false;
+            }
+            
         } catch (error) {
-            console.log(`Не удалось подключиться к ${ip}:`, error.message);
+            console.log(`Соединение с ${ip} не удалось:`, error.message);
             return false;
         }
     }
