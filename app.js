@@ -147,6 +147,12 @@ class EcoGrowApp {
             const deviceAvailable = await this.apiClient.testDeviceConnection(this.appState.deviceAddress);
             
             if (!deviceAvailable) {
+                const alternativeIPs = await this.findDeviceInNetwork();
+                if (alternativeIPs.length > 0) {
+                    this.appState.deviceAddress = alternativeIPs[0];
+                    this.notificationManager.show(`Найдено устройство: ${alternativeIPs[0]}`, 'success');
+                    return await this.connectToDevice();
+                }
                 throw new Error(`Устройство ${this.appState.deviceAddress} недоступно`);
             }
             
@@ -189,22 +195,58 @@ class EcoGrowApp {
                     8000
                 );
             } else {
-                this.notificationManager.show(
-                    '❌ Не удалось подключиться к системе\n' +
-                    'Проверьте:\n' +
-                    '• Устройство включено и подключено к Wi-Fi\n' +
-                    '• Правильный IP адрес (попробуйте http://' + this.appState.deviceAddress + ')\n' +
-                    '• Устройство в той же сети\n' +
-                    '• Для GitHub Pages используйте ngrok',
-                    'error',
-                    10000
-                );
-                this.showConnectionDialog();
+                this.showConnectionHelp();
             }
             return false;
         } finally {
             this.hideLoadingScreen();
         }
+    }
+    
+    async findDeviceInNetwork() {
+        const foundIPs = [];
+        const commonIPs = [
+            'ecogrow.local',
+            '192.168.1.100',
+            '192.168.0.100',
+            '192.168.4.1',
+            '192.168.1.101',
+            '192.168.0.101',
+            '10.0.0.100'
+        ];
+        
+        for (const ip of commonIPs) {
+            if (ip === this.appState.deviceAddress) continue;
+            
+            try {
+                const available = await this.apiClient.testDeviceConnection(ip);
+                if (available) {
+                    foundIPs.push(ip);
+                }
+            } catch (e) {
+                continue;
+            }
+        }
+        
+        return foundIPs;
+    }
+    
+    showConnectionHelp() {
+        const helpText = `❌ Не удалось подключиться к системе
+
+Проверьте:
+• Устройство включено и подключено к Wi-Fi
+• Правильный IP адрес (попробуйте http://${this.appState.deviceAddress})
+• Устройство в той же сети
+• Брандмауэр не блокирует подключение
+• Попробуйте альтернативные адреса:
+  - ecogrow.local
+  - 192.168.1.100
+  - 192.168.0.100
+  - 192.168.4.1`;
+
+        this.notificationManager.show(helpText, 'error', 10000);
+        this.showConnectionDialog();
     }
     
     async startDemoMode() {
