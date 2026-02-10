@@ -2,6 +2,7 @@
 const CACHE_NAME = 'ecogrow-v4.6';
 const APP_VERSION = '4.6';
 const OFFLINE_URL = './';
+const isGitHubPages = self.location.hostname === 'zhesny.github.io';
 
 // Файлы для кэширования при установке
 const PRECACHE_URLS = [
@@ -64,7 +65,37 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const request = event.request;
     
-    // Пропускаем запросы к ESP8266 API
+    // Блокируем запросы к локальным IP на GitHub Pages
+    if (isGitHubPages && 
+        (request.url.includes('192.168.') || 
+         request.url.includes('.local') ||
+         request.url.match(/https?:\/\/(\d{1,3}\.){3}\d{1,3}/))) {
+        
+        console.log('[ServiceWorker] GitHub Pages: блокировка локального запроса:', request.url);
+        
+        // Возвращаем информационный ответ для API запросов
+        if (request.url.includes('/api/')) {
+            event.respondWith(
+                new Response(JSON.stringify({
+                    error: 'GitHub Pages Restriction',
+                    message: 'GitHub Pages (HTTPS) не может подключиться к локальному устройству (HTTP).',
+                    solution: 'Скачайте файлы и запустите интерфейс локально.',
+                    downloadLink: 'https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip',
+                    demoMode: 'Используйте демо-режим для тестирования интерфейса.'
+                }), {
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    status: 403,
+                    statusText: 'GitHub Pages Restriction'
+                })
+            );
+            return;
+        }
+    }
+    
+    // Пропускаем запросы к ESP8266 API для локального запуска
     if (request.url.includes('/api/') || 
         request.url.includes('192.168.') || 
         request.url.includes('ecogrow.local')) {
@@ -175,5 +206,10 @@ self.addEventListener('notificationclick', event => {
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
+    }
+    
+    // Обработка сообщений о GitHub Pages
+    if (event.data && event.data.type === 'GITHUB_PAGES_WARNING') {
+        console.log('[ServiceWorker] Получено предупреждение о GitHub Pages');
     }
 });
