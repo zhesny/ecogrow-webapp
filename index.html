@@ -11,6 +11,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a192f">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
     
@@ -447,6 +448,11 @@
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
             background: #00e68a;
+        }
+
+        /* === Автоматическое предупреждение для GitHub Pages === */
+        #autoGitHubWarning {
+            margin-bottom: 20px;
         }
 
         /* === DASHBOARD === */
@@ -1515,6 +1521,90 @@
 
     <!-- Main Container -->
     <div class="container" id="mainContainer">
+        <!-- Автоматическое предупреждение для GitHub Pages -->
+        <div id="autoGitHubWarning" style="display: none;">
+            <div style="
+                background: linear-gradient(135deg, #ff6b6b, #ffa726);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 10px;
+                margin: 0 20px 20px 20px;
+                border: 2px solid #ff3d00;
+                animation: pulse 2s infinite;
+                font-size: 0.95em;
+                box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            ">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span><strong>GitHub Pages ограничение:</strong> Невозможно подключиться к ESP8266</span>
+                    </div>
+                    <button id="closeWarningBtn" style="
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 1.2em;
+                        cursor: pointer;
+                        opacity: 0.7;
+                        transition: opacity 0.2s;
+                        padding: 0 5px;
+                    " onmouseover="this.style.opacity='1';" onmouseout="this.style.opacity='0.7';">
+                        ×
+                    </button>
+                </div>
+                <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="tryDemoBtn" style="
+                        background: rgba(255,255,255,0.9);
+                        color: #ff6b6b;
+                        border: none;
+                        padding: 6px 12px;
+                        border-radius: 5px;
+                        font-size: 0.9em;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';" 
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <i class="fas fa-play-circle"></i> Демо-режим
+                    </button>
+                    <button id="showLocalGuideBtn" style="
+                        background: rgba(255,255,255,0.2);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 6px 12px;
+                        border-radius: 5px;
+                        font-size: 0.9em;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)';" 
+                    onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)';">
+                        <i class="fas fa-info-circle"></i> Как запустить локально
+                    </button>
+                    <button id="testConnectionBtn" style="
+                        background: rgba(255,255,255,0.2);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 6px 12px;
+                        border-radius: 5px;
+                        font-size: 0.9em;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)';" 
+                    onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)';">
+                        <i class="fas fa-wifi"></i> Проверить подключение
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Header -->
         <header class="header">
             <div class="logo">
@@ -1966,6 +2056,10 @@
                             <i class="fas fa-question-circle"></i>
                             Краткая инструкция
                         </a>
+                        <a href="#" class="footer-link" id="downloadLocalVersion">
+                            <i class="fas fa-download"></i>
+                            Скачать для локального запуска
+                        </a>
                     </div>
                 </div>
                 
@@ -2115,5 +2209,114 @@
     <script src="config.js"></script>
     <script src="notifications.js"></script>
     <script src="app.js"></script>
+    
+    <!-- Автоматическое предупреждение для GitHub Pages -->
+    <script>
+    // Автоматически показываем предупреждение на GitHub Pages
+    if (window.location.hostname === 'zhesny.github.io') {
+        document.getElementById('autoGitHubWarning').style.display = 'block';
+        
+        // Обработчики кнопок
+        document.getElementById('tryDemoBtn').addEventListener('click', function() {
+            document.getElementById('demoBtn').click();
+        });
+        
+        document.getElementById('showLocalGuideBtn').addEventListener('click', function() {
+            // Показываем модальное окно с инструкцией
+            const modal = document.getElementById('quickGuideModal');
+            if (modal) {
+                modal.classList.add('active');
+                
+                // Добавляем дополнительную информацию о GitHub Pages
+                setTimeout(() => {
+                    const modalBody = modal.querySelector('.modal-body');
+                    if (modalBody && !modalBody.querySelector('.github-pages-info')) {
+                        const githubInfo = `
+                            <div class="github-pages-info" style="margin-top: 20px; padding: 15px; background: rgba(255, 107, 107, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-red);">
+                                <h4 style="color: var(--accent-red); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-exclamation-triangle"></i> Важно для GitHub Pages
+                                </h4>
+                                <p style="color: var(--text-secondary); margin: 8px 0;">
+                                    • Этот интерфейс на GitHub Pages работает только в <strong>демо-режиме</strong>
+                                </p>
+                                <p style="color: var(--text-secondary); margin: 8px 0;">
+                                    • Для работы с реальным ESP8266 <strong>скачайте файлы</strong> и запустите локально
+                                </p>
+                                <p style="color: var(--text-secondary); margin: 8px 0;">
+                                    • Ссылка для скачивания: <code>https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip</code>
+                                </p>
+                            </div>
+                        `;
+                        modalBody.insertAdjacentHTML('beforeend', githubInfo);
+                    }
+                }, 100);
+            }
+        });
+        
+        document.getElementById('testConnectionBtn').addEventListener('click', function() {
+            // Тестовый запрос для проверки доступности устройства
+            const testIp = prompt('Введите IP адрес ESP8266 для проверки:', '192.168.0.148');
+            if (testIp) {
+                // Используем CORS-прокси для проверки
+                fetch(`https://cors-anywhere.herokuapp.com/http://${testIp}/api/info`)
+                    .then(response => {
+                        if (response.ok) {
+                            alert(`✅ Устройство ${testIp} доступно в сети!\n\nНо GitHub Pages (HTTPS) блокирует прямое подключение.\n\nСкачайте файлы для локального запуска.`);
+                        } else {
+                            alert(`❌ Устройство ${testIp} недоступно.\n\nВозможные причины:\n1. Неправильный IP адрес\n2. Устройство выключено\n3. Нет подключения к Wi-Fi сети\n4. Разные сети (устройство и компьютер)`);
+                        }
+                    })
+                    .catch(() => {
+                        alert(`🌐 Не удалось проверить устройство ${testIp}.\n\nПопробуйте:\n1. Проверить IP адрес в настройках ESP8266\n2. Убедиться, что устройство включено\n3. Проверить подключение к одной Wi-Fi сети`);
+                    });
+            }
+        });
+        
+        document.getElementById('closeWarningBtn').addEventListener('click', function() {
+            document.getElementById('autoGitHubWarning').style.display = 'none';
+            localStorage.setItem('hideGitHubWarning', 'true');
+        });
+        
+        // Проверяем, не скрывали ли пользователь предупреждение ранее
+        if (localStorage.getItem('hideGitHubWarning') === 'true') {
+            document.getElementById('autoGitHubWarning').style.display = 'none';
+        }
+        
+        // Обработчик для кнопки "Скачать для локального запуска" в футере
+        document.getElementById('downloadLocalVersion').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Показываем инструкцию
+            const guideText = `📥 СКАЧАТЬ ДЛЯ ЛОКАЛЬНОГО ЗАПУСКА
+
+1. Перейдите по ссылке: 
+   https://github.com/zhesny/ecogrow-webapp
+
+2. Нажмите зелёную кнопку "Code"
+
+3. Выберите "Download ZIP"
+
+4. Распакуйте архив в папку
+
+5. Откройте файл index.html в браузере
+
+✅ Преимущества локального запуска:
+• Полный доступ к ESP8266
+• Работает без интернета
+• Решает проблему Mixed Content
+• Быстрее и надежнее
+
+🔗 Прямая ссылка для скачивания:
+https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip`;
+            
+            // Используем notificationManager если он доступен
+            if (window.ecoGrowApp && window.ecoGrowApp.notificationManager) {
+                window.ecoGrowApp.notificationManager.show(guideText, 'info', 15000);
+            } else {
+                alert(guideText);
+            }
+        });
+    }
+    </script>
 </body>
 </html>
