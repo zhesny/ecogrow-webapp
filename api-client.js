@@ -53,25 +53,27 @@ class EcoGrowAPI {
     }
     
     setBaseUrl(ip) {
-        // Автоматически определяем протокол
-        if (ip === 'demo-mode') {
-            this.baseUrl = 'demo://';
-            return;
-        }
-        
-        // Убираем протокол, если он есть
-        const cleanIp = ip.replace(/^https?:\/\//, '');
-        
-        // Если на GitHub Pages, используем HTTPS
+    
+    if (ip === 'demo-mode') {
+        this.baseUrl = 'demo://';
+        return;
+    }
+    
+    
+    const cleanIp = ip.replace(/^https?:\/\//, '');
+    if (cleanIp.match(/^(?:\d{1,3}\.){3}\d{1,3}$/) || cleanIp.endsWith('.local')) {
+        this.baseUrl = `http://${cleanIp}`;
+    } else {
+       
         if (window.location.hostname === 'zhesny.github.io') {
             this.baseUrl = `https://${cleanIp}`;
         } else {
-            // Иначе используем тот же протокол, что и страница
             this.baseUrl = `${window.location.protocol}//${cleanIp}`;
         }
-        
-        console.log(`API URL установлен: ${this.baseUrl}`);
     }
+    
+    console.log(`API URL установлен: ${this.baseUrl}`);
+}
     
     async getInfo(ip) {
         this.setBaseUrl(ip);
