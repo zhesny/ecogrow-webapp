@@ -1,129 +1,183 @@
 class EcoGrowAPI {
     constructor() {
-        this.baseUrl = '';
-        this.timeout = 8000; // Увеличен для мобильных
+        this.serverAddress = '';
+        this.requestTimeout = 8000;
     }
     
-    async request(endpoint, options = {}) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    async makeRequest(endpoint, requestOptions = {}) {
+        const abortController = new AbortController();
+        const timeoutTimer = setTimeout(() => abortController.abort(), this.requestTimeout);
         
         try {
-            const url = `${this.baseUrl}${endpoint}`;
-            const response = await fetch(url, {
-                ...options,
-                signal: controller.signal,
+            let requestUrl = `${this.serverAddress}${endpoint}`;
+            
+            const apiResponse = await fetch(requestUrl, {
+                ...requestOptions,
+                signal: abortController.signal,
                 headers: {
                     'Content-Type': 'application/json',
-                    ...options.headers
+                    ...requestOptions.headers
                 }
             });
             
-            clearTimeout(timeoutId);
+            clearTimeout(timeoutTimer);
             
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (!apiResponse.ok) {
+                const errorText = await apiResponse.text().catch(() => apiResponse.statusText);
+                throw new Error(`HTTP ${apiResponse.status}: ${errorText}`);
             }
             
-            return await response.json();
+            return await apiResponse.json();
             
         } catch (error) {
-            clearTimeout(timeoutId);
+            clearTimeout(timeoutTimer);
+            
+            if (error.name === 'AbortError') {
+                throw new Error('Таймаут соединения (8 секунд)');
+            }
+            
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                console.error('Сетевая ошибка подключения');
+            }
+            
             throw error;
         }
     }
     
-    setBaseUrl(ip) {
-        if (!ip.startsWith('http://') && !ip.startsWith('https://')) {
-            this.baseUrl = `http://${ip}`;
-        } else {
-            this.baseUrl = ip;
+    configureServerAddress(ipAddress) {
+        if (ipAddress === 'demo-mode') {
+            this.serverAddress = 'demo://';
+            return;
         }
+        
+        let cleanedAddress = ipAddress.trim();
+        
+        // Удаляем протокол если есть
+        cleanedAddress = cleanedAddress.replace(/^https?:\/\//, '');
+        
+        // Убираем порт 80 если он указан (может мешать)
+        cleanedAddress = cleanedAddress.replace(/:80$/, '');
+        
+        // Проверяем локальный ли адрес
+        const isLocal = this.isLocalAddress(cleanedAddress);
+        
+        // Всегда используем HTTP для ESP8266
+        this.serverAddress = `http://${cleanedAddress}`;
+        
+        console.log(`API URL установлен: ${this.serverAddress}`);
+        return isLocal;
+    }
+
+    isLocalAddress(ipAddress) {
+        const hostname = ipAddress.split('/')[0].split(':')[0];
+        
+        // Проверка localhost и .local доменов
+        if (hostname === 'localhost' || hostname.endsWith('.local')) {
+            return true;
+        }
+        
+        // Проверка приватных IP-адресов
+        const ipPatterns = [
+            /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
+            /^192\.168\.\d{1,3}\.\d{1,3}$/,
+            /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/,
+            /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/
+        ];
+        
+        return ipPatterns.some(pattern => pattern.test(hostname));
     }
     
-    // System Info
-    async getInfo(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/info');
+    async getSystemInfo(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/info');
     }
     
-    // Get State
-    async getState(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/state');
+    async getSystemState(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/state');
     }
     
-    // Pump Control
-    async controlPump(ip, action) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/pump', {
+    async controlPumpOperation(ipAddress, action) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/pump', {
             method: 'POST',
             body: JSON.stringify({ state: action })
         });
     }
     
-    // Light Control
-    async controlLight(ip, action) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/light', {
+    async controlLightOperation(ipAddress, action) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/light', {
             method: 'POST',
             body: JSON.stringify({ state: action })
         });
     }
     
-    // Update Settings
-    async updateSettings(ip, settings) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/settings', {
+    async updateSystemSettings(ipAddress, newSettings) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/settings', {
             method: 'POST',
-            body: JSON.stringify(settings)
+            body: JSON.stringify(newSettings)
         });
     }
     
-    // Set Time
-    async setTime(ip, hours, minutes) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/time', {
+    async setDeviceTime(ipAddress, hoursValue, minutesValue) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/time', {
             method: 'POST',
-            body: JSON.stringify({ hours, minutes })
+            body: JSON.stringify({ hours: hoursValue, minutes: minutesValue })
         });
     }
     
-    // Sync Time (новый метод)
-    async syncTime(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/time/sync', {
+    async synchronizeTime(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/time/sync', {
             method: 'POST'
         });
     }
     
-    // Clear Errors
-    async clearErrors(ip) {
-        this.setBaseUrl(ip);
-        return await this.request('/api/errors/clear', {
+    async clearErrorLog(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/errors/clear', {
             method: 'POST'
         });
     }
     
-    // Get Weather Data (external API)
-    async getWeather(lat, lon, apiKey) {
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=ru`;
-        const response = await fetch(url);
-        return await response.json();
+    async resetSystemStatistics(ipAddress) {
+        this.configureServerAddress(ipAddress);
+        return await this.makeRequest('/api/stats/reset', {
+            method: 'POST'
+        });
     }
     
-    // Send Telegram Notification
-    async sendTelegramNotification(botToken, chatId, message) {
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: message,
-                parse_mode: 'HTML'
-            })
-        });
-        return await response.json();
+    async testDeviceConnection(ipAddress) {
+        if (ipAddress === 'demo-mode') {
+            return true;
+        }
+        
+        this.configureServerAddress(ipAddress);
+        
+        try {
+            const abortController = new AbortController();
+            const connectionTimer = setTimeout(() => abortController.abort(), 4000);
+            
+            const testResponse = await fetch(`${this.serverAddress}/api/info`, {
+                method: 'GET',
+                signal: abortController.signal
+            });
+            
+            clearTimeout(connectionTimer);
+            
+            if (testResponse.ok) {
+                const responseData = await testResponse.json().catch(() => ({}));
+                console.log(`Успешное подключение к ${ipAddress}:`, responseData);
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.log(`Не удалось подключиться к ${ipAddress}:`, error.message);
+            return false;
+        }
     }
 }
