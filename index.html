@@ -292,12 +292,15 @@
             align-items: center;
             box-shadow: var(--shadow-md);
             border: 1px solid rgba(0, 255, 157, 0.1);
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .logo {
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .logo-icon {
@@ -318,6 +321,7 @@
             background: linear-gradient(45deg, var(--accent-green), var(--accent-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            line-height: 1.2;
         }
 
         .logo-subtitle {
@@ -329,12 +333,17 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            flex: 1;
+            min-width: 0;
         }
 
         .header-actions {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .connection-status {
@@ -345,7 +354,18 @@
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
-            flex-wrap: wrap;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        .connection-status span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .connection-quality {
@@ -354,6 +374,7 @@
             gap: 8px;
             color: var(--text-secondary);
             font-size: 0.85rem;
+            flex-wrap: wrap;
         }
 
         .connection-metric {
@@ -364,6 +385,7 @@
             border-radius: var(--radius-sm);
             background: rgba(10, 25, 47, 0.4);
             border: 1px solid rgba(0, 255, 157, 0.15);
+            white-space: nowrap;
         }
 
         .status-dot {
@@ -371,6 +393,7 @@
             height: 8px;
             border-radius: 50%;
             background: var(--accent-red);
+            flex-shrink: 0;
         }
 
         .status-dot.connected {
@@ -395,12 +418,35 @@
             align-items: center;
             justify-content: center;
             transition: all var(--transition-fast);
+            flex-shrink: 0;
         }
 
         .header-btn:hover {
             background: var(--bg-tertiary);
             color: var(--text-primary);
             transform: translateY(-2px);
+        }
+
+        /* Кнопка подключения в хедере */
+        .connect-header-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+
+        .connect-header-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            background: #00e68a;
         }
 
         /* === DASHBOARD === */
@@ -1213,34 +1259,41 @@
                 flex-direction: column;
                 gap: 15px;
                 text-align: center;
+                padding: 15px;
             }
             
             .header-controls {
                 width: 100%;
                 justify-content: center;
-                flex-direction: row;
-                flex-wrap: nowrap;
-                gap: 8px;
+                flex-direction: column;
+                gap: 10px;
             }
 
             .connection-status {
                 padding: 6px 10px;
                 font-size: 0.8rem;
-                white-space: nowrap;
+                max-width: 100%;
+                justify-content: center;
             }
 
             .connection-quality {
                 font-size: 0.75rem;
-                white-space: nowrap;
+                justify-content: center;
             }
 
             .header-actions {
                 gap: 6px;
+                justify-content: center;
             }
 
             .header-btn {
                 width: 34px;
                 height: 34px;
+            }
+            
+            .connect-header-btn {
+                padding: 6px 12px;
+                font-size: 0.9rem;
             }
             
             .dashboard-row,
@@ -1317,6 +1370,10 @@
             .btn {
                 padding: 8px 15px;
                 font-size: 0.9rem;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.2rem;
             }
         }
 
@@ -1473,7 +1530,7 @@
             <div class="header-controls">
                 <div class="connection-status" id="connectionStatus">
                     <div class="status-dot"></div>
-                    <span>Нет подключения</span>
+                    <span>Проверка подключения...</span>
                 </div>
                 <div class="connection-quality" aria-label="Качество связи">
                     <div class="connection-metric">
@@ -1482,10 +1539,14 @@
                     </div>
                     <div class="connection-metric">
                         <i class="fas fa-rotate"></i>
-                        <span id="retryCount">0/3</span>
+                        <span id="retryCount">0/5</span>
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button class="connect-header-btn" id="manualConnectBtn" title="Подключиться к устройству">
+                        <i class="fas fa-wifi"></i>
+                        <span>Подключение</span>
+                    </button>
                     <button class="header-btn" id="themeToggle" title="Сменить тему">
                         <i class="fas fa-moon"></i>
                     </button>
@@ -1944,6 +2005,10 @@
                         <p class="text-center mt-10" style="color: var(--text-secondary); font-size: 0.9rem;">
                             Используйте "ecogrow.local" или IP адрес устройства в вашей сети
                         </p>
+                        <p class="text-center mt-5" style="color: var(--accent-orange); font-size: 0.85rem;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Для локальных устройств страница должна быть открыта по HTTP (не HTTPS)
+                        </p>
                     </div>
                     
                     <div class="text-center mt-20">
@@ -2017,6 +2082,9 @@
                         <div>
                             <h4><i class="fas fa-wifi"></i> 1. Подключение</h4>
                             <p>Введите IP адрес ESP8266 (например: 192.168.1.100) или используйте "ecogrow.local" для автоматического подключения.</p>
+                            <p style="color: var(--accent-orange); font-size: 0.9rem;">
+                                <strong>Важно:</strong> Для локальных устройств страница должна быть открыта по HTTP (http://...), а не HTTPS!
+                            </p>
                         </div>
                         <div>
                             <h4><i class="fas fa-tint"></i> 2. Настройка автополива</h4>
