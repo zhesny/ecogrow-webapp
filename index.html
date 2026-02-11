@@ -11,9 +11,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a192f">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon-192.png">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
@@ -201,8 +199,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at top, rgba(0, 255, 157, 0.08), transparent 45%),
-                linear-gradient(135deg, #091627 0%, #0a192f 45%, #0f2340 100%);
+            background: var(--bg-primary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -212,46 +209,6 @@
 
         .loader {
             text-align: center;
-            background: rgba(17, 34, 64, 0.75);
-            border: 1px solid rgba(0, 255, 157, 0.18);
-            border-radius: var(--radius-lg);
-            padding: 28px 34px 26px;
-            box-shadow: var(--shadow-lg);
-            backdrop-filter: blur(6px);
-            min-width: 260px;
-        }
-
-        .loader-brand {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 18px;
-        }
-
-        .loader-logo {
-            width: 54px;
-            height: 54px;
-            border-radius: 16px;
-            background: linear-gradient(140deg, rgba(0, 255, 157, 0.9), rgba(0, 217, 255, 0.9));
-            color: #0a192f;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .loader-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-            color: var(--text-primary);
-        }
-
-        .loader-subtitle {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
         }
 
         .loader-spinner {
@@ -293,15 +250,12 @@
             align-items: center;
             box-shadow: var(--shadow-md);
             border: 1px solid rgba(0, 255, 157, 0.1);
-            flex-wrap: wrap;
-            gap: 15px;
         }
 
         .logo {
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-shrink: 0;
         }
 
         .logo-icon {
@@ -322,7 +276,6 @@
             background: linear-gradient(45deg, var(--accent-green), var(--accent-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            line-height: 1.2;
         }
 
         .logo-subtitle {
@@ -334,17 +287,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
         }
 
         .connection-status {
@@ -355,38 +297,6 @@
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
-            max-width: 300px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex-shrink: 1;
-            min-width: 0;
-        }
-
-        .connection-status span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .connection-quality {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            flex-wrap: wrap;
-        }
-
-        .connection-metric {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
-            border-radius: var(--radius-sm);
-            background: rgba(10, 25, 47, 0.4);
-            border: 1px solid rgba(0, 255, 157, 0.15);
-            white-space: nowrap;
         }
 
         .status-dot {
@@ -394,7 +304,6 @@
             height: 8px;
             border-radius: 50%;
             background: var(--accent-red);
-            flex-shrink: 0;
         }
 
         .status-dot.connected {
@@ -419,40 +328,12 @@
             align-items: center;
             justify-content: center;
             transition: all var(--transition-fast);
-            flex-shrink: 0;
         }
 
         .header-btn:hover {
             background: var(--bg-tertiary);
             color: var(--text-primary);
             transform: translateY(-2px);
-        }
-
-        /* Кнопка подключения в хедере */
-        .connect-header-btn {
-            padding: 8px 16px;
-            border-radius: var(--radius-md);
-            background: var(--accent-green);
-            color: var(--bg-primary);
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all var(--transition-fast);
-            flex-shrink: 0;
-        }
-
-        .connect-header-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-            background: #00e68a;
-        }
-
-        /* === Автоматическое предупреждение для GitHub Pages === */
-        #autoGitHubWarning {
-            margin-bottom: 20px;
         }
 
         /* === DASHBOARD === */
@@ -475,10 +356,6 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
-        }
-
-        .dashboard-row.single {
-            grid-template-columns: 1fr;
         }
 
         /* === КАРТОЧКИ === */
@@ -812,21 +689,20 @@
             right: 0;
             bottom: 0;
             background: var(--bg-secondary);
-            transition: 0.4s;
-            border-radius: 26px;
-            border: 1px solid var(--bg-tertiary);
+            border-radius: 34px;
+            transition: var(--transition-normal);
         }
 
         .switch-slider:before {
             position: absolute;
             content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 2px;
-            background: white;
-            transition: 0.4s;
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background: var(--text-primary);
             border-radius: 50%;
+            transition: var(--transition-normal);
         }
 
         input:checked + .switch-slider {
@@ -846,116 +722,140 @@
         .time-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .time-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
         .time-input-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--text-secondary);
             font-size: 0.85rem;
+            color: var(--text-secondary);
         }
 
         .time-input-group input {
-            width: 100%;
             padding: 10px;
-            border: 1px solid var(--bg-tertiary);
             background: var(--bg-secondary);
-            color: var(--text-primary);
+            border: 1px solid var(--bg-tertiary);
             border-radius: var(--radius-md);
-            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-size: 1rem;
         }
 
-        /* === SLEEP MODE === */
-        .sleep-mode-info {
-            text-align: center;
-            margin-top: 15px;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        /* === STATS === */
+        /* === СТАТИСТИКА === */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
             background: var(--bg-secondary);
-            padding: 15px;
             border-radius: var(--radius-md);
+            padding: 15px;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .stat-icon {
+        .stat-card .stat-icon {
             width: 40px;
             height: 40px;
+            background: rgba(0, 255, 157, 0.1);
             border-radius: var(--radius-md);
-            background: var(--gradient-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--bg-primary);
+            color: var(--accent-green);
+            font-size: 1.2rem;
         }
 
         .stat-number {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-primary);
+            line-height: 1;
         }
 
-        /* === ERRORS === */
+        /* === ОШИБКИ === */
         .errors-list {
             max-height: 200px;
             overflow-y: auto;
+            margin: 15px 0;
         }
 
         .error-item {
-            background: var(--bg-secondary);
-            padding: 10px 15px;
-            border-radius: var(--radius-md);
-            margin-bottom: 10px;
-            border-left: 3px solid var(--accent-orange);
-        }
-
-        .error-item.critical {
-            border-left-color: var(--accent-red);
             background: rgba(255, 71, 87, 0.1);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--accent-red);
         }
 
         .error-item.empty {
+            background: rgba(0, 255, 157, 0.1);
             border-left-color: var(--accent-green);
             text-align: center;
-            color: var(--text-secondary);
         }
 
         .error-time {
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
             margin-bottom: 4px;
         }
 
-        /* === TELEGRAM === */
+        .error-msg {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .error-counter {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .counter-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-red);
+        }
+
+        .counter-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* === TELEGRAM СЕКЦИЯ === */
         .telegram-section {
             margin-top: 20px;
-            padding: 15px;
-            background: var(--bg-secondary);
-            border-radius: var(--radius-md);
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 255, 157, 0.1);
         }
 
         .telegram-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-top: 10px;
         }
 
         .telegram-status {
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .telegram-bot {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
         }
 
         .telegram-link {
@@ -1029,52 +929,56 @@
         .tech-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
+            margin-top: 10px;
         }
 
         .tech-tag {
-            padding: 4px 10px;
-            background: var(--bg-secondary);
-            border-radius: var(--radius-sm);
+            padding: 4px 12px;
+            background: rgba(0, 255, 157, 0.1);
+            color: var(--accent-green);
+            border-radius: 20px;
             font-size: 0.85rem;
-            color: var(--text-secondary);
+            border: 1px solid rgba(0, 255, 157, 0.2);
         }
 
         .footer-bottom {
+            text-align: center;
             padding-top: 20px;
             border-top: 1px solid rgba(0, 255, 157, 0.1);
-            text-align: center;
-            color: var(--text-secondary);
+            color: var(--text-muted);
             font-size: 0.9rem;
         }
 
-        /* === MODALS === */
+        /* === MODAL === */
         .modal {
             position: fixed;
-            inset: 0;
-            background: rgba(10, 25, 47, 0.7);
-            display: flex;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
             align-items: center;
             justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 2000;
+            z-index: 1000;
         }
 
         .modal.active {
-            opacity: 1;
-            pointer-events: auto;
+            display: flex;
         }
 
         .modal-content {
-            width: 90%;
-            max-width: 500px;
             background: var(--bg-card);
             border-radius: var(--radius-lg);
-            padding: 25px;
-            box-shadow: var(--shadow-lg);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid rgba(0, 255, 157, 0.2);
+            box-shadow: var(--shadow-lg);
         }
 
         .modal-header {
@@ -1082,7 +986,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
+            padding-bottom: 15px;
             border-bottom: 1px solid rgba(0, 255, 157, 0.1);
         }
 
@@ -1095,9 +999,10 @@
         .modal-close {
             background: none;
             border: none;
+            font-size: 1.5rem;
             color: var(--text-secondary);
-            font-size: 1.4rem;
             cursor: pointer;
+            transition: color var(--transition-fast);
         }
 
         .modal-close:hover {
@@ -1110,77 +1015,32 @@
             bottom: 20px;
             right: 20px;
             z-index: 1000;
-            width: min(420px, calc(100% - 20px));
-            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .notification {
             background: var(--bg-card);
             border-left: 4px solid var(--accent-green);
-            padding: 14px 16px;
+            padding: 15px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            width: 100%;
+            min-width: 300px;
             transform: translateX(100%);
             animation: slideIn 0.3s ease forwards;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-            pointer-events: auto;
-            position: absolute;
-            bottom: 0;
-            right: 0;
         }
 
         @keyframes slideIn {
             to { transform: translateX(0); }
         }
 
-        .notification-content {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex: 1;
+        .notification.error {
+            border-left-color: var(--accent-red);
         }
 
-        .notification-message {
-            font-weight: 600;
-        }
-
-        .notification-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .notification-icon,
-        .notification-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(0, 255, 157, 0.35);
-            background: rgba(0, 255, 157, 0.15);
-            color: var(--accent-green);
-            flex-shrink: 0;
-        }
-
-        .notification-icon i,
-        .notification-close i {
-            font-size: 0.9rem;
-        }
-
-        .notification-close {
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .notification-close:hover {
-            transform: scale(1.05);
-            background: rgba(0, 255, 157, 0.25);
+        .notification.warning {
+            border-left-color: var(--accent-orange);
         }
 
         /* === PWA INSTALL BUTTON === */
@@ -1250,10 +1110,6 @@
             .dashboard-row.first-row {
                 grid-template-columns: 1fr;
             }
-
-            .dashboard-row.single {
-                grid-template-columns: 1fr;
-            }
         }
 
         @media (max-width: 768px) {
@@ -1265,49 +1121,15 @@
                 flex-direction: column;
                 gap: 15px;
                 text-align: center;
-                padding: 15px;
             }
             
             .header-controls {
                 width: 100%;
                 justify-content: center;
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .connection-status {
-                padding: 6px 10px;
-                font-size: 0.8rem;
-                max-width: 100%;
-                justify-content: center;
-            }
-
-            .connection-quality {
-                font-size: 0.75rem;
-                justify-content: center;
-            }
-
-            .header-actions {
-                gap: 6px;
-                justify-content: center;
-            }
-
-            .header-btn {
-                width: 34px;
-                height: 34px;
-            }
-            
-            .connect-header-btn {
-                padding: 6px 12px;
-                font-size: 0.9rem;
             }
             
             .dashboard-row,
             .dashboard-row.first-row {
-                grid-template-columns: 1fr;
-            }
-
-            .dashboard-row.single {
                 grid-template-columns: 1fr;
             }
             
@@ -1339,27 +1161,11 @@
             .chart-wrapper {
                 height: 200px;
             }
-
-            .time-control {
-                flex-direction: column;
-                align-items: stretch;
-            }
             
             .modal-content {
                 width: 95%;
                 padding: 20px;
                 margin: 10px;
-            }
-
-            .notification-container {
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
-                width: auto;
-            }
-
-            .notification {
-                width: 100%;
             }
         }
 
@@ -1378,8 +1184,11 @@
                 font-size: 0.9rem;
             }
             
-            .logo-text h1 {
-                font-size: 1.2rem;
+            .pwa-install-btn {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
             }
         }
 
@@ -1414,14 +1223,6 @@
         .gap-10 { gap: 10px; }
         .gap-20 { gap: 20px; }
         .w-100 { width: 100%; }
-
-        .time-control {
-            flex-wrap: wrap;
-        }
-
-        .time-control input {
-            min-width: 140px;
-        }
         
         /* === КНОПКА ОБНОВЛЕНИЯ ВРУЧНУЮ === */
         .refresh-btn {
@@ -1507,13 +1308,6 @@
     <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loader">
-            <div class="loader-brand">
-                <div class="loader-logo">
-                    <i class="fas fa-seedling"></i>
-                </div>
-                <div class="loader-title">EcoGrow Control</div>
-                <div class="loader-subtitle">Подготовка панели управления</div>
-            </div>
             <div class="loader-spinner"></div>
             <div class="loader-text">Загрузка EcoGrow v4.5.1...</div>
         </div>
@@ -1521,90 +1315,6 @@
 
     <!-- Main Container -->
     <div class="container" id="mainContainer">
-        <!-- Автоматическое предупреждение для GitHub Pages -->
-        <div id="autoGitHubWarning" style="display: none;">
-            <div style="
-                background: linear-gradient(135deg, #ff6b6b, #ffa726);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 10px;
-                margin: 0 20px 20px 20px;
-                border: 2px solid #ff3d00;
-                animation: pulse 2s infinite;
-                font-size: 0.95em;
-                box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-            ">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span><strong>GitHub Pages ограничение:</strong> Невозможно подключиться к ESP8266</span>
-                    </div>
-                    <button id="closeWarningBtn" style="
-                        background: none;
-                        border: none;
-                        color: white;
-                        font-size: 1.2em;
-                        cursor: pointer;
-                        opacity: 0.7;
-                        transition: opacity 0.2s;
-                        padding: 0 5px;
-                    " onmouseover="this.style.opacity='1';" onmouseout="this.style.opacity='0.7';">
-                        ×
-                    </button>
-                </div>
-                <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button id="tryDemoBtn" style="
-                        background: rgba(255,255,255,0.9);
-                        color: #ff6b6b;
-                        border: none;
-                        padding: 6px 12px;
-                        border-radius: 5px;
-                        font-size: 0.9em;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 5px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';" 
-                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                        <i class="fas fa-play-circle"></i> Демо-режим
-                    </button>
-                    <button id="showLocalGuideBtn" style="
-                        background: rgba(255,255,255,0.2);
-                        color: white;
-                        border: 1px solid rgba(255,255,255,0.3);
-                        padding: 6px 12px;
-                        border-radius: 5px;
-                        font-size: 0.9em;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 5px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)';" 
-                    onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)';">
-                        <i class="fas fa-info-circle"></i> Как запустить локально
-                    </button>
-                    <button id="testConnectionBtn" style="
-                        background: rgba(255,255,255,0.2);
-                        color: white;
-                        border: 1px solid rgba(255,255,255,0.3);
-                        padding: 6px 12px;
-                        border-radius: 5px;
-                        font-size: 0.9em;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 5px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)';" 
-                    onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)';">
-                        <i class="fas fa-wifi"></i> Проверить подключение
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Header -->
         <header class="header">
             <div class="logo">
@@ -1620,30 +1330,14 @@
             <div class="header-controls">
                 <div class="connection-status" id="connectionStatus">
                     <div class="status-dot"></div>
-                    <span>Проверка подключения...</span>
+                    <span>Нет подключения</span>
                 </div>
-                <div class="connection-quality" aria-label="Качество связи">
-                    <div class="connection-metric">
-                        <i class="fas fa-stopwatch"></i>
-                        <span id="latencyValue">--</span>
-                    </div>
-                    <div class="connection-metric">
-                        <i class="fas fa-rotate"></i>
-                        <span id="retryCount">0/5</span>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button class="connect-header-btn" id="manualConnectBtn" title="Подключиться к устройству">
-                        <i class="fas fa-wifi"></i>
-                        <span>Подключение</span>
-                    </button>
-                    <button class="header-btn" id="themeToggle" title="Сменить тему">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button class="header-btn" id="settingsBtn" title="Настройки">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                </div>
+                <button class="header-btn" id="themeToggle" title="Сменить тему">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="header-btn" id="settingsBtn" title="Настройки">
+                    <i class="fas fa-cog"></i>
+                </button>
             </div>
         </header>
 
@@ -1721,7 +1415,7 @@
                     <div class="card-header">
                         <div class="card-title">
                             <i class="fas fa-water"></i>
-                            <span>Управление поливом</span>
+                            <span>Управление насосом</span>
                         </div>
                         <div class="card-status status-off" id="pumpStatus">ВЫКЛ</div>
                     </div>
@@ -1761,10 +1455,6 @@
                         </div>
                         
                         <div class="action-buttons mt-20">
-                            <button class="btn btn-primary" id="waterNowBtn">
-                                <i class="fas fa-tint"></i>
-                                Полить сейчас
-                            </button>
                             <button class="btn btn-success" id="pumpOnBtn">
                                 <i class="fas fa-play"></i>
                                 Включить насос
@@ -1817,6 +1507,7 @@
                         </div>
                         
                         <div class="action-buttons mt-20">
+                            <!-- ИСПРАВЛЕННАЯ КНОПКА - ЗЕЛЕНАЯ ВМЕСТО ОРАНЖЕВОЙ -->
                             <button class="btn btn-success" id="lightOnBtn">
                                 <i class="fas fa-lightbulb"></i>
                                 Включить свет
@@ -1865,6 +1556,19 @@
                             </div>
                         </div>
                         
+                        <div class="control-group mt-20">
+                            <label class="control-label">Синхронизация времени</label>
+                            <div class="d-flex gap-10 align-center">
+                                <button class="btn btn-primary w-100" id="syncTimeBtn">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Синхронизировать время
+                                </button>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
+                                Использует сетевые серверы времени
+                            </p>
+                        </div>
+                        
                         <div class="text-center mt-20">
                             <div class="stat-label">Системное время:</div>
                             <div class="stat-value" id="systemTime">--:--</div>
@@ -1873,7 +1577,7 @@
                 </div>
             </div>
 
-            <!-- Row 3: Статистика, Ошибки и Время -->
+            <!-- Row 3: Статистика и Ошибки -->
             <div class="dashboard-row">
                 <!-- Statistics -->
                 <div class="card">
@@ -1975,44 +1679,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Time Control -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-clock"></i>
-                            <span>Управление временем</span>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="control-group">
-                            <label class="control-label">Синхронизация с сетью</label>
-                            <div class="d-flex gap-10 align-center">
-                                <button class="btn btn-primary" id="syncTimeBtn">
-                                    <i class="fas fa-sync-alt"></i>
-                                    Синхронизировать время
-                                </button>
-                            </div>
-                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
-                                Использует сетевые серверы времени
-                            </p>
-                        </div>
-
-                        <div class="control-group mt-20">
-                            <label class="control-label">Установить своё время</label>
-                            <div class="d-flex gap-10 align-center time-control">
-                                <input type="time" id="manualTimeInput" class="w-100">
-                                <button class="btn btn-secondary" id="setTimeBtn">
-                                    <i class="fas fa-check"></i>
-                                    Применить
-                                </button>
-                            </div>
-                            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
-                                Время будет задано для контроллера
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
 
@@ -2056,10 +1722,6 @@
                             <i class="fas fa-question-circle"></i>
                             Краткая инструкция
                         </a>
-                        <a href="#" class="footer-link" id="downloadLocalVersion">
-                            <i class="fas fa-download"></i>
-                            Скачать для локального запуска
-                        </a>
                     </div>
                 </div>
                 
@@ -2075,7 +1737,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>© 2025-2026 EcoGrow System</p>
+                <p>© 2025-2026 EcoGrow System | Все права защищены</p>
             </div>
         </footer>
 
@@ -2090,7 +1752,7 @@
                     <div class="control-group">
                         <label class="control-label">IP адрес ESP8266 или имя хоста</label>
                         <div class="d-flex gap-10">
-                            <input type="text" id="ipAddress" placeholder="ecogrow.local или 192.168.x.x" value="ecogrow.local" class="w-100">
+                            <input type="text" id="ipAddress" placeholder="ecogrow.local или IP" value="ecogrow.local" class="w-100">
                             <button class="btn btn-success" id="connectBtn">
                                 <i class="fas fa-plug"></i>
                                 Подключить
@@ -2141,20 +1803,20 @@
                         </div>
                     </div>
                     
+                    <div class="toggle-switch mt-20">
+                        <label class="switch">
+                            <input type="checkbox" id="soundToggle" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <span class="switch-label">Звуковые уведомления</span>
+                    </div>
+                    
                     <div class="toggle-switch mt-10">
                         <label class="switch">
                             <input type="checkbox" id="notificationsToggle" checked>
                             <span class="switch-slider"></span>
                         </label>
-                        <span class="switch-label">Экранные уведомления</span>
-                    </div>
-
-                    <div class="toggle-switch mt-10">
-                        <label class="switch">
-                            <input type="checkbox" id="silentNotificationsToggle">
-                            <span class="switch-slider"></span>
-                        </label>
-                        <span class="switch-label">Тихий режим (без звука)</span>
+                        <span class="switch-label">Push-уведомления</span>
                     </div>
                 </div>
             </div>
@@ -2209,114 +1871,5 @@
     <script src="config.js"></script>
     <script src="notifications.js"></script>
     <script src="app.js"></script>
-    
-    <!-- Автоматическое предупреждение для GitHub Pages -->
-    <script>
-    // Автоматически показываем предупреждение на GitHub Pages
-    if (window.location.hostname === 'zhesny.github.io') {
-        document.getElementById('autoGitHubWarning').style.display = 'block';
-        
-        // Обработчики кнопок
-        document.getElementById('tryDemoBtn').addEventListener('click', function() {
-            document.getElementById('demoBtn').click();
-        });
-        
-        document.getElementById('showLocalGuideBtn').addEventListener('click', function() {
-            // Показываем модальное окно с инструкцией
-            const modal = document.getElementById('quickGuideModal');
-            if (modal) {
-                modal.classList.add('active');
-                
-                // Добавляем дополнительную информацию о GitHub Pages
-                setTimeout(() => {
-                    const modalBody = modal.querySelector('.modal-body');
-                    if (modalBody && !modalBody.querySelector('.github-pages-info')) {
-                        const githubInfo = `
-                            <div class="github-pages-info" style="margin-top: 20px; padding: 15px; background: rgba(255, 107, 107, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-red);">
-                                <h4 style="color: var(--accent-red); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas fa-exclamation-triangle"></i> Важно для GitHub Pages
-                                </h4>
-                                <p style="color: var(--text-secondary); margin: 8px 0;">
-                                    • Этот интерфейс на GitHub Pages работает только в <strong>демо-режиме</strong>
-                                </p>
-                                <p style="color: var(--text-secondary); margin: 8px 0;">
-                                    • Для работы с реальным ESP8266 <strong>скачайте файлы</strong> и запустите локально
-                                </p>
-                                <p style="color: var(--text-secondary); margin: 8px 0;">
-                                    • Ссылка для скачивания: <code>https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip</code>
-                                </p>
-                            </div>
-                        `;
-                        modalBody.insertAdjacentHTML('beforeend', githubInfo);
-                    }
-                }, 100);
-            }
-        });
-        
-        document.getElementById('testConnectionBtn').addEventListener('click', function() {
-            // Тестовый запрос для проверки доступности устройства
-            const testIp = prompt('Введите IP адрес ESP8266 для проверки:', '192.168.0.148');
-            if (testIp) {
-                // Используем CORS-прокси для проверки
-                fetch(`https://cors-anywhere.herokuapp.com/http://${testIp}/api/info`)
-                    .then(response => {
-                        if (response.ok) {
-                            alert(`✅ Устройство ${testIp} доступно в сети!\n\nНо GitHub Pages (HTTPS) блокирует прямое подключение.\n\nСкачайте файлы для локального запуска.`);
-                        } else {
-                            alert(`❌ Устройство ${testIp} недоступно.\n\nВозможные причины:\n1. Неправильный IP адрес\n2. Устройство выключено\n3. Нет подключения к Wi-Fi сети\n4. Разные сети (устройство и компьютер)`);
-                        }
-                    })
-                    .catch(() => {
-                        alert(`🌐 Не удалось проверить устройство ${testIp}.\n\nПопробуйте:\n1. Проверить IP адрес в настройках ESP8266\n2. Убедиться, что устройство включено\n3. Проверить подключение к одной Wi-Fi сети`);
-                    });
-            }
-        });
-        
-        document.getElementById('closeWarningBtn').addEventListener('click', function() {
-            document.getElementById('autoGitHubWarning').style.display = 'none';
-            localStorage.setItem('hideGitHubWarning', 'true');
-        });
-        
-        // Проверяем, не скрывали ли пользователь предупреждение ранее
-        if (localStorage.getItem('hideGitHubWarning') === 'true') {
-            document.getElementById('autoGitHubWarning').style.display = 'none';
-        }
-        
-        // Обработчик для кнопки "Скачать для локального запуска" в футере
-        document.getElementById('downloadLocalVersion').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Показываем инструкцию
-            const guideText = `📥 СКАЧАТЬ ДЛЯ ЛОКАЛЬНОГО ЗАПУСКА
-
-1. Перейдите по ссылке: 
-   https://github.com/zhesny/ecogrow-webapp
-
-2. Нажмите зелёную кнопку "Code"
-
-3. Выберите "Download ZIP"
-
-4. Распакуйте архив в папку
-
-5. Откройте файл index.html в браузере
-
-✅ Преимущества локального запуска:
-• Полный доступ к ESP8266
-• Работает без интернета
-• Решает проблему Mixed Content
-• Быстрее и надежнее
-
-🔗 Прямая ссылка для скачивания:
-https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip`;
-            
-            // Используем notificationManager если он доступен
-            if (window.ecoGrowApp && window.ecoGrowApp.notificationManager) {
-                window.ecoGrowApp.notificationManager.show(guideText, 'info', 15000);
-            } else {
-                alert(guideText);
-            }
-        });
-    }
-    </script>
 </body>
 </html>
