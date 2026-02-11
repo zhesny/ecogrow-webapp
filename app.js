@@ -1,58 +1,50 @@
 class EcoGrowApp {
     constructor() {
-        this.apiClient = new EcoGrowAPI();
-        this.chartManager = new ChartsManager();
-        this.themeManager = new ThemeManager();
-        this.notificationManager = new NotificationManager();
-        this.configManager = new ConfigManager();
+        this.api = new EcoGrowAPI();
+        this.charts = new ChartsManager();
+        this.theme = new ThemeManager();
+        this.notifications = new NotificationManager();
+        this.config = new ConfigManager();
         
-        this.appState = {
+        this.state = {
             connected: false,
             demoMode: false,
-            deviceAddress: null,
-            currentSystemData: null,
-            userSettings: {},
-            lastDataUpdate: null,
-            updateFrequency: 5000,
-            connectionAttempts: 0,
-            maxConnectionAttempts: 3,
-            lastResponseTime: null,
-            isGitHubPages: window.location.hostname === 'zhesny.github.io'
+            espIp: null,
+            currentData: null,
+            settings: {},
+            lastUpdate: null,
+            updateInterval: 5000,
+            connectionRetryCount: 0,
+            maxRetries: 3,
+            lastLatencyMs: null
         };
         
-        this.initializeApplication();
+        this.init();
     }
     
-    async initializeApplication() {
-        this.themeManager.init();
-        this.showLoadingScreen();
+    async init() {
+        this.theme.init();
+        this.showLoading();
         
-        // На GitHub Pages сразу показываем предупреждение
-        if (this.appState.isGitHubPages) {
-            setTimeout(() => {
-                this.showGitHubPagesWarning();
-            }, 1000);
-        }
+        await this.tryAutoConnect();
+        this.hideLoading();
         
-        await this.attemptAutoConnection();
-        this.hideLoadingScreen();
-        
-        this.chartManager.init();
-        this.startDataUpdateCycle();
-        this.setupUserInteractions();
-        this.initializePWA();
-        this.setupNetworkMonitoring();
+        this.charts.init();
+        this.startUpdateLoop();
+        this.setupEventListeners();
+        this.initPWA();
+        this.initNetworkListeners();
     }
     
-    initializePWA() {
-        window.addEventListener('beforeinstallprompt', (installEvent) => {
-            installEvent.preventDefault();
-            this.pwaInstallPrompt = installEvent;
+    initPWA() {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredPrompt = e;
             
-            const installButton = document.getElementById('pwaInstallBtn');
-            if (installButton) {
-                installButton.style.display = 'flex';
-                installButton.addEventListener('click', () => this.installPWAApplication());
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) {
+                installBtn.style.display = 'flex';
+                installBtn.addEventListener('click', () => this.installPWA());
             }
         });
 
@@ -61,488 +53,181 @@ class EcoGrowApp {
         }
     }
     
-    setupNetworkMonitoring() {
+    initNetworkListeners() {
         if (navigator.connection) {
             navigator.connection.addEventListener('change', () => {
-                this.handleNetworkStatusChange();
+                this.handleNetworkChange();
             });
         }
     }
     
-    handleNetworkStatusChange() {
-        if (navigator.onLine && !this.appState.connected && !this.appState.demoMode) {
-            this.notificationManager.show('📡 Сеть доступна, проверяем подключение...', 'info');
-            this.attemptAutoConnection();
+    handleNetworkChange() {
+        if (navigator.onLine && !this.state.connected && !this.state.demoMode) {
+            this.notifications.show('📡 Сеть доступна, пытаемся подключиться...', 'info');
+            this.tryAutoConnect();
         }
     }
     
-    async installPWAApplication() {
-        if (!this.pwaInstallPrompt) return;
+    async installPWA() {
+        if (!this.deferredPrompt) return;
         
-        this.pwaInstallPrompt.prompt();
-        const userChoice = await this.pwaInstallPrompt.userChoice;
+        this.deferredPrompt.prompt();
+        const { outcome } = await this.deferredPrompt.userChoice;
         
-        if (userChoice.outcome === 'accepted') {
+        if (outcome === 'accepted') {
             console.log('PWA установлено');
-            const installButton = document.getElementById('pwaInstallBtn');
-            if (installButton) installButton.style.display = 'none';
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) installBtn.style.display = 'none';
         }
         
-        this.pwaInstallPrompt = null;
+        this.deferredPrompt = null;
     }
     
-    showGitHubPagesWarning() {
-        // Создаем HTML для предупреждения
-        const warningHtml = `
-            <div style="
-                background: linear-gradient(135deg, #ff6b6b, #ffa726);
-                color: white;
-                padding: 15px 20px;
-                border-radius: 10px;
-                margin: 0 20px 20px 20px;
-                border: 2px solid #ff3d00;
-                animation: pulse 2s infinite;
-                font-size: 0.95em;
-                box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-            ">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 1.5em;"></i>
-                    <div>
-                        <strong style="font-size: 1.1em; display: block;">ВНИМАНИЕ: Вы используете GitHub Pages (HTTPS)</strong>
-                        <span style="font-size: 0.9em; opacity: 0.9;">Прямое подключение к ESP8266 невозможно</span>
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                    <button id="startDemoFromWarning" style="
-                        background: white;
-                        color: #ff6b6b;
-                        border: none;
-                        padding: 10px 15px;
-                        border-radius: 6px;
-                        font-weight: bold;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';" 
-                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                        <i class="fas fa-play-circle"></i> Запустить демо-режим
-                    </button>
-                    
-                    <button id="downloadLocalBtn" style="
-                        background: rgba(255,255,255,0.15);
-                        color: white;
-                        border: 1px solid rgba(255,255,255,0.3);
-                        padding: 10px 15px;
-                        border-radius: 6px;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.25)'; this.style.transform='translateY(-2px)';" 
-                    onmouseout="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='translateY(0)';">
-                        <i class="fas fa-download"></i> Скачать для локального запуска
-                    </button>
-                </div>
-                
-                <div style="margin-top: 12px; font-size: 0.85em; opacity: 0.8;">
-                    <i class="fas fa-info-circle"></i> Подробнее в разделе "Краткая инструкция"
-                </div>
-            </div>
-        `;
-        
-        // Добавляем предупреждение после хедера
-        const header = document.querySelector('.header');
-        if (header) {
-            const warningDiv = document.createElement('div');
-            warningDiv.innerHTML = warningHtml;
-            header.parentNode.insertBefore(warningDiv, header.nextSibling);
-            
-            // Обработчики кнопок
-            document.getElementById('startDemoFromWarning').addEventListener('click', () => {
-                this.startDemoMode();
-            });
-            
-            document.getElementById('downloadLocalBtn').addEventListener('click', () => {
-                this.showLocalSetupGuide();
-            });
+    showLoading() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '1';
+            loadingScreen.style.pointerEvents = 'all';
         }
     }
     
-    showLocalSetupGuide() {
-        const guideText = `📥 ЛОКАЛЬНЫЙ ЗАПУСК ИНТЕРФЕЙСА (РЕШЕНИЕ ПРОБЛЕМЫ)
-
-1️⃣ Скачайте файлы с GitHub:
-   • Нажмите зелёную кнопку "Code" → "Download ZIP"
-   • Распакуйте архив в любую папку на компьютере
-
-2️⃣ Запустите интерфейс локально:
-   • Откройте папку с файлами
-   • Дважды кликните на файл "index.html"
-   • ИЛИ запустите через Live Server в VS Code
-
-3️⃣ Подключитесь к ESP8266:
-   • Введите IP: 192.168.0.148 или ecogrow.local
-   • Используйте протокол HTTP (не HTTPS)
-
-✅ Преимущества:
-• Полный доступ к ESP8266 без ограничений
-• Работает на любом устройстве офлайн
-• Не требует интернета после скачивания
-• Решает проблему Mixed Content
-
-🔗 Ссылка для скачивания:
-https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip`;
-
-        this.notificationManager.show(guideText, 'info', 15000);
+    hideLoading() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const mainContainer = document.getElementById('mainContainer');
         
-        // Показываем модальное окно с деталями
-        const guideModal = document.getElementById('quickGuideModal');
-        if (guideModal) {
-            const modalBody = guideModal.querySelector('.modal-body');
-            if (modalBody) {
-                modalBody.innerHTML = `
-                    <h3 style="display: flex; align-items: center; gap: 10px; color: var(--accent-green);">
-                        <i class="fas fa-download"></i> Локальный запуск интерфейса
-                    </h3>
-                    
-                    <div style="margin: 20px 0; padding: 15px; background: rgba(0, 255, 157, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-green);">
-                        <p style="margin: 0; color: var(--text-primary);">
-                            <strong>Проблема:</strong> GitHub Pages (HTTPS) не может подключиться к ESP8266 (HTTP) из-за политики безопасности браузеров.
-                        </p>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-                        <div>
-                            <h4 style="color: var(--accent-blue); margin-bottom: 10px;">
-                                <i class="fas fa-desktop"></i> Способ 1: Прямой запуск
-                            </h4>
-                            <ol style="padding-left: 20px; color: var(--text-secondary);">
-                                <li>Скачайте ZIP-архив с GitHub</li>
-                                <li>Распакуйте в папку на компьютере</li>
-                                <li>Откройте <code>index.html</code> в браузере</li>
-                                <li>Готово! Подключайтесь к ESP8266</li>
-                            </ol>
-                        </div>
-                        
-                        <div>
-                            <h4 style="color: var(--accent-blue); margin-bottom: 10px;">
-                                <i class="fas fa-code"></i> Способ 2: Live Server
-                            </h4>
-                            <ol style="padding-left: 20px; color: var(--text-secondary);">
-                                <li>Установите VS Code</li>
-                                <li>Установите расширение "Live Server"</li>
-                                <li>Откройте папку с файлами в VS Code</li>
-                                <li>Нажмите "Go Live" в правом нижнем углу</li>
-                            </ol>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 25px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                        <p style="margin: 0 0 10px 0; color: var(--text-primary); font-weight: bold;">
-                            <i class="fas fa-link"></i> Ссылка для скачивания:
-                        </p>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="downloadLink" readonly value="https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip" style="
-                                flex: 1;
-                                padding: 10px;
-                                border: 1px solid var(--bg-tertiary);
-                                background: var(--bg-primary);
-                                color: var(--text-primary);
-                                border-radius: 6px;
-                                font-family: monospace;
-                                font-size: 0.9em;
-                            ">
-                            <button id="copyLinkBtn" style="
-                                background: var(--accent-green);
-                                color: var(--bg-primary);
-                                border: none;
-                                padding: 10px 15px;
-                                border-radius: 6px;
-                                cursor: pointer;
-                                font-weight: bold;
-                                display: flex;
-                                align-items: center;
-                                gap: 5px;
-                            ">
-                                <i class="fas fa-copy"></i> Копировать
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(255, 107, 107, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-red);">
-                        <p style="margin: 0; color: var(--text-primary);">
-                            <strong>Важно:</strong> После локального запуска все функции будут работать полностью. GitHub Pages предназначен только для демонстрации интерфейса.
-                        </p>
-                    </div>
-                `;
-                
-                // Добавляем обработчик для кнопки копирования
-                document.getElementById('copyLinkBtn').addEventListener('click', () => {
-                    const linkInput = document.getElementById('downloadLink');
-                    linkInput.select();
-                    document.execCommand('copy');
-                    
-                    const originalText = document.getElementById('copyLinkBtn').innerHTML;
-                    document.getElementById('copyLinkBtn').innerHTML = '<i class="fas fa-check"></i> Скопировано!';
-                    document.getElementById('copyLinkBtn').style.background = 'var(--accent-blue)';
-                    
-                    setTimeout(() => {
-                        document.getElementById('copyLinkBtn').innerHTML = originalText;
-                        document.getElementById('copyLinkBtn').style.background = 'var(--accent-green)';
-                    }, 2000);
-                });
-            }
-            guideModal.classList.add('active');
-        }
-    }
-    
-    showLoadingScreen() {
-        const loadingElement = document.getElementById('loadingScreen');
-        if (loadingElement) {
-            loadingElement.style.opacity = '1';
-            loadingElement.style.pointerEvents = 'all';
-        }
-    }
-    
-    hideLoadingScreen() {
-        const loadingElement = document.getElementById('loadingScreen');
-        const mainInterface = document.getElementById('mainContainer');
-        
-        if (loadingElement) {
-            loadingElement.style.opacity = '0';
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
             setTimeout(() => {
-                loadingElement.style.display = 'none';
-                if (mainInterface) {
-                    mainInterface.style.display = 'block';
+                loadingScreen.style.display = 'none';
+                if (mainContainer) {
+                    mainContainer.style.display = 'block';
                 }
             }, 500);
         }
     }
     
-    async attemptAutoConnection() {
-        const savedAddress = localStorage.getItem('ecogrow_ip');
-        if (savedAddress) {
-            this.appState.deviceAddress = savedAddress;
-            const connectionSuccessful = await this.connectToDevice();
-            if (connectionSuccessful) return;
+    async tryAutoConnect() {
+        const savedIp = localStorage.getItem('ecogrow_ip');
+        if (savedIp) {
+            this.state.espIp = savedIp;
+            await this.connectToESP();
+            return;
         }
         
-        this.showConnectionDialog();
-    }
-    
-    showConnectionDialog() {
-        const connectionDialog = document.getElementById('connectionModal');
-        if (connectionDialog) {
-            connectionDialog.classList.add('active');
-            
-            // На GitHub Pages добавляем предупреждение в диалог
-            if (this.appState.isGitHubPages) {
-                const dialogBody = connectionDialog.querySelector('.modal-body');
-                if (dialogBody && !dialogBody.querySelector('.github-warning')) {
-                    const warningHtml = `
-                        <div class="github-warning" style="
-                            background: rgba(255, 107, 107, 0.1);
-                            border: 1px solid rgba(255, 107, 107, 0.3);
-                            border-radius: 8px;
-                            padding: 12px;
-                            margin: 15px 0;
-                            color: var(--text-primary);
-                        ">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <i class="fas fa-exclamation-triangle" style="color: var(--accent-red);"></i>
-                                <strong>GitHub Pages ограничение</strong>
-                            </div>
-                            <p style="margin: 0; font-size: 0.9em; color: var(--text-secondary);">
-                                Прямое подключение к ESP8266 невозможно. Используйте демо-режим или скачайте файлы для локального запуска.
-                            </p>
-                        </div>
-                    `;
-                    dialogBody.insertAdjacentHTML('afterbegin', warningHtml);
-                }
-            }
-        }
-    }
-    
-    hideConnectionDialog() {
-        const connectionDialog = document.getElementById('connectionModal');
-        if (connectionDialog) {
-            connectionDialog.classList.remove('active');
-        }
-    }
-    
-    async connectToDevice() {
-        if (!this.appState.deviceAddress) {
-            this.notificationManager.show('❌ Введите IP адрес устройства', 'error');
-            this.showConnectionDialog();
-            return false;
-        }
-        
-        console.log(`Попытка подключения к: ${this.appState.deviceAddress}`);
-        
-        // На GitHub Pages блокируем попытки подключения к локальным устройствам
-        if (this.appState.isGitHubPages && 
-            (this.appState.deviceAddress.includes('192.168.') || 
-             this.appState.deviceAddress.includes('.local') ||
-             this.appState.deviceAddress.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/))) {
-            
-            this.notificationManager.show(
-                '🌐 GitHub Pages (HTTPS) не может подключиться к локальному устройству (HTTP). Используйте демо-режим или локальный запуск интерфейса.',
-                'error',
-                10000
-            );
-            
-            // Автоматически предлагаем демо-режим через 1.5 секунды
-            setTimeout(() => {
-                if (confirm('Запустить демо-режим для тестирования функциональности?')) {
-                    this.startDemoMode();
-                }
-            }, 1500);
-            
-            return false;
-        }
-        
-        try {
-            this.showLoadingScreen();
-            
-            this.appState.demoMode = false;
-            const deviceAvailable = await this.apiClient.testConnection(this.appState.deviceAddress);
-            
-            if (!deviceAvailable) {
-                throw new Error(`Устройство ${this.appState.deviceAddress} недоступно`);
-            }
-            
-            const deviceInfo = await this.apiClient.getInfo(this.appState.deviceAddress);
-            
-            localStorage.setItem('ecogrow_ip', this.appState.deviceAddress);
-            this.appState.connectionAttempts = 0;
-            this.appState.connected = true;
-            this.updateConnectionDisplay();
-            
-            const demoIndicator = document.getElementById('demoBanner');
-            if (demoIndicator) demoIndicator.style.display = 'none';
-            
-            await this.refreshSystemData();
-            this.hideConnectionDialog();
-            
-            this.notificationManager.show(`✅ Успешно подключено к ${deviceInfo.hostname || this.appState.deviceAddress}!`, 'success');
-            return true;
-            
-        } catch (error) {
-            console.error('Ошибка подключения:', error);
-            
-            this.appState.connected = false;
-            this.updateConnectionDisplay();
-            this.clearDisplayedData();
-            
-            this.appState.connectionAttempts++;
-            
-            let errorDescription = error.message;
-            
-            // Специальная обработка для GitHub Pages
-            if (error.message.includes('GitHub Pages блокирует')) {
-                errorDescription = 'GitHub Pages (HTTPS) не может подключиться к локальному устройству (HTTP). Скачайте файлы для локального запуска.';
-                
-                this.notificationManager.show(
-                    `❌ ${errorDescription}`,
-                    'error',
-                    10000
-                );
-                
-                setTimeout(() => {
-                    this.showLocalSetupGuide();
-                }, 2000);
-                
-                return false;
-            }
-            
-            if (this.appState.connectionAttempts < this.appState.maxConnectionAttempts) {
-                this.notificationManager.show(
-                    `❌ Попытка ${this.appState.connectionAttempts}/${this.appState.maxConnectionAttempts}: ${errorDescription}`,
-                    'error',
-                    8000
-                );
-            } else {
-                this.showConnectionHelp();
-            }
-            return false;
-        } finally {
-            this.hideLoadingScreen();
-        }
-    }
-    
-    async findDeviceInNetwork() {
-        const foundIPs = [];
         const commonIPs = [
             'ecogrow.local',
             '192.168.1.100',
-            '192.168.0.100',
-            '192.168.4.1',
-            '192.168.1.101',
-            '192.168.0.101',
-            '10.0.0.100'
+            '192.168.0.187',
+            '10.174.79.89',
+            '10.108.130.89'
         ];
         
         for (const ip of commonIPs) {
-            if (ip === this.appState.deviceAddress) continue;
-            
             try {
-                const available = await this.apiClient.testConnection(ip);
-                if (available) {
-                    foundIPs.push(ip);
+                const isConnected = await this.api.testConnection(ip);
+                if (isConnected) {
+                    this.state.espIp = ip;
+                    await this.connectToESP();
+                    return;
                 }
-            } catch (e) {
+            } catch (error) {
                 continue;
             }
         }
         
-        return foundIPs;
+        this.showConnectionModal();
     }
     
-    showConnectionHelp() {
-        const isLocalAddress = this.appState.deviceAddress && 
-            (this.appState.deviceAddress.includes('192.168.') || 
-             this.appState.deviceAddress.includes('.local'));
-        
-        let helpText = `❌ Не удалось подключиться к ${this.appState.deviceAddress || 'устройству'}`;
-        
-        if (this.appState.isGitHubPages && isLocalAddress) {
-            helpText += `\n\n🌐 ПРОБЛЕМА: GitHub Pages (HTTPS) → ESP8266 (HTTP)\n`;
-            helpText += `Браузер блокирует смешанный контент (Mixed Content)\n\n`;
-            helpText += `✅ РЕШЕНИЯ:\n`;
-            helpText += `1. Скачайте файлы и запустите локально (рекомендуется)\n`;
-            helpText += `2. Используйте демо-режим для тестирования\n`;
-            helpText += `3. Настройте HTTPS на ESP8266 (сложно)\n`;
-            helpText += `4. Используйте туннель (ngrok, localtunnel)`;
-        } else {
-            helpText += `\n\nПроверьте:\n`;
-            helpText += `• Устройство включено и в сети Wi-Fi\n`;
-            helpText += `• Правильный IP адрес: ${this.appState.deviceAddress || 'не указан'}\n`;
-            helpText += `• Устройство в той же сети\n`;
-            helpText += `• Попробуйте: http://ecogrow.local или 192.168.0.148`;
+    showConnectionModal() {
+        const modal = document.getElementById('connectionModal');
+        if (modal) {
+            modal.classList.add('active');
+        }
+    }
+    
+    hideConnectionModal() {
+        const modal = document.getElementById('connectionModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+    
+    async connectToESP() {
+        if (!this.state.espIp) {
+            this.notifications.show('❌ Введите IP адрес устройства', 'error');
+            this.showConnectionModal();
+            return;
+        }
+
+        if (window.location.protocol === 'https:' && this.api.isLocalTarget(this.state.espIp)) {
+            this.notifications.show(
+                '⚠️ Страница открыта по HTTPS, а локальное устройство доступно только по HTTP. ' +
+                'Откройте панель локально (например, через python -m http.server) и попробуйте снова.',
+                'warning',
+                10000
+            );
+            this.showConnectionModal();
+            return;
         }
         
-        this.notificationManager.show(helpText, 'error', 12000);
-        this.showConnectionDialog();
+        try {
+            this.showLoading();
+            
+            this.state.demoMode = false;
+            const isConnected = await this.api.testConnection(this.state.espIp);
+            
+            if (!isConnected) {
+                throw new Error('Устройство недоступно');
+            }
+            
+            const info = await this.api.getInfo(this.state.espIp);
+            
+            localStorage.setItem('ecogrow_ip', this.state.espIp);
+            this.state.connectionRetryCount = 0;
+            this.state.connected = true;
+            this.updateConnectionStatus();
+            
+            const demoBanner = document.getElementById('demoBanner');
+            if (demoBanner) demoBanner.style.display = 'none';
+            
+            await this.updateData();
+            this.hideConnectionModal();
+            
+            this.notifications.show(`✅ Успешно подключено к ${info.hostname || this.state.espIp}!`, 'success');
+            
+        } catch (error) {
+            console.error('Connection failed:', error);
+            
+            this.state.connected = false;
+            this.updateConnectionStatus();
+            this.clearStaleData();
+            
+            this.state.connectionRetryCount++;
+            
+            if (this.state.connectionRetryCount < this.state.maxRetries) {
+                this.notifications.show(`❌ Попытка ${this.state.connectionRetryCount}/${this.state.maxRetries}: ${error.message}`, 'error');
+                setTimeout(() => this.connectToESP(), 2000);
+            } else {
+                this.notifications.show('❌ Не удалось подключиться к системе. Запускаю демо-режим.', 'error');
+                this.startDemoMode();
+            }
+        } finally {
+            this.hideLoading();
+        }
     }
     
     async startDemoMode() {
-        this.appState.demoMode = true;
-        this.appState.connected = true;
-        this.appState.deviceAddress = 'demo-mode';
+        this.state.demoMode = true;
+        this.state.connected = true;
+        this.state.espIp = 'demo-mode';
         
-        const randomVariation = Math.random() * 10;
+        const randomOffset = Math.random() * 10;
         
-        this.appState.currentSystemData = {
-            moisture: Math.round(50 + Math.sin(Date.now() / 60000) * 15 + randomVariation),
-            avg_moisture: Math.round(55 + randomVariation),
-            min_moisture: Math.round(40 + randomVariation),
-            max_moisture: Math.round(70 + randomVariation),
+        this.state.currentData = {
+            moisture: Math.round(50 + Math.sin(Date.now() / 60000) * 15 + randomOffset),
+            avg_moisture: Math.round(55 + randomOffset),
+            min_moisture: Math.round(40 + randomOffset),
+            max_moisture: Math.round(70 + randomOffset),
             pump: false,
             light: false,
             moisture_threshold: 50,
@@ -564,51 +249,46 @@ https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip`;
             total_light_hours: Math.round(356 + Math.random() * 50),
             total_energy: Math.round(17800 + Math.random() * 1000),
             errors: [],
-            moisture_history: Array.from({length: 20}, (_, index) => 
-                60 + Math.sin((index + randomVariation) * 0.5) * 10 + Math.random() * 5
+            moisture_history: Array.from({length: 20}, (_, i) => 
+                60 + Math.sin((i + randomOffset) * 0.5) * 10 + Math.random() * 5
             )
         };
         
-        this.appState.currentSystemData.min_moisture = this.appState.currentSystemData.moisture;
-        this.appState.currentSystemData.max_moisture = this.appState.currentSystemData.moisture;
+        // Инициализируем начальные значения для min/max
+        this.state.currentData.min_moisture = this.state.currentData.moisture;
+        this.state.currentData.max_moisture = this.state.currentData.moisture;
         
-        this.updateConnectionDisplay();
-        this.updateInterface(this.appState.currentSystemData);
-        this.chartManager.updateMoistureChart(this.appState.currentSystemData.moisture_history);
+        this.updateConnectionStatus();
+        this.updateUI(this.state.currentData);
+        this.charts.updateMoistureChart(this.state.currentData.moisture_history);
         
-        const demoIndicator = document.getElementById('demoBanner');
-        if (demoIndicator) demoIndicator.style.display = 'flex';
+        document.getElementById('demoBanner').style.display = 'flex';
         
-        this.notificationManager.show('🔧 Запущен демо-режим. Данные генерируются автоматически.', 'info');
-        this.hideConnectionDialog();
+        this.notifications.show('🔧 Запущен демо-режим', 'info');
+        this.hideConnectionModal();
     }
     
-    updateConnectionDisplay() {
+    updateConnectionStatus() {
         const statusElement = document.getElementById('connectionStatus');
         if (statusElement) {
-            if (this.appState.connected) {
-                if (this.appState.demoMode) {
+            if (this.state.connected) {
+                if (this.state.demoMode) {
                     statusElement.innerHTML = `
                         <div class="status-dot" style="background: var(--accent-orange)"></div>
                         <span>Демо-режим</span>
                     `;
                     statusElement.classList.add('connected');
                 } else {
-                    const shortAddress = this.appState.deviceAddress ? 
-                        (this.appState.deviceAddress.length > 20 ? 
-                            this.appState.deviceAddress.substring(0, 17) + '...' : 
-                            this.appState.deviceAddress) : 
-                        '--';
                     statusElement.innerHTML = `
                         <div class="status-dot"></div>
-                        <span>Подключено: ${shortAddress}</span>
+                        <span>Подключено к ${this.state.espIp}</span>
                     `;
                     statusElement.classList.add('connected');
                 }
             } else {
                 statusElement.innerHTML = `
                     <div class="status-dot"></div>
-                    <span>Не подключено</span>
+                    <span>Нет подключения</span>
                 `;
                 statusElement.classList.remove('connected');
             }
@@ -617,654 +297,626 @@ https://github.com/zhesny/ecogrow-webapp/archive/refs/heads/main.zip`;
         this.updateConnectionMetrics();
     }
     
-    async refreshSystemData() {
-        if (!this.appState.connected) return;
+    async updateData() {
+        if (!this.state.connected) return;
         
-        if (this.appState.demoMode) {
-            const currentTime = new Date();
-            const currentHour = currentTime.getHours();
+        if (this.state.demoMode) {
+            const now = new Date();
+            const hour = now.getHours();
             
-            if (currentHour >= 8 && currentHour < 20) {
-                this.appState.currentSystemData.light = true;
+            // Автоматическое управление светом по времени
+            if (hour >= 8 && hour < 20) {
+                this.state.currentData.light = true;
             } else {
-                this.appState.currentSystemData.light = false;
+                this.state.currentData.light = false;
             }
             
-            this.appState.currentSystemData.moisture = Math.max(20, Math.min(80, 
+            // Генерируем реалистичные данные влажности
+            this.state.currentData.moisture = Math.max(20, Math.min(80, 
                 60 + Math.sin(Date.now() / 60000) * 10 + Math.random() * 5
             ));
             
-            if (this.appState.currentSystemData.moisture < this.appState.currentSystemData.min_moisture) {
-                this.appState.currentSystemData.min_moisture = this.appState.currentSystemData.moisture;
+            // Обновляем min/max
+            if (this.state.currentData.moisture < this.state.currentData.min_moisture) {
+                this.state.currentData.min_moisture = this.state.currentData.moisture;
             }
-            if (this.appState.currentSystemData.moisture > this.appState.currentSystemData.max_moisture) {
-                this.appState.currentSystemData.max_moisture = this.appState.currentSystemData.moisture;
+            if (this.state.currentData.moisture > this.state.currentData.max_moisture) {
+                this.state.currentData.max_moisture = this.state.currentData.moisture;
             }
             
-            this.appState.currentSystemData.current_time = currentTime.toLocaleTimeString('ru-RU', { 
+            this.state.currentData.current_time = now.toLocaleTimeString('ru-RU', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
             
-            this.appState.currentSystemData.moisture_history.push(this.appState.currentSystemData.moisture);
-            if (this.appState.currentSystemData.moisture_history.length > 20) {
-                this.appState.currentSystemData.moisture_history.shift();
+            this.state.currentData.moisture_history.push(this.state.currentData.moisture);
+            if (this.state.currentData.moisture_history.length > 20) {
+                this.state.currentData.moisture_history.shift();
             }
             
-            this.updateInterface(this.appState.currentSystemData);
-            this.chartManager.updateMoistureChart(this.appState.currentSystemData.moisture_history);
+            this.updateUI(this.state.currentData);
+            this.charts.updateMoistureChart(this.state.currentData.moisture_history);
             return;
         }
         
         try {
-            const requestStart = performance.now();
-            const systemData = await this.apiClient.getState(this.appState.deviceAddress);
-            const requestEnd = performance.now();
+            const isConnected = await this.api.testConnection(this.state.espIp);
+            if (!isConnected) {
+                throw new Error('Устройство недоступно');
+            }
             
-            this.appState.lastResponseTime = Math.round(requestEnd - requestStart);
-            this.appState.currentSystemData = systemData;
-            this.appState.lastDataUpdate = new Date();
-            this.appState.connectionAttempts = 0;
+            const startTime = performance.now();
+            const data = await this.api.getState(this.state.espIp);
+            const endTime = performance.now();
+            this.state.lastLatencyMs = Math.round(endTime - startTime);
+            this.state.currentData = data;
+            this.state.lastUpdate = new Date();
+            this.state.connectionRetryCount = 0;
             
-            this.updateInterface(systemData);
-            this.chartManager.updateMoistureChart(systemData.moisture_history);
-            this.checkSystemNotifications(systemData);
+            this.updateUI(data);
+            this.charts.updateMoistureChart(data.moisture_history);
+            this.checkNotifications(data);
             
         } catch (error) {
-            console.error('Ошибка обновления данных:', error);
+            console.error('Update failed:', error);
             
-            this.appState.connectionAttempts++;
+            this.state.connectionRetryCount++;
             this.updateConnectionMetrics();
             
-            if (this.appState.connectionAttempts >= 3) {
-                this.appState.connected = false;
-                this.updateConnectionDisplay();
-                this.clearDisplayedData();
-                this.notificationManager.show('❌ Потеряно соединение с устройством', 'error');
+            if (this.state.connectionRetryCount >= this.state.maxRetries) {
+                this.state.connected = false;
+                this.updateConnectionStatus();
+                this.clearStaleData();
+                this.notifications.show('❌ Потеряно соединение с устройством', 'error');
                 
                 setTimeout(() => {
-                    if (!this.appState.connected && !this.appState.demoMode) {
-                        this.showConnectionDialog();
+                    if (!this.state.connected && !this.state.demoMode) {
+                        if (confirm('Не удается подключиться к устройству. Хотите перейти в демо-режим?')) {
+                            this.startDemoMode();
+                        }
                     }
                 }, 1000);
+            } else {
+                this.notifications.show(`⚠️ Проблема с подключением (попытка ${this.state.connectionRetryCount}/${this.state.maxRetries})`, 'warning');
             }
         }
     }
     
-    clearDisplayedData() {
-        const displayElements = [
+    clearStaleData() {
+        const staleElements = [
             'moistureValue', 'avgMoisture', 'minMoisture', 'maxMoisture',
             'pumpStatus', 'lightStatus', 'currentTime', 'systemTime',
             'totalWaterings', 'totalLightHours', 'energyUsed',
             'moistureStatus', 'thresholdValue', 'lightToday'
         ];
         
-        displayElements.forEach(elementId => {
-            const displayElement = document.getElementById(elementId);
-            if (displayElement) {
-                if (elementId === 'moistureStatus') {
-                    displayElement.textContent = '--%';
-                } else if (elementId === 'thresholdValue') {
-                    displayElement.textContent = '50%';
-                } else if (elementId === 'pumpStatus' || elementId === 'lightStatus') {
-                    displayElement.textContent = '--';
-                    displayElement.className = 'card-status';
-                } else if (elementId === 'lightToday') {
-                    displayElement.textContent = '0 ч';
+        staleElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (id === 'moistureStatus') {
+                    element.textContent = '--%';
+                } else if (id === 'thresholdValue') {
+                    element.textContent = '50%';
+                } else if (id === 'pumpStatus' || id === 'lightStatus') {
+                    element.textContent = '--';
+                    element.className = 'card-status';
+                } else if (id === 'lightToday') {
+                    element.textContent = '0 ч';
                 } else {
-                    displayElement.textContent = '--';
+                    element.textContent = '--';
                 }
             }
         });
         
-        const thresholdControl = document.getElementById('moistureThreshold');
-        if (thresholdControl) thresholdControl.value = 50;
+        const thresholdSlider = document.getElementById('moistureThreshold');
+        if (thresholdSlider) thresholdSlider.value = 50;
         
-        const moistureIndicator = document.getElementById('moistureBarFill');
-        if (moistureIndicator) moistureIndicator.style.width = '0%';
+        const moistureBarFill = document.getElementById('moistureBarFill');
+        if (moistureBarFill) moistureBarFill.style.width = '0%';
         
-        if (this.chartManager) {
-            this.chartManager.clearChart();
+        if (this.charts) {
+            this.charts.clearChart();
         }
         
-        this.updateErrorDisplay([]);
+        this.updateErrorsList([]);
     }
     
-    updateInterface(systemData) {
-        if (!systemData) return;
+    updateUI(data) {
+        if (!data) return;
         
-        this.updateDisplayElement('moistureValue', Math.round(systemData.moisture));
-        this.updateDisplayElement('avgMoisture', Math.round(systemData.avg_moisture || systemData.moisture) + '%');
-        this.updateDisplayElement('minMoisture', Math.round(systemData.min_moisture || systemData.moisture) + '%');
-        this.updateDisplayElement('maxMoisture', Math.round(systemData.max_moisture || systemData.moisture) + '%');
+        this.updateElement('moistureValue', Math.round(data.moisture));
+        this.updateElement('avgMoisture', Math.round(data.avg_moisture || data.moisture) + '%');
+        this.updateElement('minMoisture', Math.round(data.min_moisture || data.moisture) + '%');
+        this.updateElement('maxMoisture', Math.round(data.max_moisture || data.moisture) + '%');
         
-        const moistureIndicator = document.getElementById('moistureBarFill');
-        if (moistureIndicator) {
-            moistureIndicator.style.width = `${systemData.moisture}%`;
+        const moistureBarFill = document.getElementById('moistureBarFill');
+        if (moistureBarFill) {
+            moistureBarFill.style.width = `${data.moisture}%`;
         }
         
-        const statusDisplay = document.getElementById('moistureStatus');
-        if (statusDisplay) {
-            let statusIcon = 'fa-leaf';
-            if (systemData.moisture < 30) statusIcon = 'fa-exclamation-triangle';
-            else if (systemData.moisture < 50) statusIcon = 'fa-tint';
-            else if (systemData.moisture > 80) statusIcon = 'fa-flood';
+        const statusElement = document.getElementById('moistureStatus');
+        if (statusElement) {
+            let icon = 'fa-leaf';
+            if (data.moisture < 30) icon = 'fa-exclamation-triangle';
+            else if (data.moisture < 50) icon = 'fa-tint';
+            else if (data.moisture > 80) icon = 'fa-flood';
             
-            statusDisplay.innerHTML = `<i class="fas ${statusIcon}"></i> ${Math.round(systemData.moisture)}%`;
+            statusElement.innerHTML = `<i class="fas ${icon}"></i> ${Math.round(data.moisture)}%`;
         }
         
-        this.updateDisplayElement('pumpStatus', systemData.pump ? 'ВКЛ' : 'ВЫКЛ');
-        this.updateDisplayElement('lightStatus', systemData.light ? 'ВКЛ' : 'ВЫКЛ');
-        this.updateDisplayElement('currentTime', systemData.current_time || '--:--');
-        this.updateDisplayElement('systemTime', systemData.current_time || '--:--');
-        this.updateDisplayElement('totalWaterings', systemData.total_waterings || 0);
-        this.updateDisplayElement('totalLightHours', systemData.total_light_hours || 0);
-        this.updateDisplayElement('energyUsed', (systemData.total_energy || 0) + ' Вт·ч');
-        this.updateDisplayElement('lightToday', (systemData.total_light_hours || 0) + ' ч');
+        this.updateElement('pumpStatus', data.pump ? 'ВКЛ' : 'ВЫКЛ');
+        this.updateElement('lightStatus', data.light ? 'ВКЛ' : 'ВЫКЛ');
+        this.updateElement('currentTime', data.current_time || '--:--');
+        this.updateElement('systemTime', data.current_time || '--:--');
+        this.updateElement('totalWaterings', data.total_waterings || 0);
+        this.updateElement('totalLightHours', data.total_light_hours || 0);
+        this.updateElement('energyUsed', (data.total_energy || 0) + ' Вт·ч');
+        this.updateElement('lightToday', (data.total_light_hours || 0) + ' ч');
         
-        const pumpStatusElement = document.getElementById('pumpStatus');
-        if (pumpStatusElement) {
-            pumpStatusElement.className = systemData.pump ? 'card-status active' : 'card-status';
+        const pumpStatus = document.getElementById('pumpStatus');
+        if (pumpStatus) {
+            pumpStatus.className = data.pump ? 'card-status active' : 'card-status';
         }
         
-        const lightStatusElement = document.getElementById('lightStatus');
-        if (lightStatusElement) {
-            lightStatusElement.className = systemData.light ? 'card-status active' : 'card-status';
+        const lightStatus = document.getElementById('lightStatus');
+        if (lightStatus) {
+            lightStatus.className = data.light ? 'card-status active' : 'card-status';
         }
         
-        this.updateDisplayElement('thresholdValue', (systemData.moisture_threshold || 50) + '%');
-        const thresholdControl = document.getElementById('moistureThreshold');
-        if (thresholdControl) thresholdControl.value = systemData.moisture_threshold || 50;
+        this.updateElement('thresholdValue', (data.moisture_threshold || 50) + '%');
+        const thresholdSlider = document.getElementById('moistureThreshold');
+        if (thresholdSlider) thresholdSlider.value = data.moisture_threshold || 50;
         
-        this.updateDisplayElement('wateringDelay', systemData.watering_delay || 30);
-        this.updateDisplayElement('wateringDuration', systemData.watering_duration || 10);
-        this.updateDisplayElement('manualPumpTime', systemData.manual_pump_time || 10);
-        this.updateDisplayElement('manualLightTime', systemData.manual_light_time || 1);
+        this.updateElement('wateringDelay', data.watering_delay || 30);
+        this.updateElement('wateringDuration', data.watering_duration || 10);
+        this.updateElement('manualPumpTime', data.manual_pump_time || 10);
+        this.updateElement('manualLightTime', data.manual_light_time || 1);
         
-        this.updateDisplayElement('lampStart', systemData.lamp_start || '08:00');
-        this.updateDisplayElement('lampEnd', systemData.lamp_end || '20:00');
-        this.updateDisplayElement('sleepStart', systemData.sleep_start || '23:00');
-        this.updateDisplayElement('sleepEnd', systemData.sleep_end || '07:00');
+        this.updateElement('lampStart', data.lamp_start || '08:00');
+        this.updateElement('lampEnd', data.lamp_end || '20:00');
+        this.updateElement('sleepStart', data.sleep_start || '23:00');
+        this.updateElement('sleepEnd', data.sleep_end || '07:00');
         
         const lampToggle = document.getElementById('lampEnabled');
-        if (lampToggle) lampToggle.checked = systemData.lamp_enabled;
+        if (lampToggle) lampToggle.checked = data.lamp_enabled;
         
         const sleepToggle = document.getElementById('sleepEnabled');
-        if (sleepToggle) sleepToggle.checked = systemData.sleep_enabled;
+        if (sleepToggle) sleepToggle.checked = data.sleep_enabled;
         
-        this.updateErrorDisplay(systemData.errors || []);
+        this.updateErrorsList(data.errors || []);
         this.updateConnectionMetrics();
     }
     
-    updateDisplayElement(elementId, displayValue) {
-        const displayElement = document.getElementById(elementId);
-        if (displayElement) {
-            displayElement.textContent = displayValue;
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
         }
     }
     
-    updateErrorDisplay(errorList) {
-        const errorContainer = document.getElementById('errorsList');
-        if (!errorContainer) return;
+    updateErrorsList(errors) {
+        const errorsList = document.getElementById('errorsList');
+        if (!errorsList) return;
         
-        errorContainer.innerHTML = '';
+        errorsList.innerHTML = '';
         
-        if (!errorList || errorList.length === 0) {
-            errorContainer.innerHTML = '<p class="no-errors">✅ Ошибок нет</p>';
+        if (!errors || errors.length === 0) {
+            errorsList.innerHTML = '<p class="no-errors">✅ Ошибок нет</p>';
             return;
         }
         
-        errorList.forEach(errorItem => {
+        errors.forEach(error => {
             const errorElement = document.createElement('div');
-            errorElement.className = `error-item ${errorItem.critical ? 'critical' : ''}`;
+            errorElement.className = `error-item ${error.critical ? 'critical' : ''}`;
             
             errorElement.innerHTML = `
-                <div class="error-time">${errorItem.time}</div>
-                <div class="error-message">${errorItem.msg}</div>
+                <div class="error-time">${error.time}</div>
+                <div class="error-message">${error.msg}</div>
             `;
             
-            errorContainer.appendChild(errorElement);
+            errorsList.appendChild(errorElement);
         });
     }
     
     updateConnectionMetrics() {
-        const latencyDisplay = document.getElementById('latencyValue');
-        const retryDisplay = document.getElementById('retryCount');
+        const latencyElement = document.getElementById('latencyValue');
+        const retryElement = document.getElementById('retryCount');
         
-        if (latencyDisplay) {
-            if (this.appState.lastResponseTime !== null) {
-                latencyDisplay.textContent = `${this.appState.lastResponseTime} мс`;
-                if (this.appState.lastResponseTime < 100) {
-                    latencyDisplay.style.color = 'var(--success)';
-                } else if (this.appState.lastResponseTime < 500) {
-                    latencyDisplay.style.color = 'var(--warning)';
+        if (latencyElement) {
+            if (this.state.lastLatencyMs !== null) {
+                latencyElement.textContent = `${this.state.lastLatencyMs} мс`;
+                if (this.state.lastLatencyMs < 100) {
+                    latencyElement.style.color = 'var(--success)';
+                } else if (this.state.lastLatencyMs < 500) {
+                    latencyElement.style.color = 'var(--warning)';
                 } else {
-                    latencyDisplay.style.color = 'var(--error)';
+                    latencyElement.style.color = 'var(--error)';
                 }
             } else {
-                latencyDisplay.textContent = '--';
-                latencyDisplay.style.color = 'var(--text-muted)';
+                latencyElement.textContent = '--';
+                latencyElement.style.color = 'var(--text-muted)';
             }
         }
         
-        if (retryDisplay) {
-            retryDisplay.textContent = `${this.appState.connectionAttempts}/${this.appState.maxConnectionAttempts}`;
+        if (retryElement) {
+            retryElement.textContent = `${this.state.connectionRetryCount}/${this.state.maxRetries}`;
         }
     }
     
-    checkSystemNotifications(systemData) {
-        if (!this.notificationManager.enabled) return;
+    checkNotifications(data) {
+        if (!this.notifications.enabled) return;
         
-        if (systemData.moisture < 30) {
-            this.notificationManager.show('⚠️ Низкий уровень влажности!', 'warning');
+        if (data.moisture < 30) {
+            this.notifications.show('⚠️ Низкий уровень влажности!', 'warning');
         }
         
-        if (systemData.errors && systemData.errors.length > 0) {
-            const criticalIssues = systemData.errors.filter(error => error.critical);
-            if (criticalIssues.length > 0) {
-                this.notificationManager.show('🚨 Обнаружены критические ошибки!', 'error');
+        if (data.errors && data.errors.length > 0) {
+            const criticalErrors = data.errors.filter(error => error.critical);
+            if (criticalErrors.length > 0) {
+                this.notifications.show('🚨 Обнаружены критические ошибки!', 'error');
             }
         }
     }
     
-    setupUserInteractions() {
-        const connectButton = document.getElementById('manualConnectBtn');
-        if (connectButton) {
-            connectButton.addEventListener('click', () => {
-                this.showConnectionDialog();
-            });
-        }
-        
-        const confirmConnectButton = document.getElementById('connectBtn');
-        if (confirmConnectButton) {
-            confirmConnectButton.addEventListener('click', async () => {
-                const addressInput = document.getElementById('ipAddress');
-                if (addressInput) {
-                    this.appState.deviceAddress = addressInput.value.trim();
-                    await this.connectToDevice();
+    setupEventListeners() {
+        const connectBtn = document.getElementById('connectBtn');
+        if (connectBtn) {
+            connectBtn.addEventListener('click', async () => {
+                const ipInput = document.getElementById('ipInput');
+                if (ipInput) {
+                    this.state.espIp = ipInput.value.trim();
+                    await this.connectToESP();
                 }
             });
         }
         
-        const demoButton = document.getElementById('demoBtn');
-        if (demoButton) {
-            demoButton.addEventListener('click', () => {
+        const demoBtn = document.getElementById('demoBtn');
+        if (demoBtn) {
+            demoBtn.addEventListener('click', () => {
                 this.startDemoMode();
             });
         }
         
-        const pumpStartButton = document.getElementById('pumpOnBtn');
-        const pumpStopButton = document.getElementById('pumpOffBtn');
+        const pumpOnBtn = document.getElementById('pumpOnBtn');
+        const pumpOffBtn = document.getElementById('pumpOffBtn');
         
-        if (pumpStartButton) {
-            pumpStartButton.addEventListener('click', async () => {
+        if (pumpOnBtn) {
+            pumpOnBtn.addEventListener('click', async () => {
                 const durationInput = document.getElementById('manualPumpTimeInput');
-                const pumpDuration = Math.max(1, parseInt(durationInput?.value, 10) || 10);
-                const pumpDurationMs = pumpDuration * 1000;
+                const durationSec = Math.max(1, parseInt(durationInput?.value, 10) || 10);
+                const durationMs = durationSec * 1000;
 
-                if (this.appState.demoMode) {
-                    this.appState.currentSystemData.pump = true;
-                    this.updateInterface(this.appState.currentSystemData);
-                    this.notificationManager.show(`💧 Полив запущен на ${pumpDuration} сек (демо)`, 'success');
+                if (this.state.demoMode) {
+                    this.state.currentData.pump = true;
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show(`💧 Полив запущен на ${durationSec} сек (демо)`, 'success');
                     setTimeout(() => {
-                        this.appState.currentSystemData.pump = false;
-                        this.updateInterface(this.appState.currentSystemData);
-                    }, pumpDurationMs);
+                        this.state.currentData.pump = false;
+                        this.updateUI(this.state.currentData);
+                    }, durationMs);
                     return;
                 }
 
-                if (!this.appState.connected) {
-                    this.notificationManager.show('❌ Нет подключения к системе', 'error');
+                if (!this.state.connected) {
+                    this.notifications.show('❌ Нет подключения к системе', 'error');
                     return;
                 }
 
                 try {
-                    await this.apiClient.controlPump(this.appState.deviceAddress, 'on');
-                    this.notificationManager.show(`💧 Полив запущен на ${pumpDuration} сек`, 'success');
+                    await this.api.controlPump(this.state.espIp, 'on');
+                    this.notifications.show(`💧 Полив запущен на ${durationSec} сек`, 'success');
                     setTimeout(async () => {
                         try {
-                            await this.apiClient.controlPump(this.appState.deviceAddress, 'off');
-                            this.notificationManager.show('✅ Полив завершен', 'success');
-                            setTimeout(() => this.refreshSystemData(), 1000);
+                            await this.api.controlPump(this.state.espIp, 'off');
+                            this.notifications.show('✅ Полив завершен', 'success');
+                            setTimeout(() => this.updateData(), 1000);
                         } catch (error) {
-                            this.notificationManager.show('❌ Ошибка отключения насоса', 'error');
+                            this.notifications.show('❌ Ошибка отключения насоса', 'error');
                         }
-                    }, pumpDurationMs);
+                    }, durationMs);
                 } catch (error) {
-                    this.notificationManager.show('❌ Ошибка включения насоса', 'error');
+                    this.notifications.show('❌ Ошибка включения насоса', 'error');
                 }
             });
         }
         
-        if (pumpStopButton) {
-            pumpStopButton.addEventListener('click', async () => {
-                if (this.appState.demoMode) {
-                    this.appState.currentSystemData.pump = false;
-                    this.updateInterface(this.appState.currentSystemData);
-                    this.notificationManager.show('✅ Насос выключен (демо)', 'success');
-                } else if (this.appState.connected) {
+        if (pumpOffBtn) {
+            pumpOffBtn.addEventListener('click', async () => {
+                if (this.state.demoMode) {
+                    this.state.currentData.pump = false;
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show('✅ Насос выключен (демо)', 'success');
+                } else if (this.state.connected) {
                     try {
-                        await this.apiClient.controlPump(this.appState.deviceAddress, 'off');
-                        this.notificationManager.show('✅ Насос выключен', 'success');
-                        setTimeout(() => this.refreshSystemData(), 1000);
+                        await this.api.controlPump(this.state.espIp, 'off');
+                        this.notifications.show('✅ Насос выключен', 'success');
+                        setTimeout(() => this.updateData(), 1000);
                     } catch (error) {
-                        this.notificationManager.show('❌ Ошибка выключения насоса', 'error');
+                        this.notifications.show('❌ Ошибка выключения насоса', 'error');
                     }
                 }
             });
         }
         
-        const lightStartButton = document.getElementById('lightOnBtn');
-        const lightStopButton = document.getElementById('lightOffBtn');
+        const lightOnBtn = document.getElementById('lightOnBtn');
+        const lightOffBtn = document.getElementById('lightOffBtn');
         
-        if (lightStartButton) {
-            lightStartButton.addEventListener('click', async () => {
-                if (this.appState.demoMode) {
-                    this.appState.currentSystemData.light = true;
-                    this.updateInterface(this.appState.currentSystemData);
-                    this.notificationManager.show('💡 Свет включен (демо)', 'success');
-                } else if (this.appState.connected) {
+        if (lightOnBtn) {
+            lightOnBtn.addEventListener('click', async () => {
+                if (this.state.demoMode) {
+                    this.state.currentData.light = true;
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show('💡 Свет включен (демо)', 'success');
+                } else if (this.state.connected) {
                     try {
-                        await this.apiClient.controlLight(this.appState.deviceAddress, 'on');
-                        this.notificationManager.show('💡 Свет включен', 'success');
-                        setTimeout(() => this.refreshSystemData(), 1000);
+                        await this.api.controlLight(this.state.espIp, 'on');
+                        this.notifications.show('💡 Свет включен', 'success');
+                        setTimeout(() => this.updateData(), 1000);
                     } catch (error) {
-                        this.notificationManager.show('❌ Ошибка включения света', 'error');
+                        this.notifications.show('❌ Ошибка включения света', 'error');
                     }
                 }
             });
         }
         
-        if (lightStopButton) {
-            lightStopButton.addEventListener('click', async () => {
-                if (this.appState.demoMode) {
-                    this.appState.currentSystemData.light = false;
-                    this.updateInterface(this.appState.currentSystemData);
-                    this.notificationManager.show('✅ Свет выключен (демо)', 'success');
-                } else if (this.appState.connected) {
+        if (lightOffBtn) {
+            lightOffBtn.addEventListener('click', async () => {
+                if (this.state.demoMode) {
+                    this.state.currentData.light = false;
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show('✅ Свет выключен (демо)', 'success');
+                } else if (this.state.connected) {
                     try {
-                        await this.apiClient.controlLight(this.appState.deviceAddress, 'off');
-                        this.notificationManager.show('✅ Свет выключен', 'success');
-                        setTimeout(() => this.refreshSystemData(), 1000);
+                        await this.api.controlLight(this.state.espIp, 'off');
+                        this.notifications.show('✅ Свет выключен', 'success');
+                        setTimeout(() => this.updateData(), 1000);
                     } catch (error) {
-                        this.notificationManager.show('❌ Ошибка выключения света', 'error');
+                        this.notifications.show('❌ Ошибка выключения света', 'error');
                     }
                 }
             });
         }
         
-        const timeSyncButton = document.getElementById('syncTimeBtn');
-        if (timeSyncButton) {
-            timeSyncButton.addEventListener('click', async () => {
-                if (this.appState.demoMode) {
-                    this.notificationManager.show('🕐 Время синхронизировано (демо)', 'success');
-                } else if (this.appState.connected) {
+        const syncTimeBtn = document.getElementById('syncTimeBtn');
+        if (syncTimeBtn) {
+            syncTimeBtn.addEventListener('click', async () => {
+                if (this.state.demoMode) {
+                    this.notifications.show('🕐 Время синхронизировано (демо)', 'success');
+                } else if (this.state.connected) {
                     try {
-                        await this.apiClient.syncTime(this.appState.deviceAddress);
-                        this.notificationManager.show('🕐 Время синхронизировано', 'success');
-                        setTimeout(() => this.refreshSystemData(), 1000);
+                        await this.api.syncTime(this.state.espIp);
+                        this.notifications.show('🕐 Время синхронизировано', 'success');
+                        setTimeout(() => this.updateData(), 1000);
                     } catch (error) {
-                        this.notificationManager.show('❌ Ошибка синхронизации времени', 'error');
+                        this.notifications.show('❌ Ошибка синхронизации времени', 'error');
                     }
                 }
             });
         }
 
-        const setTimeButton = document.getElementById('setTimeBtn');
+        const setTimeBtn = document.getElementById('setTimeBtn');
         const manualTimeInput = document.getElementById('manualTimeInput');
         if (manualTimeInput) {
-            const currentTime = new Date();
-            manualTimeInput.value = currentTime.toTimeString().slice(0, 5);
+            const now = new Date();
+            manualTimeInput.value = now.toTimeString().slice(0, 5);
         }
 
-        if (setTimeButton && manualTimeInput) {
-            setTimeButton.addEventListener('click', async () => {
+        if (setTimeBtn && manualTimeInput) {
+            setTimeBtn.addEventListener('click', async () => {
                 if (!manualTimeInput.value) {
-                    this.notificationManager.show('❌ Укажите время для установки', 'error');
+                    this.notifications.show('❌ Укажите время для установки', 'error');
                     return;
                 }
 
-                const [hoursValue, minutesValue] = manualTimeInput.value.split(':').map(Number);
-                if (Number.isNaN(hoursValue) || Number.isNaN(minutesValue)) {
-                    this.notificationManager.show('❌ Некорректный формат времени', 'error');
+                const [hours, minutes] = manualTimeInput.value.split(':').map(Number);
+                if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+                    this.notifications.show('❌ Некорректный формат времени', 'error');
                     return;
                 }
 
-                if (this.appState.demoMode) {
-                    this.updateDisplayElement('systemTime', manualTimeInput.value);
-                    this.notificationManager.show('🕐 Время установлено (демо)', 'success');
+                if (this.state.demoMode) {
+                    this.updateElement('systemTime', manualTimeInput.value);
+                    this.notifications.show('🕐 Время установлено (демо)', 'success');
                     return;
                 }
 
-                if (!this.appState.connected) {
-                    this.notificationManager.show('❌ Нет подключения к системе', 'error');
+                if (!this.state.connected) {
+                    this.notifications.show('❌ Нет подключения к системе', 'error');
                     return;
                 }
 
                 try {
-                    await this.apiClient.setTime(this.appState.deviceAddress, hoursValue, minutesValue);
-                    this.notificationManager.show('🕐 Время установлено', 'success');
-                    setTimeout(() => this.refreshSystemData(), 1000);
+                    await this.api.setTime(this.state.espIp, hours, minutes);
+                    this.notifications.show('🕐 Время установлено', 'success');
+                    setTimeout(() => this.updateData(), 1000);
                 } catch (error) {
-                    this.notificationManager.show('❌ Ошибка установки времени', 'error');
+                    this.notifications.show('❌ Ошибка установки времени', 'error');
                 }
             });
         }
         
         const thresholdSlider = document.getElementById('moistureThreshold');
-        const thresholdDisplay = document.getElementById('thresholdValue');
+        const thresholdValue = document.getElementById('thresholdValue');
         
-        if (thresholdSlider && thresholdDisplay) {
-            thresholdSlider.addEventListener('input', (sliderEvent) => {
-                thresholdDisplay.textContent = sliderEvent.target.value + '%';
+        if (thresholdSlider && thresholdValue) {
+            thresholdSlider.addEventListener('input', (e) => {
+                thresholdValue.textContent = e.target.value + '%';
             });
             
-            thresholdSlider.addEventListener('change', async (sliderEvent) => {
-                const thresholdValue = parseInt(sliderEvent.target.value);
-                if (this.appState.demoMode) {
-                    this.appState.currentSystemData.moisture_threshold = thresholdValue;
-                    this.notificationManager.show('✅ Порог влажности обновлен (демо)', 'success');
-                } else if (this.appState.connected) {
+            thresholdSlider.addEventListener('change', async (e) => {
+                const value = parseInt(e.target.value);
+                if (this.state.demoMode) {
+                    this.state.currentData.moisture_threshold = value;
+                    this.notifications.show('✅ Порог влажности обновлен (демо)', 'success');
+                } else if (this.state.connected) {
                     try {
-                        await this.apiClient.updateSettings(this.appState.deviceAddress, {
-                            moisture_threshold: thresholdValue
+                        await this.api.updateSettings(this.state.espIp, {
+                            moisture_threshold: value
                         });
-                        this.notificationManager.show('✅ Порог влажности обновлен', 'success');
+                        this.notifications.show('✅ Порог влажности обновлен', 'success');
                     } catch (error) {
-                        this.notificationManager.show('❌ Ошибка обновления настроек', 'error');
+                        this.notifications.show('❌ Ошибка обновления настроек', 'error');
                     }
                 }
             });
         }
         
-        const clearErrorsButton = document.getElementById('clearErrorsBtn');
-        if (clearErrorsButton) {
-            clearErrorsButton.addEventListener('click', async () => {
-                if (this.appState.demoMode) {
-                    this.appState.currentSystemData.errors = [];
-                    this.updateErrorDisplay([]);
-                    this.notificationManager.show('✅ Ошибки очищены (демо)', 'success');
-                } else if (this.appState.connected) {
+        const clearErrorsBtn = document.getElementById('clearErrorsBtn');
+        if (clearErrorsBtn) {
+            clearErrorsBtn.addEventListener('click', async () => {
+                if (this.state.demoMode) {
+                    this.state.currentData.errors = [];
+                    this.updateErrorsList([]);
+                    this.notifications.show('✅ Ошибки очищены (демо)', 'success');
+                } else if (this.state.connected) {
                     try {
-                        await this.apiClient.clearErrors(this.appState.deviceAddress);
-                        this.notificationManager.show('✅ Ошибки очищены', 'success');
-                        setTimeout(() => this.refreshSystemData(), 1000);
+                        await this.api.clearErrors(this.state.espIp);
+                        this.notifications.show('✅ Ошибки очищены', 'success');
+                        setTimeout(() => this.updateData(), 1000);
                     } catch (error) {
-                        this.notificationManager.show('❌ Ошибка очистки ошибок', 'error');
+                        this.notifications.show('❌ Ошибка очистки ошибок', 'error');
                     }
                 }
             });
         }
         
-        const resetStatsButton = document.getElementById('resetStatsBtn');
-        if (resetStatsButton) {
-            resetStatsButton.addEventListener('click', () => {
-                if (this.appState.demoMode) {
-                    this.appState.currentSystemData.total_waterings = 0;
-                    this.appState.currentSystemData.total_light_hours = 0;
-                    this.appState.currentSystemData.total_energy = 0;
-                    this.appState.currentSystemData.min_moisture = this.appState.currentSystemData.moisture;
-                    this.appState.currentSystemData.max_moisture = this.appState.currentSystemData.moisture;
+        // ИСПРАВЛЕННЫЙ И ПРОСТОЙ ОБРАБОТЧИК ДЛЯ СБРОСА СТАТИСТИКИ
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        if (resetStatsBtn) {
+            resetStatsBtn.addEventListener('click', () => {
+                console.log('Сброс статистики нажата');
+                
+                if (this.state.demoMode) {
+                    // ПРОСТОЙ СБРОС В ДЕМО-РЕЖИМЕ
+                    this.state.currentData.total_waterings = 0;
+                    this.state.currentData.total_light_hours = 0;
+                    this.state.currentData.total_energy = 0;
+                    // Сброс min/max
+                    this.state.currentData.min_moisture = this.state.currentData.moisture;
+                    this.state.currentData.max_moisture = this.state.currentData.moisture;
                     
-                    this.updateInterface(this.appState.currentSystemData);
-                    this.notificationManager.show('✅ Статистика сброшена (демо)', 'success');
-                } else if (this.appState.connected) {
-                    this.apiClient.resetStats(this.appState.deviceAddress)
+                    // Сразу обновляем интерфейс
+                    this.updateUI(this.state.currentData);
+                    this.notifications.show('✅ Статистика сброшена (демо)', 'success');
+                    console.log('Статистика сброшена в демо-режиме');
+                } else if (this.state.connected) {
+                    // Для реального устройства используем API
+                    console.log('Попытка сброса статистики через API');
+                    this.api.resetStats(this.state.espIp)
                         .then(() => {
-                            this.notificationManager.show('✅ Статистика сброшена', 'success');
-                            setTimeout(() => this.refreshSystemData(), 500);
+                            this.notifications.show('✅ Статистика сброшена', 'success');
+                            console.log('Статистика сброшена через API');
+                            // Обновляем данные через 500мс
+                            setTimeout(() => this.updateData(), 500);
                         })
                         .catch((error) => {
                             console.error('Ошибка сброса статистики:', error);
-                            this.notificationManager.show('❌ Ошибка сброса статистики', 'error');
+                            this.notifications.show('❌ Ошибка сброса статистики. Проверьте подключение.', 'error');
                         });
                 } else {
-                    this.notificationManager.show('❌ Нет подключения к системе', 'error');
+                    this.notifications.show('❌ Нет подключения к системе', 'error');
                 }
             });
         }
         
-        const documentationLink = document.getElementById('docsLink');
-        if (documentationLink) {
-            documentationLink.addEventListener('click', (clickEvent) => {
-                clickEvent.preventDefault();
+        const docsLink = document.getElementById('docsLink');
+        if (docsLink) {
+            docsLink.addEventListener('click', (e) => {
+                e.preventDefault();
                 window.open('https://docs.google.com/document/d/1WqwljHYKqke6uKdL4wd3HSNd9nIVkHLH/edit', '_blank');
             });
         }
         
-        const quickGuideButton = document.getElementById('quickGuideBtn');
-        const quickGuideDialog = document.getElementById('quickGuideModal');
-        if (quickGuideButton && quickGuideDialog) {
-            quickGuideButton.addEventListener('click', () => {
-                quickGuideDialog.classList.add('active');
-                
-                // На GitHub Pages добавляем информацию о локальном запуске
-                if (this.appState.isGitHubPages) {
-                    setTimeout(() => {
-                        const modalBody = quickGuideDialog.querySelector('.modal-body');
-                        if (modalBody) {
-                            const extraInfo = `
-                                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 107, 107, 0.1); border-radius: 8px;">
-                                    <h4 style="color: var(--accent-red); margin-bottom: 10px;">
-                                        <i class="fas fa-exclamation-triangle"></i> Важно для GitHub Pages
-                                    </h4>
-                                    <p style="color: var(--text-secondary); margin: 5px 0;">
-                                        Этот интерфейс на GitHub Pages работает только в демо-режиме.
-                                    </p>
-                                    <p style="color: var(--text-secondary); margin: 5px 0;">
-                                        Для работы с реальным ESP8266 скачайте файлы и запустите локально.
-                                    </p>
-                                </div>
-                            `;
-                            modalBody.insertAdjacentHTML('beforeend', extraInfo);
-                        }
-                    }, 100);
-                }
+        const quickGuideBtn = document.getElementById('quickGuideBtn');
+        const quickGuideModal = document.getElementById('quickGuideModal');
+        if (quickGuideBtn && quickGuideModal) {
+            quickGuideBtn.addEventListener('click', () => {
+                quickGuideModal.classList.add('active');
             });
         }
         
-        document.querySelectorAll('.modal-close').forEach(closeButton => {
-            closeButton.addEventListener('click', () => {
-                closeButton.closest('.modal').classList.remove('active');
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.closest('.modal').classList.remove('active');
             });
         });
         
-        document.querySelectorAll('.modal').forEach(dialogElement => {
-            dialogElement.addEventListener('click', (clickEvent) => {
-                if (clickEvent.target === dialogElement) {
-                    dialogElement.classList.remove('active');
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
                 }
             });
         });
         
         const themeSelector = document.getElementById('themeSelector');
         if (themeSelector) {
-            themeSelector.addEventListener('change', (selectionEvent) => {
-                this.themeManager.setTheme(selectionEvent.target.value);
-                this.notificationManager.show(`✅ Тема изменена на "${selectionEvent.target.selectedOptions[0].text}"`, 'success');
+            themeSelector.addEventListener('change', (e) => {
+                this.theme.setTheme(e.target.value);
+                this.notifications.show(`✅ Тема изменена на "${e.target.selectedOptions[0].text}"`, 'success');
             });
         }
 
         const notificationsToggle = document.getElementById('notificationsToggle');
         const silentToggle = document.getElementById('silentNotificationsToggle');
 
-        const updateNotificationControls = () => {
+        const syncNotificationControls = () => {
             if (notificationsToggle) {
-                notificationsToggle.checked = this.notificationManager.enabled;
+                notificationsToggle.checked = this.notifications.enabled;
             }
             if (silentToggle) {
-                silentToggle.checked = this.notificationManager.silentMode;
-                silentToggle.disabled = !this.notificationManager.enabled;
+                silentToggle.checked = this.notifications.silentMode;
+                silentToggle.disabled = !this.notifications.enabled;
             }
         };
 
         if (notificationsToggle) {
             const notificationsEnabled = localStorage.getItem('notifications_enabled') !== 'false';
-            this.notificationManager.setEnabled(notificationsEnabled);
-            notificationsToggle.addEventListener('change', (toggleEvent) => {
-                this.notificationManager.setEnabled(toggleEvent.target.checked);
-                updateNotificationControls();
+            this.notifications.setEnabled(notificationsEnabled);
+            notificationsToggle.addEventListener('change', (e) => {
+                this.notifications.setEnabled(e.target.checked);
+                syncNotificationControls();
             });
         }
 
         if (silentToggle) {
             const silentEnabled = localStorage.getItem('notifications_silent') === 'true';
-            this.notificationManager.setSilentMode(silentEnabled);
-            silentToggle.addEventListener('change', (toggleEvent) => {
-                this.notificationManager.setSilentMode(toggleEvent.target.checked);
-                updateNotificationControls();
+            this.notifications.setSilentMode(silentEnabled);
+            silentToggle.addEventListener('change', (e) => {
+                this.notifications.setSilentMode(e.target.checked);
+                syncNotificationControls();
             });
         }
 
-        updateNotificationControls();
+        syncNotificationControls();
         
         const updateIntervalInput = document.getElementById('updateInterval');
         if (updateIntervalInput) {
-            updateIntervalInput.addEventListener('change', (inputEvent) => {
-                const intervalValue = parseInt(inputEvent.target.value) * 1000;
-                if (intervalValue >= 2000 && intervalValue <= 60000) {
-                    this.appState.updateFrequency = intervalValue;
-                    this.notificationManager.show(`✅ Интервал обновления: ${inputEvent.target.value} сек`, 'success');
+            updateIntervalInput.addEventListener('change', (e) => {
+                const value = parseInt(e.target.value) * 1000;
+                if (value >= 2000 && value <= 60000) {
+                    this.state.updateInterval = value;
+                    this.notifications.show(`✅ Интервал обновления: ${e.target.value} сек`, 'success');
                 }
             });
         }
-        
-        // Добавляем обработчик для кнопки "Скачать для локального запуска" в футере
-        const downloadLocalBtn = document.getElementById('downloadLocalVersion');
-        if (!downloadLocalBtn) {
-            // Создаем кнопку в футере, если её нет
-            const footerLinks = document.querySelector('.footer-links');
-            if (footerLinks) {
-                const downloadLink = document.createElement('a');
-                downloadLink.href = '#';
-                downloadLink.className = 'footer-link';
-                downloadLink.id = 'downloadLocalVersion';
-                downloadLink.innerHTML = '<i class="fas fa-download"></i> Скачать для локального запуска';
-                footerLinks.appendChild(downloadLink);
-                
-                downloadLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.showLocalSetupGuide();
-                });
-            }
-        }
     }
     
-    startDataUpdateCycle() {
+    startUpdateLoop() {
         setInterval(() => {
-            if (this.appState.connected) {
-                this.refreshSystemData();
+            if (this.state.connected) {
+                this.updateData();
             }
-        }, this.appState.updateFrequency);
+        }, this.state.updateInterval);
         
         setInterval(() => {
-            if (this.appState.demoMode && this.appState.currentSystemData) {
-                const currentTime = new Date();
-                this.appState.currentSystemData.current_time = currentTime.toLocaleTimeString('ru-RU', { 
+            if (this.state.demoMode && this.state.currentData) {
+                const now = new Date();
+                this.state.currentData.current_time = now.toLocaleTimeString('ru-RU', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
-                this.updateDisplayElement('systemTime', this.appState.currentSystemData.current_time);
+                this.updateElement('systemTime', this.state.currentData.current_time);
             }
         }, 60000);
     }
@@ -1278,28 +930,28 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
             .then(registration => {
-                console.log('ServiceWorker зарегистрирован:', registration);
+                console.log('ServiceWorker registered:', registration);
             })
             .catch(error => {
-                console.log('Ошибка регистрации ServiceWorker:', error);
+                console.log('ServiceWorker registration failed:', error);
             });
     });
 }
 
 window.addEventListener('online', () => {
-    if (window.ecoGrowApp && !window.ecoGrowApp.appState.demoMode) {
-        window.ecoGrowApp.notificationManager.show('📡 Соединение восстановлено', 'success');
-        if (!window.ecoGrowApp.appState.connected) {
-            window.ecoGrowApp.attemptAutoConnection();
+    if (window.ecoGrowApp && !window.ecoGrowApp.state.demoMode) {
+        window.ecoGrowApp.notifications.show('📡 Соединение восстановлено', 'success');
+        if (!window.ecoGrowApp.state.connected) {
+            window.ecoGrowApp.tryAutoConnect();
         }
     }
 });
 
 window.addEventListener('offline', () => {
-    if (window.ecoGrowApp && !window.ecoGrowApp.appState.demoMode) {
-        window.ecoGrowApp.notificationManager.show('⚠️ Отсутствует интернет-соединение', 'warning');
-        window.ecoGrowApp.appState.connected = false;
-        window.ecoGrowApp.updateConnectionDisplay();
-        window.ecoGrowApp.clearDisplayedData();
+    if (window.ecoGrowApp && !window.ecoGrowApp.state.demoMode) {
+        window.ecoGrowApp.notifications.show('⚠️ Отсутствует интернет-соединение', 'warning');
+        window.ecoGrowApp.state.connected = false;
+        window.ecoGrowApp.updateConnectionStatus();
+        window.ecoGrowApp.clearStaleData();
     }
 });
