@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>EcoGrow Mobile</title>
+    <meta name="description" content="Умная система полива – мобильное приложение">
+    <meta name="author" content="Купченя Евгений Андреевич">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a192f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Глобальные переменные и сброс */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0a192f;
+            --bg-secondary: #112240;
+            --bg-tertiary: #1e3a5f;
+            --bg-card: #172a45;
+            --bg-header: rgba(23, 42, 69, 0.9);
+            --bg-nav: rgba(23, 42, 69, 0.9);
+            --accent-green: #64ffda;
+            --accent-blue: #00d9ff;
+            --accent-red: #ff4757;
+            --accent-orange: #ff9e00;
+            --text-primary: #e6f1ff;
+            --text-secondary: #a8b2d1;
+            --text-muted: #8892b0;
+            --gradient-primary: linear-gradient(135deg, #64ffda, #00d9ff);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --transition: 0.2s ease;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f9ff;
+            --bg-secondary: #e6f3ff;
+            --bg-tertiary: #b8e1ff;
+            --bg-card: #ffffff;
+            --bg-header: rgba(255, 255, 255, 0.9);
+            --bg-nav: rgba(255, 255, 255, 0.9);
+            --text-primary: #0c4a6e;
+            --text-secondary: #0369a1;
+            --text-muted: #64748b;
+            --accent-green: #0284c7;
+            --accent-blue: #38bdf8;
+            --accent-red: #dc2626;
+            --accent-orange: #ea580c;
+            --gradient-primary: linear-gradient(135deg, #0284c7, #38bdf8);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark-green"] {
+            --bg-primary: #0f2c1a;
+            --bg-secondary: #1a3d29;
+            --bg-tertiary: #2a5740;
+            --bg-card: #1e3a2e;
+            --bg-header: rgba(30, 58, 46, 0.9);
+            --bg-nav: rgba(30, 58, 46, 0.9);
+            --accent-green: #69f0ae;
+            --accent-blue: #4fc3f7;
+            --text-primary: #e8f5e9;
+        }
+
+        [data-theme="dark-purple"] {
+            --bg-primary: #1a103f;
+            --bg-secondary: #2a1b5f;
+            --bg-tertiary: #3d2a7f;
+            --bg-card: #2a1b5f;
+            --bg-header: rgba(42, 27, 95, 0.9);
+            --bg-nav: rgba(42, 27, 95, 0.9);
+            --accent-green: #b388ff;
+            --accent-blue: #80cbc4;
+            --text-primary: #f3e5f5;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        /* Шапка */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.2rem;
+            background: var(--bg-header);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background 0.3s ease;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+            color: var(--accent-green);
+            filter: drop-shadow(0 0 8px var(--accent-green));
+        }
+
+        .logo span {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .connection-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(255, 71, 87, 0.15);
+            border-radius: 30px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            color: var(--text-secondary);
+        }
+
+        .connection-badge.connected {
+            background: rgba(0, 255, 157, 0.15);
+            border-color: rgba(0, 255, 157, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-red);
+        }
+
+        .connection-badge.connected .status-dot {
+            background: var(--accent-green);
+        }
+
+        /* Экраны */
+        .screen {
+            display: none;
+            padding: 1rem;
+            animation: fade 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fade {
+            from { opacity: 0.5; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Карточки */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.7rem;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .card-header h2 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-header h2 i {
+            color: var(--accent-green);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+
+        .status-badge.online {
+            background: rgba(0, 255, 157, 0.2);
+            color: var(--accent-green);
+            border-color: rgba(0, 255, 157, 0.3);
+        }
+
+        /* Влажность */
+        .moisture-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+        }
+
+        .moisture-value {
+            text-align: center;
+        }
+
+        .moisture-value span:first-child {
+            font-size: 3.2rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .unit {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-left: 0.3rem;
+        }
+
+        .moisture-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: var(--bg-secondary);
+            stroke-width: 8;
+        }
+
+        .circle-progress {
+            fill: none;
+            stroke: var(--accent-green);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.6s ease;
+        }
+
+        .moisture-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8rem;
+            color: var(--accent-green);
+        }
+
+        .moisture-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            margin: 1rem 0 0.5rem;
+            overflow: hidden;
+        }
+
+        .moisture-bar-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+            padding: 0.7rem;
+            border-radius: var(--radius-md);
+            margin-top: 0.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.2rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Кнопки */
+        .btn {
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4757, #ff2e43);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00ff9d, #00cc7a);
+            color: #0a192f;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--bg-tertiary);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Ползунки и инпуты */
+        .slider-control {
+            margin: 1rem 0;
+        }
+
+        .slider-control label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .slider-with-value {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            border: 3px solid var(--bg-card);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 55px;
+            text-align: center;
+            background: rgba(100, 255, 218, 0.1);
+            padding: 0.3rem 0.5rem;
+            border-radius: 20px;
+            color: var(--accent-green);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .input-group .input-with-unit {
+            flex: 1;
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--bg-tertiary);
+        }
+
+        .input-with-unit input {
+            flex: 1;
+            padding: 0.6rem;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .input-with-unit .unit {
+            padding: 0.6rem;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin: 0.8rem 0;
+        }
+
+        .time-input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.2rem;
+        }
+
+        .time-input-group input {
+            width: 100%;
+            padding: 0.6rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0.8rem 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-switch {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-secondary);
+            border-radius: 34px;
+            transition: 0.2s;
+        }
+
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--bg-card);
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        input:checked + .slider-switch {
+            background-color: var(--accent-green);
+        }
+
+        input:checked + .slider-switch:before {
+            transform: translateX(24px);
+        }
+
+        .switch-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Статистика */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 0.8rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-card i {
+            color: var(--accent-green);
+            font-size: 1.2rem;
+        }
+
+        /* Ошибки */
+        .errors-list {
+            max-height: 140px;
+            overflow-y: auto;
+            margin-bottom: 0.8rem;
+        }
+
+        .error-item {
+            background: rgba(255, 71, 87, 0.1);
+            padding: 0.6rem;
+            margin-bottom: 0.5rem;
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--accent-red);
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .error-item.empty {
+            background: rgba(0, 255, 157, 0.1);
+            border-left-color: var(--accent-green);
+            justify-content: center;
+        }
+
+        /* Нижняя навигация */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--bg-nav);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            border-top: 1px solid rgba(100, 255, 218, 0.2);
+            z-index: 200;
+            transition: background 0.3s ease;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            padding: 0.3rem 0.5rem;
+            border-radius: 30px;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+        }
+
+        .nav-item.active {
+            color: var(--accent-green);
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        /* Уведомления — стек */
+        .notification-container {
+            position: fixed;
+            top: 70px;
+            right: 10px;
+            width: 280px;
+            height: 80px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .notification {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-green);
+            padding: 0.8rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transform-origin: top right;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .notification.success {
+            border-left-color: var(--accent-green);
+        }
+
+        .notification.error {
+            border-left-color: var(--accent-red);
+        }
+
+        .notification.warning {
+            border-left-color: var(--accent-orange);
+        }
+
+        .notification-1 {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            z-index: 50;
+        }
+
+        .notification-2 {
+            transform: translateY(-15px) scale(0.95);
+            opacity: 0.8;
+            z-index: 40;
+        }
+
+        .notification-3 {
+            transform: translateY(-30px) scale(0.9);
+            opacity: 0.6;
+            z-index: 30;
+        }
+
+        .notification-4 {
+            transform: translateY(-45px) scale(0.85);
+            opacity: 0.4;
+            z-index: 20;
+        }
+
+        .notification-5 {
+            transform: translateY(-60px) scale(0.8);
+            opacity: 0.2;
+            z-index: 10;
+        }
+
+        .notification-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .notification-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        /* Модальные окна */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 25, 47, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-green);
+        }
+
+        /* Блок "О программе" (встроен в экран настроек) */
+        .about-section {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .about-icon {
+            font-size: 3rem;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .about-version {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .about-developer {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .about-contacts {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .about-contacts a {
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            transition: color 0.2s;
+        }
+
+        .about-contacts a:hover {
+            color: var(--accent-green);
+        }
+
+        .about-tech {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .tech-badge {
+            background: rgba(100, 255, 218, 0.1);
+            color: var(--accent-green);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+
+    <!-- Шапка -->
+    <header class="app-header">
+        <div class="logo">
+            <i class="fas fa-seedling"></i>
+            <span>EcoGrow</span>
+        </div>
+        <div class="connection-badge" id="connectionStatus">
+            <div class="status-dot"></div>
+            <span>Нет подключения</span>
+        </div>
+    </header>
+
+    <!-- Экраны -->
+    <main>
+        <!-- Экран: Влажность -->
+        <div class="screen active" id="screen-moisture">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-tint"></i> Влажность почвы</h2>
+                    <span class="status-badge" id="moistureStatus">--%</span>
+                </div>
+                <div class="moisture-display">
+                    <div class="moisture-value">
+                        <span id="moistureValue">--</span>
+                        <span class="unit">%</span>
+                    </div>
+                    <div class="moisture-circle">
+                        <svg width="100" height="100">
+                            <circle class="circle-bg" cx="50" cy="50" r="44"></circle>
+                            <circle class="circle-progress" cx="50" cy="50" r="44" stroke-dasharray="276.32" stroke-dashoffset="276.32"></circle>
+                        </svg>
+                        <div class="moisture-status" id="moistureIcon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="moisture-bar">
+                    <div class="moisture-bar-fill" id="moistureBarFill"></div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-label">Средняя</span>
+                        <span class="stat-value" id="avgMoisture">--%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Мин</span>
+                        <span class="stat-value" id="minMoisture">--%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Макс</span>
+                        <span class="stat-value" id="maxMoisture">--%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-line"></i> График влажности</h2>
+                    <div style="display: flex; gap: 0.3rem;">
+                        <button class="time-btn" style="background: transparent; border: none; color: var(--text-secondary); padding: 0.2rem 0.5rem;" data-hours="1">1ч</button>
+                        <button class="time-btn" style="background: transparent; border: none; color: var(--text-secondary); padding: 0.2rem 0.5rem;" data-hours="6">6ч</button>
+                        <button class="time-btn" style="background: transparent; border: none; color: var(--text-secondary); padding: 0.2rem 0.5rem;" data-hours="24">24ч</button>
+                    </div>
+                </div>
+                <div style="height: 180px;">
+                    <canvas id="moistureChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Экран: Управление -->
+        <div class="screen" id="screen-controls">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-water"></i> Полив</h2>
+                    <span class="status-badge" id="pumpStatus">ВЫКЛ</span>
+                </div>
+                <div class="slider-control">
+                    <label>Порог влажности: <span id="thresholdValue">50%</span></label>
+                    <div class="slider-with-value">
+                        <input type="range" class="slider" id="moistureThreshold" min="10" max="90" value="50" step="1">
+                        <span class="slider-value" id="thresholdValueDisplay">50%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-with-unit">
+                        <input type="number" id="wateringDelay" min="5" max="240" value="30">
+                        <div class="unit">мин</div>
+                    </div>
+                    <div class="input-with-unit">
+                        <input type="number" id="wateringDuration" min="1" max="300" value="10">
+                        <div class="unit">сек</div>
+                    </div>
+                </div>
+                <div class="toggle-switch">
+                    <span class="switch-label">Автоматический режим</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoModeToggle" checked>
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="waterNowBtn"><i class="fas fa-play"></i> Полить</button>
+                    <button class="btn btn-danger" id="pumpOffBtn"><i class="fas fa-stop"></i> Выкл</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-lightbulb"></i> Фитолампа</h2>
+                    <span class="status-badge" id="lightStatus">ВЫКЛ</span>
+                </div>
+                <div class="time-inputs">
+                    <div class="time-input-group">
+                        <label>Вкл</label>
+                        <input type="time" id="lightOnTime" value="08:00">
+                    </div>
+                    <div class="time-input-group">
+                        <label>Выкл</label>
+                        <input type="time" id="lightOffTime" value="20:00">
+                    </div>
+                </div>
+                <div class="toggle-switch">
+                    <span class="switch-label">Расписание</span>
+                    <label class="switch">
+                        <input type="checkbox" id="lightScheduleToggle" checked>
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                <div class="toggle-switch">
+                    <span class="switch-label">Автоматический режим</span>
+                    <label class="switch">
+                        <input type="checkbox" id="lightAutoToggle" checked>
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="lightOnBtn"><i class="fas fa-power-off"></i> Вкл</button>
+                    <button class="btn btn-danger" id="lightOffBtn"><i class="fas fa-moon"></i> Выкл</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-bed"></i> Режим сна</h2>
+                    <span class="status-badge" id="sleepStatus">Неактивен</span>
+                </div>
+                <div class="time-inputs">
+                    <div class="time-input-group">
+                        <label>Начало</label>
+                        <input type="time" id="sleepStartTime" value="23:00">
+                    </div>
+                    <div class="time-input-group">
+                        <label>Конец</label>
+                        <input type="time" id="sleepEndTime" value="07:00">
+                    </div>
+                </div>
+                <div class="toggle-switch">
+                    <span class="switch-label">Включить режим сна</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sleepModeToggle">
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Экран: Статистика -->
+        <div class="screen" id="screen-stats">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-bar"></i> Статистика</h2>
+                    <button class="btn-icon" style="background: transparent; border: none; color: var(--text-secondary);" id="resetStatsBtn">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-tint"></i>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Поливов</div>
+                            <div style="font-size: 1.2rem; font-weight: 700;" id="totalWaterings">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-sun"></i>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Часов света</div>
+                            <div style="font-size: 1.2rem; font-weight: 700;" id="totalLightHours">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-bolt"></i>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Энергия</div>
+                            <div style="font-size: 1.2rem; font-weight: 700;" id="energyUsed">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Дней работы</div>
+                            <div style="font-size: 1.2rem; font-weight: 700;" id="uptimeDays">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-clock"></i> Время</h2>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                    <span style="color: var(--text-muted);">Системное</span>
+                    <span style="font-size: 1.4rem; font-weight: 600;" id="systemTime">--:--</span>
+                </div>
+                <button class="btn btn-primary" id="syncTimeBtn" style="margin-bottom: 0.5rem;">
+                    <i class="fas fa-sync-alt"></i> Синхронизировать
+                </button>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="number" id="manualHours" min="0" max="23" value="12" placeholder="ЧЧ" style="flex: 1; padding: 0.6rem; background: var(--bg-secondary); border: 1px solid var(--bg-tertiary); border-radius: var(--radius-md); color: var(--text-primary);">
+                    <input type="number" id="manualMinutes" min="0" max="59" value="0" placeholder="ММ" style="flex: 1; padding: 0.6rem; background: var(--bg-secondary); border: 1px solid var(--bg-tertiary); border-radius: var(--radius-md); color: var(--text-primary);">
+                    <button class="btn btn-primary" id="setTimeManuallyBtn" style="width: auto; padding: 0.6rem 1rem;">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Ошибки</h2>
+                    <span style="background: var(--accent-red); color: white; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem;" id="errorCount">0</span>
+                </div>
+                <div class="errors-list" id="errorsList">
+                    <div class="error-item empty">
+                        <i class="fas fa-check-circle"></i> Ошибок нет
+                    </div>
+                </div>
+                <button class="btn btn-danger" id="clearErrorsBtn">
+                    <i class="fas fa-trash"></i> Очистить
+                </button>
+            </div>
+        </div>
+
+        <!-- Экран: Настройки + О программе -->
+        <div class="screen" id="screen-settings">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-cog"></i> Настройки</h2>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.8rem; color: var(--text-secondary); font-weight: 600;">Тема оформления</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <button class="btn btn-secondary theme-btn" data-theme="dark"><i class="fas fa-moon"></i> Тёмная</button>
+                        <button class="btn btn-secondary theme-btn" data-theme="light"><i class="fas fa-sun"></i> Светлая</button>
+                        <button class="btn btn-secondary theme-btn" data-theme="dark-green"><i class="fas fa-leaf"></i> Зелёная</button>
+                        <button class="btn btn-secondary theme-btn" data-theme="dark-purple"><i class="fas fa-magic"></i> Фиолетовая</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">Интервал обновления</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="updateInterval" min="2" max="60" value="5">
+                        <div class="unit">сек</div>
+                    </div>
+                </div>
+
+                <div class="toggle-switch" style="margin-bottom: 1.5rem;">
+                    <span class="switch-label">Звук уведомлений</span>
+                    <label class="switch">
+                        <input type="checkbox" id="soundToggle" checked>
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(100, 255, 218, 0.2);">
+                    <div class="about-section">
+                        <div class="about-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <div class="about-version">EcoGrow v4.5.1</div>
+                        <div class="about-developer">Разработчик: Купченя Евгений Андреевич</div>
+                        <div class="about-contacts">
+                            <a href="https://t.me/Zhesny" target="_blank"><i class="fab fa-telegram"></i></a>
+                            <a href="mailto:zhenya.kupchenya@mail.ru"><i class="fas fa-envelope"></i></a>
+                            <a href="https://github.com/zhesny" target="_blank"><i class="fab fa-github"></i></a>
+                        </div>
+                        <div class="about-tech">
+                            <span class="tech-badge">Arduino</span>
+                            <span class="tech-badge">ESP8266</span>
+                            <span class="tech-badge">JavaScript</span>
+                            <span class="tech-badge">Chart.js</span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;">
+                            © 2025-2026 EcoGrow System
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Нижняя навигация -->
+    <div class="bottom-nav">
+        <button class="nav-item active" data-screen="moisture">
+            <i class="fas fa-tint"></i>
+            <span>Влажность</span>
+        </button>
+        <button class="nav-item" data-screen="controls">
+            <i class="fas fa-sliders-h"></i>
+            <span>Управление</span>
+        </button>
+        <button class="nav-item" data-screen="stats">
+            <i class="fas fa-chart-bar"></i>
+            <span>Статистика</span>
+        </button>
+        <button class="nav-item" data-screen="settings">
+            <i class="fas fa-cog"></i>
+            <span>Настройки</span>
+        </button>
+    </div>
+
+    <!-- Контейнер уведомлений -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Модальное окно подключения -->
+    <div class="modal" id="connectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-wifi"></i> Подключение</h2>
+                <button class="modal-close" id="closeConnectionModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="espIp" placeholder="ecogrow.local" value="ecogrow.local" style="width: 100%; padding: 0.8rem; background: var(--bg-secondary); border: 1px solid var(--bg-tertiary); border-radius: var(--radius-md); color: var(--text-primary); margin-bottom: 0.8rem;">
+                <button class="btn btn-success" id="connectBtn" style="margin-bottom: 0.5rem;"><i class="fas fa-plug"></i> Подключить</button>
+                <button class="btn btn-primary" id="demoModeBtn"><i class="fas fa-flask"></i> Демо-режим</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрипты -->
+    <script src="api-client.js"></script>
+    <script src="charts.js"></script>
+    <script src="notifications.js"></script>
+    <script src="theme.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Инициализация частиц
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 50, density: { enable: true, value_area: 800 } },
+                color: { value: '#64ffda' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.2, random: true },
+                size: { value: 2, random: true },
+                line_linked: { enable: true, distance: 150, color: '#64ffda', opacity: 0.1, width: 1 },
+                move: { enable: true, speed: 1, direction: 'none', random: true, straight: false }
+            },
+            interactivity: {
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' } }
+            },
+            retina_detect: true
+        });
+
+        // Навигация по экранам
+        document.querySelectorAll('.nav-item[data-screen]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(`screen-${this.dataset.screen}`).classList.add('active');
+            });
+        });
+
+        // Закрытие модальных окон
+        document.querySelectorAll('.modal-close, .modal').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) {
+                    e.target.closest('.modal').classList.remove('active');
+                }
+            });
+        });
+
+        // Активировать первую кнопку времени на графике (после загрузки)
+        setTimeout(() => {
+            const firstTimeBtn = document.querySelector('.time-btn');
+            if (firstTimeBtn) firstTimeBtn.classList.add('active');
+        }, 100);
+    </script>
+</body>
+</html>
