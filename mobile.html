@@ -44,7 +44,7 @@
             --transition: 0.2s ease;
         }
 
-        [data-theme="light"] {
+        [data-theme="light-blue"] {
             --bg-primary: #f0f9ff;
             --bg-secondary: #e6f3ff;
             --bg-tertiary: #b8e1ff;
@@ -60,30 +60,6 @@
             --accent-orange: #ea580c;
             --gradient-primary: linear-gradient(135deg, #0284c7, #38bdf8);
             --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        [data-theme="dark-green"] {
-            --bg-primary: #0f2c1a;
-            --bg-secondary: #1a3d29;
-            --bg-tertiary: #2a5740;
-            --bg-card: #1e3a2e;
-            --bg-header: rgba(30, 58, 46, 0.9);
-            --bg-nav: rgba(30, 58, 46, 0.9);
-            --accent-green: #69f0ae;
-            --accent-blue: #4fc3f7;
-            --text-primary: #e8f5e9;
-        }
-
-        [data-theme="dark-purple"] {
-            --bg-primary: #1a103f;
-            --bg-secondary: #2a1b5f;
-            --bg-tertiary: #3d2a7f;
-            --bg-card: #2a1b5f;
-            --bg-header: rgba(42, 27, 95, 0.9);
-            --bg-nav: rgba(42, 27, 95, 0.9);
-            --accent-green: #b388ff;
-            --accent-blue: #80cbc4;
-            --text-primary: #f3e5f5;
         }
 
         body {
@@ -631,15 +607,16 @@
             top: 70px;
             right: 10px;
             width: 280px;
-            height: 80px;
+            max-height: 80vh;
+            overflow-y: hidden;
             z-index: 1000;
             pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
         }
 
         .notification {
-            position: absolute;
-            top: 0;
-            right: 0;
             width: 100%;
             background: var(--bg-card);
             border-left: 4px solid var(--accent-green);
@@ -649,12 +626,13 @@
             display: flex;
             align-items: center;
             gap: 0.8rem;
-            transform-origin: top right;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 0.5rem;
             pointer-events: auto;
             backdrop-filter: blur(10px);
             font-size: 0.9rem;
             color: var(--text-primary);
+            animation: slideInRight 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .notification.success {
@@ -667,36 +645,6 @@
 
         .notification.warning {
             border-left-color: var(--accent-orange);
-        }
-
-        .notification-1 {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-            z-index: 50;
-        }
-
-        .notification-2 {
-            transform: translateY(-15px) scale(0.95);
-            opacity: 0.8;
-            z-index: 40;
-        }
-
-        .notification-3 {
-            transform: translateY(-30px) scale(0.9);
-            opacity: 0.6;
-            z-index: 30;
-        }
-
-        .notification-4 {
-            transform: translateY(-45px) scale(0.85);
-            opacity: 0.4;
-            z-index: 20;
-        }
-
-        .notification-5 {
-            transform: translateY(-60px) scale(0.8);
-            opacity: 0.2;
-            z-index: 10;
         }
 
         .notification-close {
@@ -719,6 +667,11 @@
             background: rgba(255, 255, 255, 0.3);
             color: var(--text-primary);
             transform: rotate(90deg);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         /* Модальные окна */
@@ -1097,9 +1050,7 @@
                     <label style="display: block; margin-bottom: 0.8rem; color: var(--text-secondary); font-weight: 600;">Тема оформления</label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                         <button class="btn btn-secondary theme-btn" data-theme="dark"><i class="fas fa-moon"></i> Тёмная</button>
-                        <button class="btn btn-secondary theme-btn" data-theme="light"><i class="fas fa-sun"></i> Светлая</button>
-                        <button class="btn btn-secondary theme-btn" data-theme="dark-green"><i class="fas fa-leaf"></i> Зелёная</button>
-                        <button class="btn btn-secondary theme-btn" data-theme="dark-purple"><i class="fas fa-magic"></i> Фиолетовая</button>
+                        <button class="btn btn-secondary theme-btn" data-theme="light-blue"><i class="fas fa-sun"></i> Светлая</button>
                     </div>
                 </div>
 
@@ -1124,7 +1075,7 @@
                         <div class="about-icon">
                             <i class="fas fa-seedling"></i>
                         </div>
-                        <div class="about-version">EcoGrow v4.5.1</div>
+                        <div class="about-version">EcoGrow v4.5.2</div>
                         <div class="about-developer">Разработчик: Купченя Евгений Андреевич</div>
                         <div class="about-contacts">
                             <a href="https://t.me/Zhesny" target="_blank"><i class="fab fa-telegram"></i></a>
@@ -1193,7 +1144,6 @@
     <script src="app.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script>
-        // Инициализация частиц
         particlesJS('particles-js', {
             particles: {
                 number: { value: 50, density: { enable: true, value_area: 800 } },
@@ -1210,7 +1160,6 @@
             retina_detect: true
         });
 
-        // Навигация по экранам
         document.querySelectorAll('.nav-item[data-screen]').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -1220,7 +1169,6 @@
             });
         });
 
-        // Закрытие модальных окон
         document.querySelectorAll('.modal-close, .modal').forEach(el => {
             el.addEventListener('click', (e) => {
                 if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) {
@@ -1229,7 +1177,6 @@
             });
         });
 
-        // Активировать первую кнопку времени на графике (после загрузки)
         setTimeout(() => {
             const firstTimeBtn = document.querySelector('.time-btn');
             if (firstTimeBtn) firstTimeBtn.classList.add('active');
