@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoGrow Control Panel</title>
     <script>
-        // Автоматический редирект на мобильную версию для телефонов
         if (window.innerWidth <= 768 || window.matchMedia('(display-mode: standalone)').matches) {
             window.location.replace('mobile.html');
         }
@@ -59,42 +58,6 @@
             --transition-slow: 0.5s cubic-bezier(0.4,0,0.2,1);
         }
 
-        [data-theme="dark-green"] {
-            --bg-primary: #0f2c1a;
-            --bg-secondary: #1a3d29;
-            --bg-tertiary: #2a5740;
-            --bg-card: #1e3a2e;
-            --accent-green: #69f0ae;
-            --accent-blue: #4fc3f7;
-        }
-
-        [data-theme="dark-purple"] {
-            --bg-primary: #1a103f;
-            --bg-secondary: #2a1b5f;
-            --bg-tertiary: #3d2a7f;
-            --bg-card: #2a1b5f;
-            --accent-green: #b388ff;
-            --accent-blue: #80cbc4;
-        }
-
-        [data-theme="light"] {
-            --bg-primary: #f8fafc;
-            --bg-secondary: #f1f5f9;
-            --bg-tertiary: #e2e8f0;
-            --bg-card: #ffffff;
-            --bg-input: #edf2f7;
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --text-muted: #64748b;
-            --accent-green: #2e7d32;
-            --accent-blue: #1976d2;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 20px rgba(0,0,0,0.15);
-            --shadow-lg: 0 10px 40px rgba(0,0,0,0.2);
-            --shadow-glow: 0 0 20px rgba(46,125,50,0.2);
-            --gradient-primary: linear-gradient(135deg, #2e7d32 0%, #1976d2 100%);
-        }
-
         [data-theme="light-blue"] {
             --bg-primary: #f0f9ff;
             --bg-secondary: #e6f3ff;
@@ -104,17 +67,6 @@
             --text-secondary: #0369a1;
             --accent-green: #0284c7;
             --accent-blue: #38bdf8;
-        }
-
-        [data-theme="light-green"] {
-            --bg-primary: #f1f8e9;
-            --bg-secondary: #dcedc8;
-            --bg-tertiary: #c5e1a5;
-            --bg-card: #ffffff;
-            --text-primary: #1e3a2e;
-            --text-secondary: #2e7d32;
-            --accent-green: #388e3c;
-            --accent-blue: #66bb6a;
         }
 
         body {
@@ -1053,22 +1005,28 @@
 
         .developer-contacts {
             display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+            flex-direction: row;
+            gap: 1rem;
             margin-top: 0.5rem;
         }
 
         .contact-link {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-round);
+            color: var(--text-primary);
             text-decoration: none;
-            transition: color var(--transition-fast);
+            transition: all var(--transition-normal);
         }
 
         .contact-link:hover {
-            color: var(--accent-green);
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            transform: translateY(-3px);
         }
 
         .social-links {
@@ -1214,6 +1172,10 @@
             display: flex;
             flex-direction: column-reverse;
             gap: 10px;
+            max-width: 350px;
+            max-height: 90vh;
+            overflow-y: auto;
+            pointer-events: none;
         }
 
         .notification {
@@ -1225,9 +1187,11 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            min-width: 300px;
+            width: 100%;
             transform: translateX(100%);
             animation: slideInRight 0.3s ease forwards;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
         }
 
         .notification.success {
@@ -1473,7 +1437,7 @@
                 <i class="fas fa-seedling"></i>
             </div>
             <div class="loading-text">
-                <h2>EcoGrow 4.5.1</h2>
+                <h2>EcoGrow 4.5.2</h2>
                 <div class="loading-subtitle">
                     <span>🌱 Умный полив</span>
                     <span>💡 Автосвет</span>
@@ -1502,7 +1466,7 @@
                 </div>
             </div>
             <p style="color: var(--text-muted); margin-top: 1.5rem; font-size: 0.85rem;">
-                v4.5.1 · Разработчик: Купченя Евгений
+                v4.5.2 · Разработчик: Купченя Евгений
             </p>
         </div>
     </div>
@@ -1513,7 +1477,7 @@
                 <div class="logo">
                     <i class="fas fa-seedling"></i>
                     <h1>EcoGrow</h1>
-                    <span class="badge">4.5.1</span>
+                    <span class="badge">4.5.2</span>
                 </div>
                 <div class="connection-status" id="connectionStatus">
                     <div class="status-dot"></div>
@@ -1527,7 +1491,7 @@
                 </div>
                 <button class="theme-toggle" id="themeToggle">
                     <i class="fas fa-moon"></i>
-                    <span>Темная синяя</span>
+                    <span>Тёмная</span>
                 </button>
                 <button class="btn-icon" id="settingsBtn">
                     <i class="fas fa-cog"></i>
@@ -1831,21 +1795,19 @@
                 <div class="footer-section">
                     <h3>🌱 EcoGrow System</h3>
                     <p>Умная система полива и контроля микроклимата растений</p>
-                    <p>Версия: 4.5.1 | 2026</p>
+                    <p>Версия: 4.5.2 | 2026</p>
                 </div>
                 <div class="footer-section">
                     <h4>Разработчик</h4>
                     <p><strong>Купченя Евгений Андреевич</strong></p>
                     <div class="developer-contacts">
-                        <a href="https://t.me/Zhesny" class="contact-link" target="_blank">
-                            <i class="fab fa-telegram"></i> @Zhesny
+                        <a href="https://t.me/Zhesny" class="contact-link" target="_blank" title="Telegram">
+                            <i class="fab fa-telegram"></i>
                         </a>
-                        <a href="mailto:zhenya.kupchenya@mail.ru" class="contact-link">
-                            <i class="fas fa-envelope"></i> zhenya.kupchenya@mail.ru
+                        <a href="mailto:zhenya.kupchenya@mail.ru" class="contact-link" title="Email">
+                            <i class="fas fa-envelope"></i>
                         </a>
-                    </div>
-                    <div class="social-links">
-                        <a href="https://github.com/zhesny" class="social-link" target="_blank">
+                        <a href="https://github.com/zhesny" class="contact-link" target="_blank" title="GitHub">
                             <i class="fab fa-github"></i>
                         </a>
                     </div>
@@ -1910,12 +1872,8 @@
                     <div class="control-group">
                         <label class="control-label" style="display: block; margin-bottom: 0.5rem;">Тема интерфейса</label>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
-                            <button class="btn btn-secondary theme-btn" data-theme="dark"><i class="fas fa-moon"></i> Темная синяя</button>
-                            <button class="btn btn-secondary theme-btn" data-theme="dark-green"><i class="fas fa-leaf"></i> Темная зеленая</button>
-                            <button class="btn btn-secondary theme-btn" data-theme="dark-purple"><i class="fas fa-magic"></i> Темная фиолетовая</button>
-                            <button class="btn btn-secondary theme-btn" data-theme="light"><i class="fas fa-sun"></i> Светлая</button>
-                            <button class="btn btn-secondary theme-btn" data-theme="light-blue"><i class="fas fa-water"></i> Светлая голубая</button>
-                            <button class="btn btn-secondary theme-btn" data-theme="light-green"><i class="fas fa-seedling"></i> Светлая зеленая</button>
+                            <button class="btn btn-secondary theme-btn" data-theme="dark"><i class="fas fa-moon"></i> Тёмная</button>
+                            <button class="btn btn-secondary theme-btn" data-theme="light-blue"><i class="fas fa-sun"></i> Светлая</button>
                         </div>
                     </div>
                     <div class="control-group" style="margin-top: 20px;">
