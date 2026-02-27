@@ -14,6 +14,8 @@ class EcoGrowApp {
         };
         this.demoMode = false;
         this.demoInterval = null;
+        this.updateInterval = 5000; // мс, по умолчанию 5 сек
+        this.updateTimer = null;
         this.init();
     }
 
@@ -540,16 +542,49 @@ class EcoGrowApp {
                 cancelButtonText: 'Отмена'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Здесь можно вызвать API для сброса статистики
                     this.notifications.show('📊 Статистика сброшена', 'success');
                 }
             });
         });
+
+        // Обработчик изменения интервала обновления
+        const updateIntervalInput = document.getElementById('updateInterval');
+        if (updateIntervalInput) {
+            updateIntervalInput.addEventListener('change', (e) => {
+                let val = parseInt(e.target.value, 10);
+                if (isNaN(val) || val < 2) val = 2;
+                if (val > 60) val = 60;
+                e.target.value = val;
+                this.updateInterval = val * 1000;
+                this.restartUpdateLoop();
+                this.notifications.show(`⏱ Интервал обновления установлен ${val} сек`, 'info');
+            });
+        }
+
+        // Обработчик звука
+        const soundToggle = document.getElementById('soundToggle');
+        if (soundToggle) {
+            soundToggle.addEventListener('change', (e) => {
+                localStorage.setItem('notifications_sound', e.target.checked ? 'true' : 'false');
+            });
+            // загрузить сохранённое значение
+            const savedSound = localStorage.getItem('notifications_sound');
+            if (savedSound !== null) {
+                soundToggle.checked = savedSound === 'true';
+            }
+        }
+    }
+
+    restartUpdateLoop() {
+        if (this.updateTimer) clearInterval(this.updateTimer);
+        this.updateTimer = setInterval(() => {
+            if (this.state.connected) this.updateData();
+        }, this.updateInterval);
     }
 
     startUpdateLoop() {
-        setInterval(() => {
-            if (this.state.connected) this.updateData();
-        }, 5000);
+        this.restartUpdateLoop();
         setInterval(() => {
             this.updateCurrentTime();
         }, 60000);
@@ -609,7 +644,7 @@ class MockEcoGrowAPI {
     }
 
     async getInfo(ip) {
-        return { version: '4.5.1', ip: 'demo', hostname: 'demo.local', uptime: 12345 };
+        return { version: '4.5.2', ip: 'demo', hostname: 'demo.local', uptime: 12345 };
     }
 
     async getState(ip) {
