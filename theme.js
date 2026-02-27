@@ -3,7 +3,7 @@ class ThemeManager {
         this.currentTheme = 'dark';
         this.themes = {
             dark: {
-                name: 'Тёмная синяя',
+                name: 'Тёмная',
                 icon: 'fa-moon',
                 colors: {
                     '--bg-primary': '#0a192f',
@@ -16,36 +16,8 @@ class ThemeManager {
                     '--accent-blue': '#00d9ff'
                 }
             },
-            'dark-green': {
-                name: 'Тёмная зелёная',
-                icon: 'fa-leaf',
-                colors: {
-                    '--bg-primary': '#0f2c1a',
-                    '--bg-secondary': '#1a3d29',
-                    '--bg-tertiary': '#2a5740',
-                    '--bg-card': '#1e3a2e',
-                    '--text-primary': '#e8f5e9',
-                    '--text-secondary': '#c8e6c9',
-                    '--accent-green': '#69f0ae',
-                    '--accent-blue': '#4fc3f7'
-                }
-            },
-            'dark-purple': {
-                name: 'Тёмная фиолетовая',
-                icon: 'fa-magic',
-                colors: {
-                    '--bg-primary': '#1a103f',
-                    '--bg-secondary': '#2a1b5f',
-                    '--bg-tertiary': '#3d2a7f',
-                    '--bg-card': '#2a1b5f',
-                    '--text-primary': '#f3e5f5',
-                    '--text-secondary': '#e1bee7',
-                    '--accent-green': '#b388ff',
-                    '--accent-blue': '#80cbc4'
-                }
-            },
-            light: {
-                name: 'Светлая голубая',
+            'light-blue': {
+                name: 'Светлая',
                 icon: 'fa-sun',
                 colors: {
                     '--bg-primary': '#f0f9ff',
@@ -54,7 +26,6 @@ class ThemeManager {
                     '--bg-card': '#ffffff',
                     '--text-primary': '#0c4a6e',
                     '--text-secondary': '#0369a1',
-                    '--text-muted': '#64748b',
                     '--accent-green': '#0284c7',
                     '--accent-blue': '#38bdf8'
                 }
