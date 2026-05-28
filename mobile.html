@@ -69,6 +69,7 @@
             min-height: 100vh;
             padding-bottom: 85px;
             transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
         }
 
         #particles-js {
@@ -143,19 +144,38 @@
             background: var(--accent-green);
         }
 
+        /* Экраны с анимацией */
+        .screen-container {
+            position: relative;
+            overflow: hidden;
+        }
         .screen {
             display: none;
             padding: 1rem;
-            animation: fade 0.3s ease;
+            animation: fadeSlideIn 0.3s ease forwards;
         }
-
         .screen.active {
             display: block;
         }
-
-        @keyframes fade {
-            from { opacity: 0.5; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes fadeSlideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
         }
 
         .card {
@@ -276,29 +296,39 @@
             transition: width 0.5s ease;
         }
 
+        /* Исправленные стили для статистики влажности */
         .stats-row {
             display: flex;
             justify-content: space-between;
             background: var(--bg-secondary);
-            padding: 0.7rem;
+            padding: 0.8rem;
             border-radius: var(--radius-md);
-            margin-top: 0.5rem;
+            margin-top: 0.8rem;
+            gap: 0.5rem;
         }
-
         .stat-item {
             text-align: center;
             flex: 1;
+            background: rgba(0,0,0,0.1);
+            border-radius: var(--radius-md);
+            padding: 0.5rem 0;
         }
-
         .stat-label {
-            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.3rem;
         }
-
+        .stat-label i {
+            font-size: 0.7rem;
+            color: var(--accent-green);
+        }
         .stat-value {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 1.2rem;
+            font-weight: 700;
         }
 
         .btn {
@@ -400,15 +430,6 @@
             display: flex;
             gap: 0.8rem;
             margin-bottom: 0.8rem;
-        }
-
-        .input-group .input-with-unit {
-            flex: 1;
-            display: flex;
-            background: var(--bg-secondary);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            border: 1px solid var(--bg-tertiary);
         }
 
         .input-with-unit {
@@ -561,7 +582,7 @@
             justify-content: center;
         }
 
-        /* НИЖНЯЯ НАВИГАЦИЯ — СТИЛЬ TELEGRAM (ЦЕНТР, СКРУГЛЁННЫЙ ПИЛЛ) */
+        /* Нижняя навигация Telegram-стиль */
         .bottom-nav {
             position: fixed;
             bottom: 16px;
@@ -577,7 +598,6 @@
             border: 1px solid rgba(100, 255, 218, 0.25);
             box-shadow: var(--shadow-md);
             z-index: 200;
-            transition: background 0.2s, border 0.2s;
         }
         .nav-item {
             display: flex;
@@ -599,7 +619,6 @@
         }
         .nav-item span {
             font-weight: 500;
-            letter-spacing: 0.3px;
         }
         .nav-item.active {
             color: var(--accent-green);
@@ -625,8 +644,6 @@
             top: 70px;
             right: 10px;
             width: 280px;
-            max-height: 80vh;
-            overflow-y: hidden;
             z-index: 1000;
             pointer-events: none;
             display: flex;
@@ -648,32 +665,8 @@
             pointer-events: auto;
             backdrop-filter: blur(10px);
             font-size: 0.9rem;
-            color: var(--text-primary);
             animation: slideInRight 0.3s ease;
         }
-
-        .notification.success {
-            border-left-color: var(--accent-green);
-        }
-        .notification.error {
-            border-left-color: var(--accent-red);
-        }
-        .notification.warning {
-            border-left-color: var(--accent-orange);
-        }
-        .notification-close {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -772,9 +765,6 @@
             font-size: 0.8rem;
             border: 1px solid rgba(100, 255, 218, 0.2);
         }
-        .hidden {
-            display: none !important;
-        }
     </style>
 </head>
 <body>
@@ -791,8 +781,8 @@
         </div>
     </header>
 
-    <main>
-        <!-- Влажность -->
+    <main class="screen-container">
+        <!-- Экран влажности -->
         <div class="screen active" id="screen-moisture">
             <div class="card">
                 <div class="card-header">
@@ -817,10 +807,20 @@
                 <div class="moisture-bar">
                     <div class="moisture-bar-fill" id="moistureBarFill"></div>
                 </div>
+                <!-- Исправленные надписи с иконками -->
                 <div class="stats-row">
-                    <div class="stat-item"><span class="stat-label">Средняя</span><span class="stat-value" id="avgMoisture">--%</span></div>
-                    <div class="stat-item"><span class="stat-label">Мин</span><span class="stat-value" id="minMoisture">--%</span></div>
-                    <div class="stat-item"><span class="stat-label">Макс</span><span class="stat-value" id="maxMoisture">--%</span></div>
+                    <div class="stat-item">
+                        <span class="stat-label"><i class="fas fa-chart-line"></i> Средняя</span>
+                        <span class="stat-value" id="avgMoisture">--%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label"><i class="fas fa-arrow-down"></i> Мин</span>
+                        <span class="stat-value" id="minMoisture">--%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label"><i class="fas fa-arrow-up"></i> Макс</span>
+                        <span class="stat-value" id="maxMoisture">--%</span>
+                    </div>
                 </div>
             </div>
             <div class="card">
@@ -896,7 +896,7 @@
             </div>
         </div>
 
-        <!-- Настройки + О программе -->
+        <!-- Настройки -->
         <div class="screen" id="screen-settings">
             <div class="card">
                 <div class="card-header"><h2><i class="fas fa-cog"></i> Настройки</h2></div>
@@ -936,7 +936,7 @@
         </div>
     </main>
 
-    <!-- Нижняя навигация (скруглённая, по центру) -->
+    <!-- Нижняя навигация -->
     <div class="bottom-nav">
         <button class="nav-item active" data-screen="moisture"><i class="fas fa-tint"></i><span>Влажность</span></button>
         <button class="nav-item" data-screen="controls"><i class="fas fa-sliders-h"></i><span>Управление</span></button>
@@ -969,21 +969,75 @@
             interactivity: { events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' } } }, retina_detect: true
         });
 
-        // навигация между экранами
-        document.querySelectorAll('.nav-item[data-screen]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                document.getElementById(`screen-${this.dataset.screen}`).classList.add('active');
+        // Навигация по клику
+        const screens = ['moisture', 'controls', 'stats', 'settings'];
+        let currentIndex = 0;
+
+        function setActiveScreen(index) {
+            if (index < 0) index = 0;
+            if (index >= screens.length) index = screens.length - 1;
+            if (index === currentIndex) return;
+            
+            const oldScreen = document.getElementById(`screen-${screens[currentIndex]}`);
+            const newScreen = document.getElementById(`screen-${screens[index]}`);
+            if (!oldScreen || !newScreen) return;
+            
+            // Анимация выхода
+            oldScreen.style.animation = 'fadeSlideOut 0.2s ease forwards';
+            setTimeout(() => {
+                oldScreen.classList.remove('active');
+                oldScreen.style.animation = '';
+                newScreen.classList.add('active');
+                newScreen.style.animation = 'fadeSlideIn 0.3s ease forwards';
+            }, 150);
+            
+            // Обновляем активную кнопку в меню
+            document.querySelectorAll('.nav-item').forEach((btn, i) => {
+                if (i === index) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            currentIndex = index;
+        }
+
+        document.querySelectorAll('.nav-item[data-screen]').forEach((btn, idx) => {
+            btn.addEventListener('click', () => {
+                const screenId = btn.dataset.screen;
+                const newIndex = screens.indexOf(screenId);
+                if (newIndex !== -1) setActiveScreen(newIndex);
             });
         });
-        document.querySelectorAll('.modal-close, .modal').forEach(el => {
-            el.addEventListener('click', (e) => { if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) e.target.closest('.modal').classList.remove('active'); });
-        });
-        setTimeout(() => { const firstTimeBtn = document.querySelector('.time-btn'); if (firstTimeBtn) firstTimeBtn.classList.add('active'); }, 100);
 
-        // Сохранение и загрузка интервала обновления (исправление бага с размерами + сохранение)
+        // Свайп для переключения
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50;
+
+        document.querySelector('.screen-container').addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        document.querySelector('.screen-container').addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const delta = touchEndX - touchStartX;
+            if (Math.abs(delta) > minSwipeDistance) {
+                if (delta > 0) {
+                    // свайп вправо -> предыдущий экран
+                    setActiveScreen(currentIndex - 1);
+                } else {
+                    // свайп влево -> следующий экран
+                    setActiveScreen(currentIndex + 1);
+                }
+            }
+        });
+
+        // Обработка модалок
+        document.querySelectorAll('.modal-close, .modal').forEach(el => {
+            el.addEventListener('click', (e) => { 
+                if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) 
+                    e.target.closest('.modal').classList.remove('active'); 
+            });
+        });
+        
+        // Сохранение интервала обновления
         const intervalInput = document.getElementById('updateInterval');
         if (intervalInput) {
             const savedInterval = localStorage.getItem('ecogrow_update_interval_sec');
@@ -1008,13 +1062,15 @@
                 }
             });
         }
-        // звук тоже сохраняется уже в app.js, но дублируем загрузку
         const soundToggle = document.getElementById('soundToggle');
         if (soundToggle) {
             const savedSound = localStorage.getItem('notifications_sound');
             if (savedSound !== null) soundToggle.checked = savedSound === 'true';
             soundToggle.addEventListener('change', (e) => localStorage.setItem('notifications_sound', e.target.checked ? 'true' : 'false'));
         }
+        
+        // Активируем первый экран
+        setActiveScreen(0);
     </script>
 </body>
 </html>
