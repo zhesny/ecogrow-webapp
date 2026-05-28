@@ -144,15 +144,15 @@
             background: var(--accent-green);
         }
 
-        /* Экраны с анимацией */
+        /* Контейнер экранов с относительным позиционированием */
         .screen-container {
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
         }
         .screen {
             display: none;
             padding: 1rem;
-            animation: fadeSlideIn 0.3s ease forwards;
+            animation: fadeSlideIn 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
         }
         .screen.active {
             display: block;
@@ -296,7 +296,6 @@
             transition: width 0.5s ease;
         }
 
-        /* Исправленные стили для статистики влажности */
         .stats-row {
             display: flex;
             justify-content: space-between;
@@ -782,7 +781,6 @@
     </header>
 
     <main class="screen-container">
-        <!-- Экран влажности -->
         <div class="screen active" id="screen-moisture">
             <div class="card">
                 <div class="card-header">
@@ -807,7 +805,6 @@
                 <div class="moisture-bar">
                     <div class="moisture-bar-fill" id="moistureBarFill"></div>
                 </div>
-                <!-- Исправленные надписи с иконками -->
                 <div class="stats-row">
                     <div class="stat-item">
                         <span class="stat-label"><i class="fas fa-chart-line"></i> Средняя</span>
@@ -836,7 +833,6 @@
             </div>
         </div>
 
-        <!-- Управление -->
         <div class="screen" id="screen-controls">
             <div class="card">
                 <div class="card-header"><h2><i class="fas fa-water"></i> Полив</h2><span class="status-badge" id="pumpStatus">ВЫКЛ</span></div>
@@ -868,7 +864,6 @@
             </div>
         </div>
 
-        <!-- Статистика -->
         <div class="screen" id="screen-stats">
             <div class="card">
                 <div class="card-header"><h2><i class="fas fa-chart-bar"></i> Статистика</h2><button class="btn-icon" style="background: transparent; border: none; color: var(--text-secondary);" id="resetStatsBtn"><i class="fas fa-redo"></i></button></div>
@@ -896,7 +891,6 @@
             </div>
         </div>
 
-        <!-- Настройки -->
         <div class="screen" id="screen-settings">
             <div class="card">
                 <div class="card-header"><h2><i class="fas fa-cog"></i> Настройки</h2></div>
@@ -936,7 +930,6 @@
         </div>
     </main>
 
-    <!-- Нижняя навигация -->
     <div class="bottom-nav">
         <button class="nav-item active" data-screen="moisture"><i class="fas fa-tint"></i><span>Влажность</span></button>
         <button class="nav-item" data-screen="controls"><i class="fas fa-sliders-h"></i><span>Управление</span></button>
@@ -969,7 +962,6 @@
             interactivity: { events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' } } }, retina_detect: true
         });
 
-        // Навигация по клику
         const screens = ['moisture', 'controls', 'stats', 'settings'];
         let currentIndex = 0;
 
@@ -982,16 +974,14 @@
             const newScreen = document.getElementById(`screen-${screens[index]}`);
             if (!oldScreen || !newScreen) return;
             
-            // Анимация выхода
-            oldScreen.style.animation = 'fadeSlideOut 0.2s ease forwards';
+            oldScreen.style.animation = 'fadeSlideOut 0.2s cubic-bezier(0.2,0.9,0.4,1.1) forwards';
             setTimeout(() => {
                 oldScreen.classList.remove('active');
                 oldScreen.style.animation = '';
                 newScreen.classList.add('active');
-                newScreen.style.animation = 'fadeSlideIn 0.3s ease forwards';
+                newScreen.style.animation = 'fadeSlideIn 0.3s cubic-bezier(0.2,0.9,0.4,1.1) forwards';
             }, 150);
             
-            // Обновляем активную кнопку в меню
             document.querySelectorAll('.nav-item').forEach((btn, i) => {
                 if (i === index) btn.classList.add('active');
                 else btn.classList.remove('active');
@@ -1007,29 +997,31 @@
             });
         });
 
-        // Свайп для переключения
-        let touchStartX = 0;
-        let touchEndX = 0;
+        // Жесты: свайп только если больше горизонтальное смещение, чем вертикальное
+        let touchStartX = 0, touchStartY = 0;
+        let touchEndX = 0, touchEndY = 0;
         const minSwipeDistance = 50;
 
-        document.querySelector('.screen-container').addEventListener('touchstart', (e) => {
+        const container = document.querySelector('.screen-container');
+        container.addEventListener('touchstart', (e) => {
             touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
         });
-        document.querySelector('.screen-container').addEventListener('touchend', (e) => {
+        container.addEventListener('touchend', (e) => {
             touchEndX = e.changedTouches[0].screenX;
-            const delta = touchEndX - touchStartX;
-            if (Math.abs(delta) > minSwipeDistance) {
-                if (delta > 0) {
-                    // свайп вправо -> предыдущий экран
+            touchEndY = e.changedTouches[0].screenY;
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            // Если горизонтальное перемещение больше вертикального и превышает порог
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
                     setActiveScreen(currentIndex - 1);
                 } else {
-                    // свайп влево -> следующий экран
                     setActiveScreen(currentIndex + 1);
                 }
             }
         });
 
-        // Обработка модалок
         document.querySelectorAll('.modal-close, .modal').forEach(el => {
             el.addEventListener('click', (e) => { 
                 if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) 
@@ -1037,7 +1029,6 @@
             });
         });
         
-        // Сохранение интервала обновления
         const intervalInput = document.getElementById('updateInterval');
         if (intervalInput) {
             const savedInterval = localStorage.getItem('ecogrow_update_interval_sec');
@@ -1069,7 +1060,6 @@
             soundToggle.addEventListener('change', (e) => localStorage.setItem('notifications_sound', e.target.checked ? 'true' : 'false'));
         }
         
-        // Активируем первый экран
         setActiveScreen(0);
     </script>
 </body>
